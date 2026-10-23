@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023082728';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023082744';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -534,7 +534,7 @@ function render() {
   // Cámara: sigue a Lucy (adentro, la pastelería queda centrada)
   const vwT = VW / SCALE, vhT = VH / SCALE;
   if (game.map === 'bakery') { cam.x = (m.w * T - vwT) / 2; cam.y = (m.h * T - vhT) / 2 - 18; }
-  else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
+  else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); if (render.snap) { render.snap = false; cam.x = clamp(tx, 0, m.w * T - vwT); cam.y = clamp(ty, 0, m.h * T - vhT); } cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
   const x0 = Math.max(0, Math.floor(cam.x / T)), y0 = Math.max(0, Math.floor(cam.y / T)), x1 = Math.min(m.w - 1, Math.ceil((cam.x + vwT) / T)), y1 = Math.min(m.h - 1, Math.ceil((cam.y + vhT) / T)), ts = T * SCALE + .5;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const g = m.ground[x + y * m.w], X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
@@ -852,7 +852,7 @@ function enter(to) {
   sfx.door(); fade(() => {
     if (to === 'bakery') { game.map = 'bakery'; const m = maps.bakery; lucy.x = lucy.px = m.spawn.x; lucy.y = lucy.py = m.spawn.y; lucy.dir = 3; }
     else { game.map = 'town'; lucy.x = lucy.px = 21; lucy.y = lucy.py = 13; lucy.dir = 0; }
-    lucy.path = []; lucy.moving = false; resize();
+    lucy.path = []; lucy.moving = false; resize(); render.snap = true;
   });
 }
 let fadeT0 = 0, fadeCb = null;
@@ -987,7 +987,7 @@ paintMute();
   furnishBakery(); spawnStaff(); spawnTownNpcs();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar('lucy', sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
-  resize(); refreshHud(); paintTask(); requestAnimationFrame(loop);
+  resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
 })();
