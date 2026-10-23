@@ -45,6 +45,16 @@ img{-webkit-user-drag:none;pointer-events:none}
 .big.gold{background:var(--gold)}
 .big.pulse{animation:pulse .8s ease-in-out infinite}
 @keyframes pulse{50%{transform:scale(1.12);box-shadow:0 0 0 4px var(--ink),0 0 0 10px rgba(255,111,174,.55)}}
+.big:not(.mint):not(.gold){background:#c9a0ff}
+/* Bandeja de muebles guardados (modo acomodar) */
+#tray{position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;align-items:center;gap:12px;padding:10px max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(14px,env(safe-area-inset-left,0px));background:rgba(255,248,238,.96);box-shadow:0 -4px 0 var(--ink)}
+#trayItems{flex:1;display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;min-height:76px;align-items:center;padding:4px}
+#trayItems button{position:relative;flex:none;width:76px;height:76px;border:0;border-radius:16px;background:#fff;box-shadow:0 0 0 3px #f0d6e4;display:grid;place-items:center}
+#trayItems button img{width:80%;height:80%;object-fit:contain}
+#trayItems .qty{position:absolute;right:-4px;top:-4px;background:var(--pink);color:#fff;border-radius:99px;font-size:13px;padding:1px 7px;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
+#trayItems p{margin:0;font-family:system-ui,sans-serif;font-weight:800;color:#8a5a7a;font-size:clamp(15px,2.2vw,19px);line-height:1.3}
+#tray.drop #trayItems::before{content:'⬇ ¡Suéltalo aquí para guardarlo!';flex:none;font-size:20px;color:#d0508a}
+#tray.drop{background:rgba(255,214,234,.97)}
 .badge{position:absolute;margin:-48px 0 0 46px;background:#ff4d6d;color:#fff;border-radius:99px;font-size:13px;padding:1px 7px;-webkit-text-stroke:0;box-shadow:0 0 0 2px var(--ink)}
 /* Ventanas tipo Pokémon */
 .modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(74,42,74,.35);padding:calc(env(safe-area-inset-top,0px) + 12px) max(12px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(12px,env(safe-area-inset-left,0px));box-sizing:border-box}
@@ -113,9 +123,11 @@ img{-webkit-user-drag:none;pointer-events:none}
   <button class="ibtn" id="muteBtn" aria-label="Sonido"></button>
 </div>
 <div class="dock">
+  <button class="big" id="editBtn" aria-label="Acomodar la casa" hidden><img alt="" src="__UP__img/bakery/h-sofa.webp">ACOMODAR</button>
   <button class="big mint" id="bagBtn" aria-label="Despensa"><img alt="" src="__UP__img/bakery/ing-flour.webp">DESPENSA</button>
   <button class="big gold" id="upBtn" aria-label="Mejorar pastelería"><img alt="" src="__UP__img/bakery/coin.webp">MEJORAR</button>
 </div>
+<div id="tray" hidden><div id="trayItems"></div><button class="big mint" id="doneBtn" aria-label="Listo">✓<br>LISTO</button></div>
 <div id="modal" class="modal" hidden><div class="win" id="win"></div></div>
 <div id="mix" hidden><h3 id="mixTitle">¡MEZCLA!</h3><canvas id="mixCv" width="520" height="520"></canvas><div class="row" id="mixRow"></div></div>
 <div id="loading"><b>Pastelería de Lucy</b><span><i></i></span></div>
@@ -162,6 +174,8 @@ const sfx = {
   ding: () => { beep(1568, .3, 'sine', .07); beep(2093, .4, 'sine', .05, 0, .1); },
   happy: () => [0, 4, 7, 12].forEach((s, i) => beep(523 * Math.pow(2, s / 12), .1, 'square', .045, 0, i * .07)),
   levelup: () => [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => beep(523 * Math.pow(2, s / 12), .14, 'square', .05, 0, i * .1)),
+  meow: () => { beep(620, .16, 'sine', .06, 420); beep(1040, .32, 'sine', .05, -560, .14); },
+  drop: () => beep(260, .08, 'triangle', .07, -60),
   bell: () => { beep(1175, .25, 'sine', .06); beep(1568, .3, 'sine', .04, 0, .05); },
 };
 // Musiquita del pueblo: alegre y suave (tipo Pokémon), se apaga con el botón de sonido
@@ -244,9 +258,13 @@ const TASKS = [
   { t: 'Compra harina en el molino', img: 'ing-flour', ev: 'buy:flour', n: 1, r: 10 },
   { t: 'Hornea unas galletas', img: 'des-cookie', ev: 'bake:cookie', n: 1, r: 20 },
   { t: 'Vende tu primer postre', img: 'coin', ev: 'sell', n: 1, r: 20 },
+  { t: 'Visita tu casa', img: 'b-home', ev: 'visit:home', n: 1, r: 15 },
+  { t: 'Acaricia a Aceituna y a Coco', img: 'cat-aceituna-icon', ev: 'pet', n: 2, r: 15 },
   { t: 'Junta 3 fresas del arbusto', img: 'ing-strawberry', ev: 'gather:strawberry', n: 3, r: 15 },
   { t: 'Hornea un cupcake', img: 'des-cupcake', ev: 'bake:cupcake', n: 1, r: 25 },
   { t: 'Pon una alfombra bonita', img: 'd-rug', ev: 'up:rug', n: 1, r: 20 },
+  { t: 'Compra un mueble en la mueblería', img: 'h-sofa', ev: 'furn', n: 1, r: 30 },
+  { t: 'Acomoda un mueble en tu casa', img: 'h-bookshelf', ev: 'place', n: 1, r: 20 },
   { t: 'Vende 5 postres', img: 'coin', ev: 'sell', n: 5, r: 40 },
   { t: 'Compra el segundo horno', img: 'f-oven1', ev: 'up:oven2', n: 1, r: 40 },
   { t: 'Recoge 2 manzanas', img: 'ing-apple', ev: 'gather:apple', n: 2, r: 20 },
@@ -255,6 +273,7 @@ const TASKS = [
   { t: 'Hornea un pay de manzana', img: 'des-applepie', ev: 'bake:applepie', n: 1, r: 40 },
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
+  { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
   { t: 'Contrata al panadero', img: 'ch-baker', ev: 'up:baker', n: 1, r: 100 },
   { t: 'Llega a 4 estrellas', img: 'heart', ev: 'star', n: 4, r: 150, abs: 1 },
@@ -263,10 +282,54 @@ const TASKS = [
   { t: 'Hornea un pastel de cumpleaños', img: 'des-bdaycake', ev: 'bake:bdaycake', n: 1, r: 200 },
 ];
 
+/* ---------- La casa de Lucy: muebles, paredes, pisos y tamaños ---------- */
+// fw×fh: cuadros que ocupa en el piso; flat: tapetes (se pueden pisar); cat: lo usan los gatos
+const FURN = [
+  { id: 'bed', n: 'Cama rosa', img: 'h-bed', cost: 0, fw: 2, fh: 2 },
+  { id: 'catbed', n: 'Camita de gato', img: 'h-catbed', cost: 0, fw: 1, fh: 1, cat: 'sleep' },
+  { id: 'catbowl', n: 'Platos de gato', img: 'h-catbowl', cost: 0, fw: 1, fh: 1, cat: 'eat' },
+  { id: 'rug1', n: 'Tapete redondo', img: 'h-rug1', cost: 0, fw: 3, fh: 2, flat: 1 },
+  { id: 'wardrobe', n: 'Ropero', img: 'h-wardrobe', cost: 80, fw: 2, fh: 1 },
+  { id: 'sofa', n: 'Sofá rosa', img: 'h-sofa', cost: 120, fw: 2, fh: 1 },
+  { id: 'tv', n: 'Tele', img: 'h-tv', cost: 150, fw: 2, fh: 1, play: 'tv' },
+  { id: 'bookshelf', n: 'Librero', img: 'h-bookshelf', cost: 90, fw: 2, fh: 1 },
+  { id: 'desk', n: 'Escritorio', img: 'h-desk', cost: 100, fw: 2, fh: 1 },
+  { id: 'cattree', n: 'Rascador de gato', img: 'h-cattree', cost: 140, fw: 1, fh: 1, cat: 'climb' },
+  { id: 'fishtank', n: 'Pecera', img: 'h-fishtank', cost: 180, fw: 2, fh: 1, play: 'fish' },
+  { id: 'piano', n: 'Piano', img: 'h-piano', cost: 260, fw: 2, fh: 1, play: 'piano', star: 2 },
+  { id: 'toybox', n: 'Baúl de juguetes', img: 'h-toybox', cost: 70, fw: 1, fh: 1 },
+  { id: 'dining', n: 'Mesa de comedor', img: 'h-dining', cost: 160, fw: 2, fh: 2 },
+  { id: 'fridge', n: 'Refrigerador', img: 'h-fridge', cost: 140, fw: 1, fh: 1 },
+  { id: 'stove', n: 'Estufa', img: 'h-stove', cost: 130, fw: 1, fh: 1 },
+  { id: 'floorlamp', n: 'Lámpara de pie', img: 'h-floorlamp', cost: 60, fw: 1, fh: 1 },
+  { id: 'bigplant', n: 'Planta grande', img: 'h-bigplant', cost: 50, fw: 1, fh: 1 },
+  { id: 'mirror', n: 'Espejo', img: 'h-mirror', cost: 70, fw: 1, fh: 1 },
+  { id: 'pouf', n: 'Puf', img: 'h-pouf', cost: 45, fw: 1, fh: 1, cat: 'sit' },
+  { id: 'dollhouse', n: 'Casita de muñecas', img: 'h-dollhouse', cost: 220, fw: 2, fh: 1, star: 2 },
+  { id: 'vanity', n: 'Tocador', img: 'h-vanity', cost: 180, fw: 2, fh: 1, star: 2 },
+  { id: 'fireplace', n: 'Chimenea', img: 'h-fireplace', cost: 300, fw: 2, fh: 1, star: 3, cat: 'warm' },
+  { id: 'plushshelf', n: 'Estante de peluches', img: 'h-plushshelf', cost: 200, fw: 2, fh: 1, star: 2 },
+  { id: 'princessbed', n: 'Cama de princesa', img: 'h-princessbed', cost: 600, fw: 2, fh: 2, star: 4 },
+  { id: 'rug2', n: 'Tapete de estrellas', img: 'h-rug2', cost: 60, fw: 3, fh: 2, flat: 1 },
+  { id: 'rug3', n: 'Alfombra de corazón', img: 'h-rug3', cost: 90, fw: 3, fh: 2, flat: 1 },
+  { id: 'cushion', n: 'Cojín grande', img: 'h-cushion', cost: 40, fw: 1, fh: 1, flat: 1, cat: 'sit' },
+  { id: 'nightstand', n: 'Buró con lámpara', img: 'h-nightstand', cost: 55, fw: 1, fh: 1 },
+  { id: 'swing', n: 'Columpio', img: 'h-swing', cost: 320, fw: 2, fh: 1, play: 'swing', star: 3 },
+  { id: 'tipi', n: 'Tienda de juguete', img: 'h-tipi', cost: 240, fw: 2, fh: 2, star: 2, cat: 'hide' },
+  { id: 'console', n: 'Videojuegos', img: 'h-console', cost: 350, fw: 2, fh: 1, play: 'tv', star: 3 },
+];
+const FURNI = Object.fromEntries(FURN.map(f => [f.id, f]));
+// Paredes [papel, raya, puntitos] y pisos [A, B] que se pueden comprar
+const WALLS = [{ n: 'Rosa', c: ['#ffe3ef', '#ffd0e4', '#ffffff'], cost: 0 }, { n: 'Menta', c: ['#dff7ee', '#c6efe0', '#ffffff'], cost: 80 }, { n: 'Lavanda', c: ['#ece4ff', '#ddd0ff', '#ffffff'], cost: 80 }, { n: 'Limón', c: ['#fff6d6', '#ffedb0', '#ffffff'], cost: 80 }, { n: 'Cielo', c: ['#e0f1ff', '#c8e6ff', '#ffffff'], cost: 120 }];
+const FLOORS = [{ n: 'Madera', c: ['#e8c49c', '#dcb488'], cost: 0, wood: 1 }, { n: 'Cuadros rosas', c: ['#fff3e4', '#ffd3e4'], cost: 90 }, { n: 'Cuadros menta', c: ['#f2fff9', '#c9efe0'], cost: 90 }, { n: 'Alfombra azul', c: ['#bcdcff', '#b0d4ff'], cost: 140 }, { n: 'Madera oscura', c: ['#b07a50', '#a06c44'], cost: 140, wood: 1 }];
+const HOME_SIZES = [{ w: 11, h: 9, cost: 0 }, { w: 13, h: 10, cost: 450, n: 'Casa mediana' }, { w: 15, h: 11, cost: 1400, n: 'Casa grande' }];
+
 /* ---------- Guardado ---------- */
-const FRESH = () => ({ v: 1, coins: 40, fame: 0, inv: { egg: 1, flour: 1, sugar: 1 }, show: [], ovens: [], ups: {}, task: 0, taskN: 0, sold: 0, gather: {}, pos: null, map: 'town', muted: false });
+const FRESH = () => ({ v: 1, home: null, coins: 40, fame: 0, inv: { egg: 1, flour: 1, sugar: 1 }, show: [], ovens: [], ups: {}, task: 0, taskN: 0, sold: 0, gather: {}, pos: null, map: 'town', muted: false });
 let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
+// Casa nueva: viene con cama, camita y platos para los gatos y un tapete
+if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 1, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 9, y: 6 }], store: [] };
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
 setInterval(() => { S.seen = now(); persist(); }, 4000); addEventListener('pagehide', persist); document.addEventListener('visibilitychange', () => document.hidden && persist());
 muted = !!S.muted;
@@ -282,6 +345,7 @@ const CHARS = ['lucy', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', '
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
+  'b-home', 'b-furniture', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart',
 ];
@@ -321,7 +385,9 @@ function buildTown() {
   bld('b-fruit', 30, 12, 7, 3, 33, 'shop:fruit');
   bld('b-choco', 4, 26, 7, 3, 7, 'shop:choco');
   bld('b-grocery', 32, 26, 7, 3, 35, 'shop:grocery');
-  addObj(m, 'house-1', 13, 25, 5, 5, 3); addObj(m, 'house-2', 24, 30, 5, 5, 3); addObj(m, 'house-3', 13, 31, 5, 5, 3); addObj(m, 'house-4', 38, 32, 5, 5, 3);
+  bld('b-home', 13, 25, 5, 3, 15, 'home');
+  addObj(m, 'house-2', 24, 30, 5, 5, 3); addObj(m, 'house-3', 13, 31, 5, 5, 3);
+  bld('b-furniture', 38, 31, 6, 3, 40, 'shop:furniture');
   // Plaza con fuente, bancas y faroles
   addObj(m, 'p-fountain', 27, 23, 3, 3, 2); addObj(m, 'p-bench', 25, 25, 2, 2, 1); addObj(m, 'p-bench', 30, 25, 2, 2, 1); addObj(m, 'p-lamp', 25, 21, 1, 1, 1); addObj(m, 'p-lamp', 31, 21, 1, 1, 1);
   addObj(m, 'p-mailbox', 20, 13, 1, 1, 1);
@@ -377,13 +443,49 @@ function furnishBakery() {
   m.queue = [{ x: 5, y: 8 }];   // donde espera el cliente (uno a la vez)
   m.behind = { x: 5, y: 6 };   // detrás del mostrador (la cajera)
 }
+// La casa: el tamaño depende de la ampliación; los muebles se ponen donde Lucy quiera
+function buildHome() {
+  const sz = HOME_SIZES[S.home.lvl], m = makeMap(sz.w, sz.h), W = m.w;
+  setRect(m, 0, 0, W - 1, m.h - 1, i => (m.ground[i] = G_FLOOR));
+  setRect(m, 0, 0, W - 1, 2, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
+  setRect(m, 0, 0, 0, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; }); setRect(m, W - 1, 0, W - 1, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
+  setRect(m, 0, m.h - 1, W - 1, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
+  const dx = Math.floor(W / 2), door = dx + (m.h - 1) * W; m.solid[door] = 0; m.ground[door] = G_FLOOR; m.doors[door] = 'town'; m.door = { x: dx, y: m.h - 1 };
+  m.spawn = { x: dx, y: m.h - 2 }; m.home = true;
+  m.wall = [{ img: 'd-window', x: 2.2, w: 1.5, y: 1.35 }, { img: 'd-window', x: W - 3.7, w: 1.5, y: 1.35 }];
+  placeFurniture(m); return m;
+}
+function placeFurniture(m) {
+  m.objs = []; m.rugs = [];
+  const W = m.w; for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < W - 1; x++) m.solid[x + y * W] = 0;
+  for (const it of S.home.items) {
+    const f = FURNI[it.id]; if (!f) continue;
+    if (f.flat) { m.rugs.push({ it, f }); continue; }
+    const o = addObj(m, f.img, it.x, it.y + f.fh - 1, f.fw, f.fw, f.fh, { furn: f, it }); if (f.fh > 1) o.dw = f.fw;
+  }
+}
+// ¿Cabe un mueble ahí? (dentro del piso, sin encimarse y sin tapar la puerta)
+function fits(m, f, x, y, self) {
+  if (x < 1 || y < 3 || x + f.fw > m.w - 1 || y + f.fh > m.h - 1) return false;
+  if (x <= m.door.x && x + f.fw > m.door.x && y + f.fh >= m.h - 1) return false;
+  for (const it of S.home.items) { if (it === self) continue; const g = FURNI[it.id]; if (!g || !!g.flat !== !!f.flat) continue; if (x < it.x + g.fw && x + f.fw > it.x && y < it.y + g.fh && y + f.fh > it.y) return false; }
+  return true;
+}
 const maps = { town: buildTown(), bakery: buildBakery() };
+maps.home = buildHome();
 
 /* ---------- Pintado del piso (pixel art hecho con canvas) ---------- */
 const tileCv = {};
 function mkTile(name, draw) { const c = document.createElement('canvas'); c.width = c.height = T; const x = c.getContext('2d'); draw(x); tileCv[name] = c; }
 function px(x, c, a, b, w = 1, h = 1) { x.fillStyle = c; x.fillRect(a, b, w, h); }
 function seeded(n) { let s = n * 9301 + 49297; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+function homeTiles() {
+  const w = WALLS[S.home.wall].c, f = FLOORS[S.home.floor];
+  mkTile('h-paper', x => { px(x, w[0], 0, 0, 16, 16); for (let i = 0; i < 16; i += 8) px(x, w[1], i, 0, 4, 16); [[2, 3], [10, 11], [6, 7], [14, 15]].forEach(([a, b]) => px(x, w[2], a, b % 16, 2, 2)); });
+  mkTile('h-crown', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#c98a5e', 0, 0, 16, 3); px(x, '#e8b48a', 0, 3, 16, 1); px(x, '#a8693e', 0, 4, 16, 1); });
+  if (f.wood) { mkTile('h-floorA', x => { px(x, f.c[0], 0, 0, 16, 16); px(x, f.c[1], 0, 7, 16, 1); px(x, f.c[1], 0, 15, 16, 1); px(x, f.c[1], 9, 0, 1, 7); px(x, f.c[1], 3, 8, 1, 7); px(x, 'rgba(255,255,255,.18)', 0, 0, 16, 1); }); tileCv['h-floorB'] = tileCv['h-floorA']; }
+  else { mkTile('h-floorA', x => { px(x, f.c[0], 0, 0, 16, 16); px(x, 'rgba(0,0,0,.06)', 0, 15, 16, 1); px(x, 'rgba(0,0,0,.06)', 15, 0, 1, 16); }); mkTile('h-floorB', x => { px(x, f.c[1], 0, 0, 16, 16); px(x, 'rgba(0,0,0,.06)', 0, 15, 16, 1); px(x, 'rgba(0,0,0,.06)', 15, 0, 1, 16); }); }
+}
 for (let v = 0; v < 4; v++) mkTile('grass' + v, x => { px(x, '#8fd45a', 0, 0, 16, 16); const r = seeded(v + 1); for (let i = 0; i < 9; i++) { const a = r() * 15 | 0, b = r() * 15 | 0; px(x, '#76c048', a, b, 1, 2); px(x, '#a8e070', a + 1, b, 1, 1); } });
 mkTile('flower', x => { x.drawImage(tileCv.grass0, 0, 0); const cols = ['#ff8fc4', '#fff', '#ffd23a']; [[3, 4], [10, 9], [6, 12]].forEach(([a, b], k) => { px(x, cols[k], a, b, 2, 2); px(x, '#fff7b0', a, b, 1, 1); }); });
 mkTile('path', x => { px(x, '#f0d898', 0, 0, 16, 16); const r = seeded(7); for (let i = 0; i < 10; i++) px(x, '#e0c480', r() * 15 | 0, r() * 15 | 0, 2, 1); px(x, '#f8e6b0', 0, 0, 16, 1); });
@@ -398,6 +500,7 @@ mkTile('panel', x => { px(x, '#d9a06e', 0, 0, 16, 16); px(x, '#f0c08e', 0, 0, 16
 mkTile('wallSide', x => { px(x, '#9a5a7e', 0, 0, 16, 16); px(x, '#b8749a', 2, 2, 12, 12); px(x, '#c888ac', 2, 2, 12, 2); px(x, '#7a4062', 0, 15, 16, 1); });
 mkTile('wall', x => { px(x, '#ffd6ea', 0, 0, 16, 16); for (let i = 0; i < 16; i += 4) px(x, '#ffc4de', i, 0, 2, 16); px(x, '#e8a8c8', 0, 15, 16, 1); });
 mkTile('wallTop', x => { px(x, '#c87aa8', 0, 0, 16, 16); px(x, '#b0608e', 0, 14, 16, 2); });
+homeTiles();
 mkTile('wainscot', x => { px(x, '#fff8ee', 0, 0, 16, 16); px(x, '#e8d4c0', 0, 0, 16, 2); for (let i = 2; i < 16; i += 5) px(x, '#f0e2d4', i, 3, 1, 13); });
 
 /* ---------- Personajes ---------- */
@@ -448,8 +551,8 @@ let SCALE = 3, VW = 0, VH = 0, cam = { x: 0, y: 0 };
 function resize() {
   const dpr = Math.min(2, devicePixelRatio || 1); VW = innerWidth; VH = innerHeight; cv.width = VW * dpr; cv.height = VH * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // Cuántos cuadros caben: en el pueblo ~13 de alto, adentro de la pastelería se ve toda
-  const inside = game && game.map === 'bakery';
-  SCALE = inside ? Math.min(VW / (14 * T), (VH - 120) / (11.5 * T)) : Math.max(VW, VH) / (T * (VW > VH ? 19 : 14));
+  const inside = game && game.map !== 'town', mm = game && maps[game.map];
+  SCALE = inside ? Math.min(VW / ((mm.w + .2) * T), (VH - (game.edit ? 210 : 120)) / ((mm.h + .5) * T)) : Math.max(VW, VH) / (T * (VW > VH ? 19 : 14));
 }
 addEventListener('resize', resize);
 function drawSprite(name, x, y, w, h) { const im = IMG[name]; if (im && im.width) cx.drawImage(im, x, y, w, h); }
@@ -467,6 +570,32 @@ function drawObj(o, m) {
   cx.drawImage(img, sx, sy, w, w * img.height / img.width); cx.globalAlpha = 1;
   if (o.gather && gatherReady(o) && game.t % 2 < 1.2) { cx.fillStyle = '#fff'; drawSparkle((o.x + o.tw / 2) * T, (o.yb - .3) * T - (h / SCALE) * .55); }
 }
+// Mueble de la casa: dibujado a lo ancho de su lugar, apoyado abajo; al arrastrarlo se ve verde (cabe) o rojo (no cabe)
+function drawFurn(f, it, m) {
+  const im = IMG[f.img]; if (!im || !im.width) return;
+  const ex = editSel && editSel.it === it ? editSel : null, x = ex ? ex.x : it.x, y = ex ? ex.y : it.y;
+  const w = f.fw * T * SCALE * (f.flat ? 1 : 1.04), h = w * im.height / im.width, sx = ((x + f.fw / 2) * T - cam.x) * SCALE - w / 2;
+  const sy = f.flat ? ((y + f.fh / 2) * T - cam.y) * SCALE - h / 2 : ((y + f.fh) * T - cam.y) * SCALE - h;
+  if (ex) { cx.fillStyle = ex.ok ? 'rgba(80,220,140,.35)' : 'rgba(255,80,100,.35)'; cx.fillRect((x * T - cam.x) * SCALE, (y * T - cam.y) * SCALE, f.fw * T * SCALE, f.fh * T * SCALE); cx.globalAlpha = .9; }
+  cx.drawImage(im, sx, sy, w, h); cx.globalAlpha = 1;
+  if (game.edit && !ex) { cx.strokeStyle = 'rgba(255,111,174,.8)'; cx.lineWidth = 2; cx.setLineDash([6, 4]); cx.strokeRect((x * T - cam.x) * SCALE + 2, (y * T - cam.y) * SCALE + 2, f.fw * T * SCALE - 4, f.fh * T * SCALE - 4); cx.setLineDash([]); }
+}
+function drawEditOverlay(m) {
+  cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 1;
+  for (let x = 1; x < m.w; x++) { const X = (x * T - cam.x) * SCALE; cx.beginPath(); cx.moveTo(X, (3 * T - cam.y) * SCALE); cx.lineTo(X, ((m.h - 1) * T - cam.y) * SCALE); cx.stroke(); }
+  for (let y = 3; y < m.h; y++) { const Y = (y * T - cam.y) * SCALE; cx.beginPath(); cx.moveTo((T - cam.x) * SCALE, Y); cx.lineTo(((m.w - 1) * T - cam.x) * SCALE, Y); cx.stroke(); }
+}
+// Gatitos: hoja de 4×2 (sentado, caminar izq ×2, dormido / lamerse, caminar der ×2, estirarse)
+function drawCat(k) {
+  const im = IMG['cat-' + k.id]; if (!im || !im.width) return;
+  const cw = im.width / 4, ch = im.height / 2; let col = 0, row = 0;
+  if (k.moving) { const f = (k.anim * 2 | 0) % 2; row = k.face > 0 ? 1 : 0; col = 1 + f; }
+  else if (k.state === 'sleep') { row = 0; col = 3; } else if (k.state === 'groom') { row = 1; col = 0; } else if (k.state === 'stretch') { row = 1; col = 3; }
+  const w = T * SCALE * 1.05, h = w * ch / cw, lift = k.on ? T * SCALE * .9 : 0, sx = ((k.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((k.py + 1) * T - cam.y) * SCALE - h - lift + (k.state === 'sleep' ? T * SCALE * .1 : 0);
+  cx.fillStyle = 'rgba(40,20,40,.16)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h + lift - T * SCALE * .05, w * .32, T * SCALE * .1, 0, 0, 7); cx.fill();
+  cx.drawImage(im, col * cw, row * ch, cw, ch, sx, sy, w, h);
+  if (k.state === 'sleep' && game.t % 2 < 1.4) { cx.font = `${Math.round(T * SCALE * .4)}px Lilita One`; cx.fillStyle = '#fff'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 3; const zx = sx + w * .8, zy = sy - (game.t % 2) * 8; cx.strokeText('z', zx, zy); cx.fillText('z', zx, zy); }
+}
 function drawSparkle(wx, wy) { const sx = (wx - cam.x) * SCALE, sy = (wy - cam.y) * SCALE, s = SCALE * 3; cx.fillStyle = '#fff8a0'; cx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, r = i % 2 ? s * .35 : s; cx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } cx.fill(); }
 function drawChar(c, scale = 1) {
   const im = IMG['ch-' + c.sheet]; if (!im || !im.width) return;
@@ -478,36 +607,43 @@ function drawChar(c, scale = 1) {
 }
 function render() {
   const m = mapOf(); cx.imageSmoothingEnabled = false;
-  cx.fillStyle = game.map === 'bakery' ? '#7a4a6a' : '#5aa040'; cx.fillRect(0, 0, VW, VH);
+  const inside = game.map !== 'town';
+  cx.fillStyle = inside ? '#7a4a6a' : '#5aa040'; cx.fillRect(0, 0, VW, VH);
   // Cámara: sigue a Lucy (adentro, la pastelería queda centrada)
   const vwT = VW / SCALE, vhT = VH / SCALE;
-  if (game.map === 'bakery') { cam.x = (m.w * T - vwT) / 2; cam.y = (m.h * T - vhT) / 2 - 18; }
+  if (inside) { cam.x = (m.w * T - vwT) / 2; cam.y = (m.h * T - vhT) / 2 + (game.edit ? 55 / SCALE : -18); }
   else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); if (render.snap) { render.snap = false; cam.x = clamp(tx, 0, m.w * T - vwT); cam.y = clamp(ty, 0, m.h * T - vhT); } cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
   const x0 = Math.max(0, Math.floor(cam.x / T)), y0 = Math.max(0, Math.floor(cam.y / T)), x1 = Math.min(m.w - 1, Math.ceil((cam.x + vwT) / T)), y1 = Math.min(m.h - 1, Math.ceil((cam.y + vhT) / T)), ts = T * SCALE + .5;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const g = m.ground[x + y * m.w], X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
-    let t = g === G_PATH ? 'path' : g === G_FLOWER ? 'flower' : g === G_PLAZA ? 'plaza' : g === G_FLOOR ? ((x + y) % 2 ? 'floorB' : 'floorA') : g === G_WALL ? (x === 0 || x === m.w - 1 || y === m.h - 1 ? 'wallSide' : y === 0 ? 'crown' : y === 1 ? 'paper' : 'panel') : 'grass' + ((x * 7 + y * 13) % 4);
+    const hp = m.home ? 'h-' : '';
+    let t = g === G_PATH ? 'path' : g === G_FLOWER ? 'flower' : g === G_PLAZA ? 'plaza' : g === G_FLOOR ? hp + ((x + y) % 2 ? 'floorB' : 'floorA') : g === G_WALL ? (x === 0 || x === m.w - 1 || y === m.h - 1 ? 'wallSide' : y === 0 ? hp + 'crown' : y === 1 ? hp + 'paper' : 'panel') : 'grass' + ((x * 7 + y * 13) % 4);
     cx.drawImage(tileCv[t], X, Y, ts, ts);
   }
   cx.imageSmoothingEnabled = true;
-  if (game.map === 'bakery') {
+  if (inside) {
     { const y3 = (3 * T - cam.y) * SCALE, gr = cx.createLinearGradient(0, y3, 0, y3 + T * SCALE * .6); gr.addColorStop(0, 'rgba(120,60,80,.22)'); gr.addColorStop(1, 'rgba(120,60,80,0)'); cx.fillStyle = gr; cx.fillRect((1 * T - cam.x) * SCALE, y3, (m.w - 2) * T * SCALE, T * SCALE * .6); }
     for (const w of m.wall) { const im = IMG[w.img]; if (im && im.width) { const ww = w.w * T * SCALE, hh = ww * im.height / im.width; cx.drawImage(im, (w.x * T - cam.x) * SCALE, ((w.y || 1.25) * T - cam.y) * SCALE - hh / 2, ww, hh); } }
+    if (m.rugs) for (const r of m.rugs) drawFurn(r.f, r.it, m);
     if (m.rug) { const im = IMG[m.rug.img]; if (im && im.width) { const ww = m.rug.w * T * SCALE, hh = ww * im.height / im.width; cx.drawImage(im, (m.rug.x * T - cam.x) * SCALE, (m.rug.y * T - cam.y) * SCALE - hh / 2, ww, hh); } }
   }
   // Objetos y personajes ordenados por profundidad (los de abajo se dibujan encima)
   const list = m.objs.map(o => ({ y: o.sortY != null ? o.sortY : o.yb + .99, o }));
   list.push({ y: lucy.py + .5, c: lucy });
   if (game.map === 'town') { for (const n of npcs) list.push({ y: n.py + .5, c: n }); for (const a of m.animals) list.push({ y: a.py + .5, a }); }
+  else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on ? 1 : 0), cat: k }); }
   else { for (const c of customers) list.push({ y: c.py + .5, c, cust: 1 }); for (const s of staffEls) list.push({ y: s.role === 'cashier' ? m.counter.yb + 1 : s.py + .5, c: s, clip: s.role === 'cashier' }); }
   list.sort((a, b) => a.y - b.y);
   for (const it of list) {
-    if (it.o) drawObj(it.o, m);
+    if (it.o && it.o.furn) drawFurn(it.o.furn, it.o.it, m);
+    else if (it.o) drawObj(it.o, m);
+    else if (it.cat) drawCat(it.cat);
     else if (it.a) drawAnimal(it.a);
     else if (it.clip) { const im = IMG[m.counter.img], top = ((m.counter.yb + 1) * T - cam.y) * SCALE - m.counter.tw * T * SCALE * im.height / im.width * .62; cx.save(); cx.beginPath(); cx.rect(0, 0, VW, top); cx.clip(); drawChar(it.c); cx.restore(); }
     else { const r = drawChar(it.c); if (it.cust && r) drawBubble(it.c, r); }
   }
   if (game.map === 'bakery') drawBakeryOverlays(m);
+  if (game.edit) drawEditOverlay(m);
   drawGuide();
   drawFloaters();
 }
@@ -559,7 +695,13 @@ const SELLS = { egg: 'barn', milk: 'barn', butter: 'barn', flour: 'mill', sugar:
 function doorOf(to) { const m = maps.town; const e = Object.entries(m.doors).find(([, v]) => v === to); return e ? { map: 'town', x: e[0] % m.w, y: Math.floor(e[0] / m.w) } : null; }
 const ctr = o => ({ map: 'bakery', x: o.x + (o.dx || 0) + (o.dw || o.tw) / 2 - .5, y: o.yb });
 function guideTarget() {
-  const t = curTask(), [kind, arg] = t.ev.split(':'), inside = game.map === 'bakery', bm = maps.bakery;
+  const t = curTask(), [kind, arg] = t.ev.split(':'), inside = game.map === 'bakery', bm = maps.bakery, hm = maps.home;
+  const exitHome = { map: 'home', x: hm.door.x, y: hm.door.y };
+  if (kind === 'visit') return game.map === 'home' ? null : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (kind === 'pet') { if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const k = cats[S.taskN % 2] || cats[0]; return { map: 'home', x: k.px, y: k.py - (k.on ? 1 : 0), h: .7 }; }
+  if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (game.map === 'home') return kind === 'up' ? { btn: '#upBtn' } : exitHome;
   const toBakery = () => inside ? null : doorOf('bakery');
   if (kind === 'buy') return inside ? { map: 'bakery', x: bm.door.x, y: bm.door.y } : doorOf('shop:' + SELLS[arg]);
   if (kind === 'gather') {
@@ -586,10 +728,11 @@ function guideTarget() {
   return null;
 }
 function drawGuide() {
+  if (game.edit) return;
   const g = guideTarget(); document.querySelectorAll('.big').forEach(b => b.classList.toggle('pulse', !!(g && g.btn && b.matches(g.btn))));
   if (!g || g.btn || g.map !== game.map) return;
   const bob = Math.abs(Math.sin(game.t * 4)) * T * SCALE * .35, s = T * SCALE * .55;
-  const atDoor = game.map === 'bakery' && g.y === maps.bakery.door.y;
+  const atDoor = game.map !== 'town' && g.y === mapOf().door.y;
   let x = ((g.x + .5) * T - cam.x) * SCALE, y = ((g.y - (g.h != null ? g.h : game.map === 'town' ? 1.2 : atDoor ? -.6 : .9)) * T - cam.y) * SCALE - bob, ang = Math.PI / 2;
   const m = 40, off = x < m || x > VW - m || y < 90 || y > VH - m;
   if (off) { const lx = ((lucy.px + .5) * T - cam.x) * SCALE, ly = ((lucy.py) * T - cam.y) * SCALE; ang = Math.atan2(y - ly, x - lx); x = clamp(x, m, VW - m); y = clamp(y, 100, VH - m); }
@@ -813,25 +956,34 @@ function staffWork(dt) {
 
 /* ---------- Cambiar de mapa ---------- */
 function enter(to) {
+  if (to === 'shop:furniture') { openFurnShop(); lucy.path = []; lucy.dir = 0; return; }
   if (to.startsWith('shop:')) { openShop(to.slice(5)); const m = maps.town; lucy.path = []; lucy.dir = 0; const d = findPath(m, lucy.x, lucy.y, lucy.x, lucy.y + 1); return; }
   sfx.door(); fade(() => {
-    if (to === 'bakery') { game.map = 'bakery'; const m = maps.bakery; lucy.x = lucy.px = m.spawn.x; lucy.y = lucy.py = m.spawn.y; lucy.dir = 3; }
-    else { game.map = 'town'; lucy.x = lucy.px = 21; lucy.y = lucy.py = 13; lucy.dir = 0; }
+    const from = game.map;
+    if (to === 'bakery' || to === 'home') { game.map = to; const m = maps[to]; lucy.x = lucy.px = m.spawn.x; lucy.y = lucy.py = m.spawn.y; lucy.dir = 3; if (to === 'home') event('visit:home'); }
+    else { game.map = 'town'; const d = doorOf(from === 'home' ? 'home' : 'bakery'); lucy.x = lucy.px = d.x; lucy.y = lucy.py = d.y + 1; lucy.dir = 0; }
+    updateDock();
     lucy.path = []; lucy.moving = false; resize(); render.snap = true;
   });
 }
 let fadeT0 = 0, fadeCb = null;
 function fade(cb) { fadeT0 = performance.now(); fadeCb = cb; setTimeout(() => { if (fadeCb) { fadeCb(); fadeCb = null; } }, 300); }
 
+function updateDock() { $('#editBtn').hidden = game.map !== 'home'; }
+
 /* ---------- Dedo: tocar para caminar o para usar algo ---------- */
 let drag = null;
 function worldTile(e) { return { x: Math.floor((e.clientX / SCALE + cam.x) / T), y: Math.floor((e.clientY / SCALE + cam.y) / T), fx: e.clientX / SCALE + cam.x, fy: e.clientY / SCALE + cam.y }; }
-cv.addEventListener('pointerdown', e => { e.preventDefault(); drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
+cv.addEventListener('pointerdown', e => { e.preventDefault(); if (game && game.edit) { editDown(e); try { cv.setPointerCapture(e.pointerId); } catch (er) {} return; } drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
 cv.addEventListener('pointermove', e => {
+  if (game && game.edit) return;
   if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.hypot(dx, dy) > 28) { drag.moved = true; drag.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0); }
 });
-['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, e => { if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null; if (!d.moved && ev === 'pointerup') tapAt(e); }));
+// En modo acomodar el arrastre se escucha en toda la ventana (el dedo puede pasar sobre la bandeja)
+addEventListener('pointermove', e => { if (game && game.edit && editSel) editMove(e); });
+['pointerup', 'pointercancel'].forEach(ev => addEventListener(ev, () => { if (game && game.edit && editSel) editUp(); }));
+['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, e => { if (game && game.edit) return; if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null; if (!d.moved && ev === 'pointerup') tapAt(e); }));
 // Mantener el dedo arrastrado: camina en esa dirección como con la cruceta
 function joystick() {
   if (!drag || !drag.moved || game.paused || lucy.moving) return;
@@ -842,7 +994,7 @@ function tapAt(e) {
   if (game.paused) return; const w = worldTile(e), m = mapOf();
   // ¿Tocó algo con qué hacer algo? (objeto, animal, cliente o personaje)
   const target = findTarget(w, m);
-  if (target) { const p = target.door ? findPath(m, lucy.x, lucy.y, target.x, target.y) : findPath(m, lucy.x, lucy.y, target.x, target.y, true); if (p) { lucy.path = p; lucy.goal = target; sfx.tap(); if (!p.length) arrive(); } else sfx.no(); return; }
+  if (target) { let p = target.door ? findPath(m, lucy.x, lucy.y, target.x, target.y) : findPath(m, lucy.x, lucy.y, target.x, target.y, true); if (!p && target.fw > 1) for (let k = 1; k < target.fw && !p; k++) p = findPath(m, lucy.x, lucy.y, target.x + k, target.y, true); if (p) { lucy.path = p; lucy.goal = target; sfx.tap(); if (!p.length) arrive(); } else sfx.no(); return; }
   const p = findPath(m, lucy.x, lucy.y, clamp(w.x, 0, m.w - 1), clamp(w.y, 0, m.h - 1)); if (p) { lucy.path = p; lucy.goal = null; }
 }
 function findTarget(w, m) {
@@ -853,6 +1005,9 @@ function findTarget(w, m) {
     for (const o of m.objs) { if (!o.img.startsWith('b-')) continue; const im = IMG[o.img], h = im && im.width ? o.tw * im.height / im.width : 5; if (w.fx >= o.x * T && w.fx < (o.x + o.tw) * T && w.fy > (o.yb + 1 - h) * T && w.fy < (o.yb + 1) * T) { const d = Object.entries(m.doors).find(([i]) => (i % m.w) >= o.x && (i % m.w) < o.x + o.tw && Math.floor(i / m.w) === o.yb); if (d) return { door: d[1], x: d[0] % m.w, y: Math.floor(d[0] / m.w) }; } }
     for (const o of m.objs) if (o.gather && w.x >= o.fx - 1 && w.x <= o.fx + o.fw && w.y >= o.yb - 1 && w.y <= o.yb) return { obj: o, x: o.fx, y: o.yb };
     for (const n of npcs) if (n.x === w.x && (n.y === w.y || n.y === w.y + 1)) return { npc: n, x: n.x, y: n.y };
+  } else if (m.home) {
+    for (const k of cats) if (Math.abs(k.px - w.x) < 1 && w.y >= Math.round(k.py) - 1 - (k.on ? 1 : 0) && w.y <= Math.round(k.py)) return { cat: k, x: k.x, y: k.y };
+    for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y - 1 && w.y < it.y + f.fh) return { furn: f, obj: null, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
   } else {
     for (const c of customers) if (c.state === 'wait' && c.x === w.x && (c.y === w.y || c.y === w.y + 1)) return { cust: c, x: m.counter.fx + 1, y: m.counter.yb - 1, stand: true };
     for (const o of m.objs) { if (!o.act) continue; const im = IMG[o.img], h = im && im.width ? o.tw * im.height / im.width : 2; if (w.fx >= o.x * T && w.fx < (o.x + o.tw) * T && w.fy > (o.yb + 1 - h) * T && w.fy < (o.yb + 1) * T) return o.act === 'counter' ? { obj: o, x: o.fx + 1, y: o.yb - 1, stand: true } : { obj: o, x: o.fx, y: o.yb }; }
@@ -867,12 +1022,121 @@ function arrive() {
   if (g.animal) { look(g.animal.x, g.animal.y); gather({ ...g.animal, px: g.animal.x, py: g.animal.y }); return; }
   if (g.npc) { look(g.npc.x, g.npc.y); sfx.tap(); toast(pick(['¡Hola, Lucy!', '¡Me encantan tus pasteles!', '¡Qué rico huele tu pastelería!', 'Las fresas de aquí son las mejores', '¿Ya probaste hacer pay de manzana?']), null); return; }
   if (g.cust) { lucy.dir = 0; serve(g.cust); return; }
+  if (g.cat) { look(g.cat.x, g.cat.y); pet(g.cat); return; }
+  if (g.furn) { look(g.x, g.y); useFurn(g.furn); return; }
   const o = g.obj; if (!o) return; look(o.fx + (o.fw > 1 ? 1 : 0), o.yb);
   if (o.gather) return gather({ ...o, px: o.fx, py: o.yb });
   if (o.act === 'mix') return openRecipes();
   if (o.act === 'oven') return takeOut(o.k);
   if (o.act === 'show') return openBag();
   if (o.act === 'counter') { lucy.dir = 0; const c = customers.find(c => c.state === 'wait'); if (c) serve(c); else toast('No hay clientes esperando', 'f-counter'); return; }
+}
+
+/* ---------- Aceituna y Coco ---------- */
+let cats = [];
+function spawnCats() {
+  const m = maps.home; cats = [{ id: 'aceituna', name: 'Aceituna' }, { id: 'coco', name: 'Coco' }].map((c, i) => { const p = freeTile(m) || { x: 3 + i, y: 5 }; return Object.assign(mkChar('lucy', p.x, p.y), c, { speed: 2.3, face: i ? -1 : 1, state: 'sit', timer: rand(1, 4) }); });
+}
+function freeTile(m, near) {
+  const opts = []; for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (!m.solid[x + y * m.w]) opts.push({ x, y });
+  if (near) opts.sort((a, b) => Math.hypot(a.x - near.x, a.y - near.y) - Math.hypot(b.x - near.x, b.y - near.y));
+  return near ? opts[0] : pick(opts);
+}
+const furnOf = (m, kind) => m.objs.filter(o => o.furn && o.furn.cat === kind).concat((m.rugs || []).filter(r => r.f.cat === kind).map(r => ({ furn: r.f, it: r.it, fx: r.it.x, yb: r.it.y })));
+function updateCats(dt) {
+  const m = maps.home;
+  for (const k of cats) {
+    if (k.moving || k.path.length) { const dx = k.path[0] ? k.path[0].x - k.x : 0; if (dx) k.face = dx; stepChar(k, dt, m, c => { if (!c.path.length && c.then) { const f = c.then; c.then = null; f(); } }); continue; }
+    k.timer -= dt; if (k.timer > 0) continue;
+    // Si estaba arriba de un mueble, se baja de un brinco
+    if (m.solid[k.x + k.y * m.w]) { const p = freeTile(m, k); if (p) { k.x = k.px = p.x; k.y = k.py = p.y; } k.on = false; }
+    const r = Math.random(), goTo = (o, st, dur, onTop) => { const p = findPath(m, k.x, k.y, o.fx, o.yb, true); if (!p) return false; k.path = p; k.state = 'walk'; k.then = () => { if (onTop) { k.x = k.px = o.fx; k.y = k.py = o.yb; k.on = onTop === 'up'; } k.state = st; k.timer = dur; if (st === 'eat') floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; return true; };
+    k.on = false;
+    if (r < .22) { const bed = furnOf(m, 'sleep')[0]; if (!(bed && goTo(bed, 'sleep', rand(8, 14), 'in'))) { k.state = 'sleep'; k.timer = rand(6, 10); } }
+    else if (r < .34) { const t = furnOf(m, 'climb')[0]; if (!(t && goTo(t, pick(['sit', 'groom']), rand(4, 8), 'up'))) { k.state = 'groom'; k.timer = 3; } }
+    else if (r < .44) { const b = furnOf(m, 'eat')[0]; if (!(b && goTo(b, 'eat', 3))) { k.state = 'sit'; k.timer = 2; } }
+    else if (r < .52) { const c = furnOf(m, 'sit').concat(furnOf(m, 'warm'), furnOf(m, 'hide')); const o = c.length ? pick(c) : null; if (!(o && goTo(o, 'sit', rand(4, 7), o.furn.flat ? 'in' : null))) { k.state = 'stretch'; k.timer = 1.5; } }
+    else if (r < .62 && game.map === 'home') { const p = findPath(m, k.x, k.y, lucy.x, lucy.y, true); if (p && p.length < 14) { k.path = p; k.then = () => { k.state = 'sit'; k.timer = rand(2, 4); }; } }
+    else if (r < .82) { const t = freeTile(m); const p = t && findPath(m, k.x, k.y, t.x, t.y); if (p && p.length < 12) { k.path = p; k.then = () => { k.state = pick(['sit', 'groom', 'stretch']); k.timer = rand(1.5, 4); }; } }
+    else { k.state = pick(['sit', 'groom', 'stretch']); k.timer = rand(2, 4); }
+  }
+}
+// Acariciar: maúlla, salen corazones y su nombre
+function pet(k) {
+  sfx.meow(); k.path = []; k.then = null; k.state = 'stretch'; k.timer = 1.6; k.face = lucy.x > k.x ? 1 : -1;
+  for (let i = 0; i < 3; i++) setTimeout(() => floatText(k.px + .5 + rand(-.3, .3), k.py - .4, i ? '' : k.name, 'heart', '#ff8fc4'), i * 180);
+  event('pet');
+}
+// Muebles que hacen algo al tocarlos
+function useFurn(f) {
+  if (f.play === 'piano') { [0, 4, 7, 12, 7, 4, 0].forEach((n, i) => beep(523 * Math.pow(2, n / 12), .25, 'triangle', .07, 0, i * .18)); floatText(lucy.px + .5, lucy.py - 1, '♪ ♫', null, '#ff8fc4'); return; }
+  if (f.play === 'tv') { [0, 7, 4, 12].forEach((n, i) => beep(660 * Math.pow(2, n / 12), .1, 'square', .04, 0, i * .1)); floatText(lucy.px + .5, lucy.py - 1, '¡Qué divertido!', null); return; }
+  if (f.play === 'fish') { [0, 1, 2, 3].forEach(i => beep(rand(500, 900), .08, 'sine', .05, 400, i * .12)); floatText(lucy.px + .5, lucy.py - 1, 'blub blub', null, '#bfe6ff'); return; }
+  if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
+  if (f.id === 'bed' || f.id === 'princessbed') { floatText(lucy.px + .5, lucy.py - 1, 'z z z', null); sfx.ding(); return; }
+  floatText(lucy.px + .5, lucy.py - 1, f.n, null);
+}
+
+/* ---------- Acomodar la casa: tocar un mueble guardado para ponerlo, arrastrar para moverlo, arrastrar a la bandeja para guardarlo ---------- */
+let editSel = null;
+function setEdit(on) {
+  game.edit = on; $('#tray').hidden = !on; document.querySelector('.dock').style.visibility = on ? 'hidden' : ''; editSel = null;
+  if (!on) { const m = maps.home; placeFurniture(m); for (const c of [lucy, ...cats]) if (m.solid[c.x + c.y * m.w]) { const p = freeTile(m, c); if (p) { c.x = c.px = p.x; c.y = c.py = p.y; c.path = []; c.on = false; } } persist(); }
+  resize(); paintTray(); sfx.tap();
+}
+function paintTray() {
+  const box = $('#trayItems'), cnt = {}; S.home.store.forEach(id => (cnt[id] = (cnt[id] || 0) + 1));
+  const ids = Object.keys(cnt);
+  box.innerHTML = ids.length ? ids.map(id => `<button data-id="${id}" aria-label="${FURNI[id].n}"><img alt="" src="${src(FURNI[id].img)}">${cnt[id] > 1 ? `<span class="qty">${cnt[id]}</span>` : ''}</button>`).join('') : '<p>Arrastra los muebles para moverlos. Arrástralos aquí abajo para guardarlos. ¡Compra más en la mueblería!</p>';
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => placeFromStore(b.dataset.id)));
+}
+function placeFromStore(id) {
+  const m = maps.home, f = FURNI[id], c = { x: Math.floor(m.w / 2), y: Math.floor(m.h / 2) }; let best = null;
+  // Los tapetes van al centro; los muebles, primero contra la pared del fondo
+  for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (fits(m, f, x, y)) { const d = f.flat ? Math.hypot(x + f.fw / 2 - c.x, y + f.fh / 2 - c.y) : (y - 3) * 2.2 + Math.abs(x + f.fw / 2 - c.x) * .45; if (!best || d < best.d) best = { x, y, d }; }
+  if (!best) { sfx.no(); toast('Ya no cabe: ¡amplía tu casa en la mueblería!', 'b-home'); return; }
+  S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); placeFurniture(m); paintTray(); sfx.pick(); event('place');
+}
+function editDown(e) {
+  const m = maps.home, fx = e.clientX / SCALE + cam.x, fy = e.clientY / SCALE + cam.y, tx = Math.floor(fx / T), ty = Math.floor(fy / T);
+  const hit = S.home.items.filter(it => { const f = FURNI[it.id]; return tx >= it.x && tx < it.x + f.fw && ty >= it.y && ty < it.y + f.fh; }).sort((a, b) => !!FURNI[a.id].flat - !!FURNI[b.id].flat)[0];
+  if (hit) { editSel = { it: hit, f: FURNI[hit.id], x: hit.x, y: hit.y, ox: tx - hit.x, oy: ty - hit.y, ok: true }; sfx.pick(); }
+}
+function editMove(e) {
+  if (!editSel) return; const m = maps.home, tx = Math.floor((e.clientX / SCALE + cam.x) / T), ty = Math.floor((e.clientY / SCALE + cam.y) / T);
+  editSel.x = tx - editSel.ox; editSel.y = ty - editSel.oy; editSel.ok = fits(m, editSel.f, editSel.x, editSel.y, editSel.it);
+  editSel.store = e.clientY > $('#tray').getBoundingClientRect().top; $('#tray').classList.toggle('drop', editSel.store);
+}
+function editUp() {
+  if (!editSel) return; const s = editSel, m = maps.home; editSel = null; $('#tray').classList.remove('drop');
+  if (s.store) { S.home.items.splice(S.home.items.indexOf(s.it), 1); S.home.store.push(s.it.id); toast(`${s.f.n} guardado`, s.f.img); sfx.tap(); }
+  else if (s.ok && (s.x !== s.it.x || s.y !== s.it.y)) { s.it.x = s.x; s.it.y = s.y; sfx.drop(); event('place'); }
+  else if (!s.ok) sfx.no();
+  placeFurniture(m); paintTray();
+}
+
+/* ---------- Mueblería: muebles, paredes, pisos y ampliar la casa ---------- */
+function openFurnShop() {
+  sfx.door(); let tab = openFurnShop.tab || 'muebles';
+  const draw = () => {
+    const st = starsOf(S.fame), owned = id => S.home.items.filter(i => i.id === id).length + S.home.store.filter(i => i === id).length;
+    let body = '';
+    if (tab === 'muebles') body = '<div class="grid">' + FURN.filter(f => f.cost > 0).map(f => { const lock = (f.star || 1) > st, n = owned(f.id);
+      return `<button class="card${lock ? ' lock off' : S.coins < f.cost ? ' off' : ''}" data-f="${f.id}">${n ? `<span class="qty">${n}</span>` : ''}${lock ? `<span class="own">${'★'.repeat(f.star)}</span>` : ''}<img class="pic" alt="" src="${src(f.img)}"><span class="name">${f.n}</span>${priceTag(f.cost)}</button>`; }).join('') + '</div>';
+    else {
+      const nx = HOME_SIZES[S.home.lvl + 1];
+      body = `<h3 style="font-weight:400;margin:4px 4px 8px">Ampliar la casa</h3><div class="grid">` + (nx ? `<button class="card${S.coins < nx.cost ? ' off' : ''}" data-grow="1"><img class="pic" alt="" src="${src('b-home')}"><span class="name">${nx.n}</span><span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">Más espacio para tus muebles</span>${priceTag(nx.cost)}</button>` : '<div class="card"><img class="pic" alt="" src="' + src('b-home') + '"><span class="name">¡Tu casa ya es la más grande!</span></div>') + '</div>' +
+        `<h3 style="font-weight:400;margin:16px 4px 8px">Paredes</h3><div class="grid">` + WALLS.map((w, i) => { const own = S.home.walls.includes(i); return `<button class="card${S.home.wall === i ? '' : !own && S.coins < w.cost ? ' off' : ''}" data-wall="${i}">${S.home.wall === i ? '<span class="own">¡Puesta!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:repeating-linear-gradient(90deg,${w.c[0]} 0 12px,${w.c[1]} 12px 20px);box-shadow:inset 0 0 0 3px rgba(0,0,0,.06)"></span><span class="name">${w.n}</span>${own ? '' : priceTag(w.cost)}</button>`; }).join('') + '</div>' +
+        `<h3 style="font-weight:400;margin:16px 4px 8px">Pisos</h3><div class="grid">` + FLOORS.map((f, i) => { const own = S.home.floors.includes(i); return `<button class="card${S.home.floor === i ? '' : !own && S.coins < f.cost ? ' off' : ''}" data-floor="${i}">${S.home.floor === i ? '<span class="own">¡Puesto!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:${f.wood ? `repeating-linear-gradient(0deg,${f.c[0]} 0 14px,${f.c[1]} 14px 16px)` : `conic-gradient(${f.c[0]} 25%,${f.c[1]} 0 50%,${f.c[0]} 0 75%,${f.c[1]} 0) 0 0/28px 28px`}"></span><span class="name">${f.n}</span>${own ? '' : priceTag(f.cost)}</button>`; }).join('') + '</div>';
+    }
+    openWin(`<header><img alt="" src="${portrait('npc-c')}"><div style="flex:1"><h2>Mueblería</h2><p>¡Todo para tu casa, Lucy! Lo que compres queda guardado para acomodarlo.</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="tabs"><button class="tab${tab === 'muebles' ? ' on' : ''}" data-t="muebles">Muebles</button><button class="tab${tab === 'casa' ? ' on' : ''}" data-t="casa">Casa, paredes y pisos</button></div><div class="body">${body}</div>`);
+    winEl.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = openFurnShop.tab = b.dataset.t; sfx.tap(); draw(); }));
+    winEl.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { const f = FURNI[b.dataset.f]; if ((f.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${f.star} estrellas`, 'heart'); return; } if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.store.push(f.id); refreshHud(); sfx.buy(); toast(`¡${f.n}! Acomódalo en tu casa`, f.img); event('furn'); draw(); }));
+    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); spawnCats(); refreshHud(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
+    winEl.querySelectorAll('[data-wall]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.wall, w = WALLS[i]; if (!S.home.walls.includes(i)) { if (S.coins < w.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= w.cost; S.home.walls.push(i); sfx.buy(); } S.home.wall = i; homeTiles(); refreshHud(); draw(); }));
+    winEl.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.floor, f = FLOORS[i]; if (!S.home.floors.includes(i)) { if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.floors.push(i); sfx.buy(); } S.home.floor = i; homeTiles(); refreshHud(); draw(); }));
+  };
+  draw();
 }
 
 /* ---------- Vecinos del pueblo que pasean ---------- */
@@ -919,6 +1183,7 @@ function update(dt) {
   if (!game) return;
   floaters.forEach(f => (f.t += dt));
   {
+    if (game.edit) { updateCats(dt); return; }
     if (!game.paused) {
       game.t += dt;
       joystick();
@@ -927,7 +1192,7 @@ function update(dt) {
         if (!c.path.length && c.goal) arrive();
       });
       if (lucy.moving && Math.random() < dt * 4) sfx.step();
-      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens();
+      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt);
       // Llegan clientes (más seguido con más estrellas y mesitas)
       if (!customers.length) { game.custT -= dt; if (game.custT <= 0) { game.custT = custInterval() * rand(.6, 1); spawnCustomer(); } }
     }
@@ -939,6 +1204,8 @@ function paintMute() { $('#muteBtn').innerHTML = muted ? ICON_OFF : ICON_ON; }
 $('#muteBtn').addEventListener('click', () => { muted = !muted; S.muted = muted; persist(); paintMute(); sfx.tap(); });
 $('#bagBtn').addEventListener('click', openBag);
 $('#upBtn').addEventListener('click', openUpgrades);
+$('#editBtn').addEventListener('click', () => setEdit(true));
+$('#doneBtn').addEventListener('click', () => setEdit(false));
 $('#task').addEventListener('click', () => { sfx.tap(); const t = curTask(); toast(t.t, t.img); });
 if (window.LEON_HUB) { const b = $('#homeBtn'); b.hidden = false; b.addEventListener('click', () => { persist(); location.href = window.LEON_HUB; }); }
 ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
@@ -948,8 +1215,8 @@ paintMute();
   const bar = $('#loading i');
   await loadAll(p => { bar.style.width = Math.max(8, p * 100) + '%'; window.LEON_PROGRESS = p; });
   $('#loading').hidden = true;
-  game = { map: S.map === 'bakery' ? 'bakery' : 'town', t: 0, paused: false, custT: 8 };
-  furnishBakery(); spawnStaff(); spawnTownNpcs();
+  game = { map: ['bakery', 'home'].includes(S.map) ? S.map : 'town', t: 0, paused: false, custT: 8 };
+  furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); updateDock();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar('lucy', sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
@@ -974,10 +1241,12 @@ paintMute();
     post('lucy-shop', { shop: !modal.hidden }); closeWin();
     game.map = 'bakery'; resize(); S.inv.flour = 3; S.inv.egg = 3; S.inv.sugar = 3; S.ovens = [{ r: 'cookie', start: now() - 99, dur: 12 }];
     spawnCustomer(); step(60); spawnCustomer(); step(120); post('lucy-bakery', { cust: customers.length });
+    game.map = 'home'; resize(); render.snap = true; step(90); post('lucy-home', { cats: cats.map(k => k.state) });
+    setEdit(true); step(5); post('lucy-edit', { store: S.home.store.length }); setEdit(false);
   })();
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
 })();
-window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
+window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
 })();
 </script>
