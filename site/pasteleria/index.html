@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023111909';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023112328';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -346,6 +346,14 @@ const UPS = [
   { id: 'table2', cat: 'deco', n: 'Otra mesita', img: 'f-table', cost: 160, star: 3, fame: 8, need: 'table1', d: 'Llegan todavía más clientes' },
   { id: 'lamp', cat: 'deco', n: 'Lámpara bonita', img: 'd-lamp', cost: 120, star: 3, fame: 6 },
   { id: 'shelf', cat: 'deco', n: 'Estante de frascos', img: 'f-shelf', cost: 140, star: 4, fame: 8 },
+  { id: 'lights', cat: 'deco', n: 'Guirnalda de foquitos', img: 'd-lights', cost: 80, star: 1, fame: 4 },
+  { id: 'cupcaketower', cat: 'deco', n: 'Torre de cupcakes', img: 'd-cupcaketower', cost: 110, star: 2, fame: 6 },
+  { id: 'candyshelf', cat: 'deco', n: 'Repisa de dulces', img: 'd-candyshelf', cost: 130, star: 2, fame: 6 },
+  { id: 'flowerarch', cat: 'deco', n: 'Arco de flores', img: 'd-flowerarch', cost: 220, star: 3, fame: 10 },
+  { id: 'bigbear', cat: 'deco', n: 'Oso gigante', img: 'd-bigbear', cost: 180, star: 3, fame: 8 },
+  { id: 'tablefountain', cat: 'deco', n: 'Fuentecita de mesa', img: 'd-tablefountain', cost: 160, star: 3, fame: 7, need: 'table1' },
+  { id: 'chandelier', cat: 'deco', n: 'Candelabro dorado', img: 'd-chandelier', cost: 400, star: 4, fame: 14 },
+  { id: 'cupcakesign', cat: 'deco', n: 'Letrero de cupcake', img: 'd-cupcakesign', cost: 150, star: 2, fame: 6 },
   { id: 'board', cat: 'deco', n: 'Pizarrón de menú', img: 'd-menuboard', cost: 100, star: 4, fame: 7 },
 ];
 // Adornos del pueblo frente a la pastelería: { img, x, yb, tw } en cuadros del pueblo
@@ -502,7 +510,7 @@ const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
   'b-home', 'b-furniture', 'b-boutique', 'p-van', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
-  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
+  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
 const src = n => UP + n + '.webp';
@@ -575,6 +583,8 @@ function furnishBakery() {
   m.wall = [{ img: 'd-window', x: 11.25, w: 1.35, y: 1.35 }];
   if (S.ups.clock) m.wall.push({ img: 'd-clock', x: 9.05, w: .9, y: 1.15 });
   if (S.ups.painting) m.wall.push({ img: 'd-painting', x: 10.05, w: 1.25, y: 1.2 });
+  if (S.ups.lights) m.wall.push({ img: 'd-lights', x: 1.3, w: 4.4, y: 1.05 });
+  if (S.ups.candyshelf) m.wall.push({ img: 'd-candyshelf', x: 7.15, w: 1.2, y: 1.25 });
   if (S.ups.lamp) m.wall.push({ img: 'd-lamp', x: 12.62, w: .6, y: .9 });
   m.ovens = [];
   for (let k = 0; k < ovenCount(); k++) m.ovens.push(addObj(m, S.ups.fastoven ? 'm-oven' : 'f-oven1', 1 + k * 2, 3, 2, 2, 1, { act: 'oven', k }));
@@ -598,6 +608,11 @@ function furnishBakery() {
   if (S.ups.chocofountain) addObj(m, 'm-chocofountain', 3, 9, 1, 1, 1, { dw: 1.25, dx: -.1 });
   if (S.ups.cotton) addObj(m, 'm-cotton', 7, 9, 1, 1, 1, { dw: 1.3, dx: -.15 });
   if (S.ups.balloons) addObj(m, 'd-balloons', 1, 9, 1, 1, 1);
+  if (S.ups.cupcaketower) m.objs.push({ img: 'd-cupcaketower', x: 4.15, yb: 6.5, tw: .9, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.12 });
+  if (S.ups.bigbear) addObj(m, 'd-bigbear', 8, 9, 1, 1, 1, { dw: 1.2, dx: -.1 });
+  if (S.ups.tablefountain) m.objs.push({ img: 'd-tablefountain', x: S.ups.vase ? 10.1 : 9.62, yb: 6.35, tw: .75, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.31 });
+  if (S.ups.cupcakesign) m.objs.push({ img: 'd-cupcakesign', x: 1.55, yb: 6.25, tw: .8, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.05 });
+  if (S.ups.flowerarch) m.objs.push({ img: 'd-flowerarch', x: m.door.x - .45, yb: m.door.y, tw: 1.9, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 99 });
   // Ala nueva de la pastelería ampliada: otro rincón con tapete, mesitas, planta y una ventana más
   if (S.ups.bigbakery) {
     m.wall.push({ img: 'd-window', x: 14.6, w: 1.5, y: 1.35 });
@@ -857,6 +872,7 @@ function drawAnimal(a) {
 }
 // Hornos con su barrita de avance, la vitrina con los postres y el globito de cada cliente
 function drawBakeryOverlays(m) {
+  if (S.ups.chandelier) { const im = IMG['d-chandelier']; if (im && im.width) { const ww = 1.25 * T * SCALE, hh = ww * im.height / im.width; cx.drawImage(im, (5.75 * T - cam.x) * SCALE, (.05 * T - cam.y) * SCALE, ww, hh); } }
   m.ovens.forEach((o, k) => {
     const ov = S.ovens[k]; const sx = ((o.x + 1) * T - cam.x) * SCALE, sy = ((o.yb - 1.6) * T - cam.y) * SCALE;
     if (!ov) return;
