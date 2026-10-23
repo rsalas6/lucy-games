@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023103925';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023104129';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1361,6 +1361,10 @@ paintMute();
     spawnCustomer(); step(60); spawnCustomer(); step(120); post('lucy-bakery', { cust: customers.length });
     game.map = 'home'; resize(); render.snap = true; step(90); post('lucy-home', { cats: cats.map(k => k.state) });
     setEdit(true); step(5); post('lucy-edit', { store: S.home.store.length }); setEdit(false);
+    S.coins = 3000; S.home.store.push('yarn', 'tunnel'); setEdit(true); placeFromStore('yarn'); placeFromStore('tunnel'); setEdit(false);
+    let plays = 0; for (let i = 0; i < 600 && !plays; i++) { update(1 / 10); if (cats.some(k => k.state === 'play')) plays++; } render(); post('lucy-toys', { plays, items: S.home.items.length });
+    game.map = 'town'; resize(); openBoutique(); winEl.querySelector('[data-o=gatita]').click(); closeWin(); render.snap = true; step(10); post('lucy-outfit', { outfit: S.outfit, sheet: lucy.sheet });
+    S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
