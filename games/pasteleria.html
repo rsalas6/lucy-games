@@ -784,8 +784,9 @@ function render() {
   cx.fillStyle = inside ? '#7a4a6a' : '#5aa040'; cx.fillRect(0, 0, VW, VH);
   // Cámara: sigue a Lucy (adentro, la pastelería queda centrada)
   const vwT = VW / SCALE, vhT = VH / SCALE;
-  if (inside) { cam.y = (m.h * T - vhT) / 2 + (game.edit ? 55 / SCALE : -18); if (m.w * T > vwT + 2) { const tx = clamp((lucy.px + .5) * T - vwT / 2, 0, m.w * T - vwT); cam.x += (tx - cam.x) * (render.snap ? 1 : .15); render.snap = false; } else cam.x = (m.w * T - vwT) / 2; }
+  if (inside) { cam.y = (m.h * T - vhT) / 2 + (game.edit ? 55 / SCALE : -18); if (m.w * T > vwT + 2) { const mx = m.w * T - vwT, tx = clamp((lucy.px + .5) * T - vwT / 2, 0, mx); if (render.lastMap !== game.map) render.snap = true; cam.x = clamp(cam.x + (tx - cam.x) * (render.snap ? 1 : .15), 0, mx); render.snap = false; } else cam.x = (m.w * T - vwT) / 2; }
   else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); if (render.snap) { render.snap = false; cam.x = clamp(tx, 0, m.w * T - vwT); cam.y = clamp(ty, 0, m.h * T - vhT); } cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
+  render.lastMap = game.map;
   const x0 = Math.max(0, Math.floor(cam.x / T)), y0 = Math.max(0, Math.floor(cam.y / T)), x1 = Math.min(m.w - 1, Math.ceil((cam.x + vwT) / T)), y1 = Math.min(m.h - 1, Math.ceil((cam.y + vhT) / T)), ts = T * SCALE + .5;
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const g = m.ground[x + y * m.w], X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
@@ -1227,8 +1228,10 @@ function joystick() {
 function tapAt(e) {
   if (game.paused) return; const w = worldTile(e), m = mapOf();
   // ¿Tocó algo con qué hacer algo? (objeto, animal, cliente o personaje)
-  const target = findTarget(w, m);
-  if (target) { let p = target.door ? findPath(m, lucy.x, lucy.y, target.x, target.y) : findPath(m, lucy.x, lucy.y, target.x, target.y, true); if (!p && target.fw > 1) for (let k = 1; k < target.fw && !p; k++) p = findPath(m, lucy.x, lucy.y, target.x + k, target.y, true); if (p) { lucy.path = p; lucy.goal = target; sfx.tap(); if (!p.length) arrive(); } else sfx.no(); return; }
+  let target = findTarget(w, m);
+  // Tiendas: Lucy se para frente a la puerta y se abre la ventana (no se mete)
+  if (target && target.door && target.door.startsWith('shop:')) target = { shop: target.door, x: target.x, y: target.y + 1, door: null, exact: true };
+  if (target) { let p = target.exact ? findPath(m, lucy.x, lucy.y, target.x, target.y) : target.door ? findPath(m, lucy.x, lucy.y, target.x, target.y) : findPath(m, lucy.x, lucy.y, target.x, target.y, true); if (!p && target.fw > 1) for (let k = 1; k < target.fw && !p; k++) p = findPath(m, lucy.x, lucy.y, target.x + k, target.y, true); if (p) { lucy.path = p; lucy.goal = target; sfx.tap(); if (!p.length) arrive(); } else sfx.no(); return; }
   const p = findPath(m, lucy.x, lucy.y, clamp(w.x, 0, m.w - 1), clamp(w.y, 0, m.h - 1)); if (p) { lucy.path = p; lucy.goal = null; }
 }
 function findTarget(w, m) {
@@ -1261,6 +1264,7 @@ function arrive() {
   if (g.npc) { look(g.npc.x, g.npc.y); sfx.tap(); toast(pick(['¡Hola, Lucy!', '¡Me encantan tus pasteles!', '¡Qué rico huele tu pastelería!', 'Las fresas de aquí son las mejores', '¿Ya probaste hacer pay de manzana?']), null); return; }
   if (g.cust) { lucy.dir = 0; serve(g.cust); return; }
   if (g.cat) { look(g.cat.x, g.cat.y); pet(g.cat); return; }
+  if (g.shop) { lucy.dir = 3; enter(g.shop); return; }
   if (g.judge) { lucy.dir = 3; openContest(); return; }
   if (g.mail) { look(g.mail.fx, g.mail.yb); const day = Math.floor(Date.now() / 864e5); if (S.mail === day) { toast('Hoy ya abriste tu correo. ¡Vuelve mañana!', 'p-mailbox'); return; } S.mail = day; const gifts = [['egg', 3], ['strawberry', 4], ['choco', 2], ['cream', 2], ['catfood', 2]], [k, n] = pick(gifts), c = 30 + starsOf(S.fame) * 15; addInv(k, n); addCoins(c); sfx.levelup(); toast(`¡Carta de los vecinos! +${c} y ${n} ${ING[k].n.toLowerCase()}`, 'ing-' + k); return; }
   if (g.furn) { look(g.x, g.y); useFurn(g.furn, g.it); return; }
