@@ -12,8 +12,8 @@
 @font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:block;src:url(__UP__vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYEF8RXi4EwQ.woff2) format('woff2')}
 #leonIntro{--li-ink:#2a1f3d;--li-sun:#ff8fc4;position:fixed;inset:0;z-index:9999;overflow:hidden;background:#ffd6ea;font-family:'Lilita One','Arial Rounded MT Bold',sans-serif;color:#fff;transition:opacity .5s;-webkit-user-select:none;user-select:none;touch-action:none}
 #leonIntro.out{opacity:0}
-.li-scene{position:absolute;inset:-2%;background:url(__UP__img/splash-wide.webp) 50% 70%/cover no-repeat;animation:li-zoom 4s ease-out both}
-@media (orientation:portrait){.li-scene{background-image:url(__UP__img/splash-tall.webp)}}
+.li-scene{position:absolute;inset:-2%;background:url(__UP__img/splash2-wide.webp) 50% 70%/cover no-repeat;animation:li-zoom 4s ease-out both}
+@media (orientation:portrait){.li-scene{background-image:url(__UP__img/splash2-tall.webp)}}
 .li-scene::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(42,31,61,.35),rgba(42,31,61,0) 40%,rgba(42,31,61,0) 75%,rgba(42,31,61,.35))}
 .li-top{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + max(4vh,16px));display:flex;flex-direction:column;align-items:center}
 .li-title{display:flex;gap:.02em;font-size:min(22vw,17vh,150px);line-height:.95;color:var(--li-sun);-webkit-text-stroke:.05em var(--li-ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--li-ink),0 .16em .1em rgba(0,0,0,.25)}
