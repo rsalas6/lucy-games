@@ -1651,6 +1651,11 @@ paintMute();
     game.map = 'town'; updateDock(); const dockTown = ['bagBtn', 'upBtn'].map(i => i + ':' + !$('#' + i).hidden).join(' ');
     game.map = 'bakery'; updateDock(); S.ups.plant = 1; $('#upBtn').click(); winEl.querySelector('.tab[data-t=deco]').click(); const have = winEl.querySelectorAll('.have').length, tabsWrap = getComputedStyle(winEl.querySelector('.tabs')).flexWrap, tabsOneRow = new Set([...winEl.querySelectorAll('.tab')].map(t => t.offsetTop)).size === 1; closeWin();
     const lvl0 = S.home.lvl; S.home.lvl = 2; maps.home = buildHome(); const rooms = maps.home.rooms.map(r => r.n).join(','), walls = maps.home.wallT.reduce((a, b) => a + b, 0); game.map = 'home'; resize(); step(3); post('lucy-rooms', { dockHome, homeShop, dockTown, have, tabsWrap, tabsOneRow, rooms, walls }); S.home.lvl = lvl0; maps.home = buildHome(); game.map = 'town'; resize(); updateDock(); step(2);
+    // Tienda: Lucy se para enfrente y se abre la ventana; clientes que esperan según las mejoras
+    game.map = 'town'; resize(); lucy.x = lucy.px = 21; lucy.y = lucy.py = 15; lucy.path = []; render.snap = true; step(3); tapAt({ clientX: ((14 + .5) * T - cam.x) * SCALE, clientY: ((8 + .5) * T - cam.y) * SCALE }); for (let i = 0; i < 80 && modal.hidden; i++) step(4);
+    const shopRes = { open: !modal.hidden, title: winEl.querySelector('h2') && winEl.querySelector('h2').textContent, lucy: [lucy.x, lucy.y], map: game.map }; closeWin(); post('lucy-shopstop', shopRes);
+    const caps = []; for (const ups of [[], ['table1'], ['table1', 'table2'], ['table1', 'table2', 'bigbakery']]) { ['table1', 'table2', 'bigbakery'].forEach(k => delete S.ups[k]); ups.forEach(k => (S.ups[k] = 1)); maps.bakery = buildBakery(); furnishBakery(); customers.length = 0; for (let i = 0; i < 6; i++) { spawnCustomer(); step(20); } step(150); caps.push(customers.length + '/' + custCap()); }
+    post('lucy-caps', { caps }); customers.length = 0;
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
