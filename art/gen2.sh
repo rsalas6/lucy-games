@@ -1,0 +1,5 @@
+#!/bin/zsh
+cd "$(dirname "$0")"
+D="$(pwd)/gen"
+codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Usa tu herramienta de generación de imágenes. ESTILO: pixel art de videojuego estilo Pokémon Esmeralda (Game Boy Advance), vista desde arriba en 3/4, colores brillantes y tiernos, contornos oscuros limpios, mismo estilo y tamaño que un arbusto de fresas y un manzano de juego de Pokémon. SIN texto, SIN letras. El FONDO debe ser magenta puro liso (#FF00FF) en toda la imagen, sin sombras en el fondo; cada objeto bien separado con espacio magenta alrededor. Crea harvest.png (imagen ancha 16:9) en $D/ con EXACTAMENTE 4 objetos en UNA SOLA FILA, del mismo tamaño: 1) arbusto de fresas verde frondoso con flores blancas y SIN fresas (ya cosechado), 2) el mismo arbusto con fresas chiquitas verdes creciendo, 3) manzano frondoso SIN manzanas (ya cosechado), 4) gallina blanca sentada sobre su nido de paja. Al final imprime NOMBRE => RUTA COMPLETA de la imagen." < /dev/null > log2.txt 2>&1
+echo ALLDONE
