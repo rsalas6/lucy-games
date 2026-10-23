@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023104806';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023105021';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -196,6 +196,7 @@ img{-webkit-user-drag:none;pointer-events:none}
 </div>
 <div class="dock">
   <button class="big" id="editBtn" aria-label="Acomodar la casa" hidden><img alt="" src="../img/bakery/h-sofa.webp">ACOMODAR</button>
+  <button class="big" id="orderBtn" aria-label="Pedido especial" hidden style="background:#ffb3d9"><img alt="" id="orderImg">PEDIDO</button>
   <button class="big mint" id="bagBtn" aria-label="Despensa"><img alt="" src="../img/bakery/ing-flour.webp">DESPENSA</button>
   <button class="big gold" id="upBtn" aria-label="Mejorar pastelería"><img alt="" src="../img/bakery/coin.webp">MEJORAR</button>
 </div>
@@ -359,6 +360,7 @@ const TASKS = [
   { t: 'Contrata a la cajera', img: 'ch-cashier', ev: 'up:cashier', n: 1, r: 60 },
   { t: 'Hornea un pay de manzana', img: 'des-applepie', ev: 'bake:applepie', n: 1, r: 40 },
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
+  { t: 'Entrega un pedido especial', img: 'des-bdaycake', ev: 'order', n: 1, r: 60 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -818,6 +820,7 @@ function guideTarget() {
     return o ? { map: 'town', x: o.px != null ? o.px : o.x + o.tw / 2 - .5, y: o.py != null ? o.py : o.yb, h: o.px != null ? .8 : 1.6 } : null;
   }
   if (kind === 'up' || kind === 'recipe') return { btn: '#upBtn' };
+  if (kind === 'order' && S.order && S.show.filter(x => x === S.order.r).length >= S.order.n) return { btn: '#orderBtn' };
   if (kind === 'bake' || kind === 'star') {
     const r = RECI[arg] || REC.filter(r => r.star <= starsOf(S.fame) && canMake(r))[0] || REC[0];
     // Si algo ya está listo en el horno, a sacarlo; si faltan ingredientes, a la tienda
@@ -1286,6 +1289,26 @@ function openFurnShop() {
   draw();
 }
 
+/* ---------- Pedidos especiales: un vecino encarga varios postres para su fiesta (pagan el doble) ---------- */
+const PARTIES = [['npc-d', 'Don Pepe', 'su cumpleaños'], ['npc-a', 'Doña Rosa', 'la merienda con sus amigas'], ['npc-b', 'Toño', 'su fiesta de la escuela'], ['npc-c', 'Mimí', 'su pijamada']];
+function newOrder() {
+  const menu = REC.filter(unlocked), r = pick(menu), who = pick(PARTIES), n = 2 + (Math.random() * (1 + starsOf(S.fame)) | 0);
+  S.order = { r: r.id, n, who: who[0], name: who[1], why: who[2], pay: priceOf(r) * n * 2, fame: r.star * n };
+  paintOrder(); sfx.bell(); toast(`¡Pedido de ${who[1]}! ${n} × ${r.n}`, 'des-' + r.id);
+}
+function paintOrder() { const o = S.order, b = $('#orderBtn'); b.hidden = !o; if (o) { $('#orderImg').src = src('des-' + o.r); b.classList.toggle('pulse', S.show.filter(x => x === o.r).length >= o.n); } }
+function openOrder() {
+  const o = S.order; if (!o) return; sfx.tap(); const have = S.show.filter(x => x === o.r).length, ok = have >= o.n;
+  openWin(`<header><img alt="" src="${portrait(o.who)}"><div style="flex:1"><h2>Pedido de ${o.name}</h2><p>Es para ${o.why}. ¡Paga el doble!</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="body"><div class="grid"><div class="card"><span class="qty">${have}/${o.n}</span><img class="pic" alt="" src="${src('des-' + o.r)}"><span class="name">${o.n} × ${RECI[o.r].n}</span>${priceTag(o.pay)}<span style="font-size:14px;color:#d0508a">+${o.fame} fama</span></div></div>` +
+    `<div style="display:flex;justify-content:center;gap:12px;margin-top:14px"><button class="card" id="deliver" style="min-width:180px;${ok ? 'background:#c8f5dc' : 'opacity:.6'}">${ok ? '¡Entregar!' : 'Hornéalos y ponlos en la vitrina'}</button><button class="card" id="skip" style="min-width:120px">Otro pedido</button></div></div>`);
+  $('#deliver').addEventListener('click', () => {
+    if (!ok) { sfx.no(); return; }
+    for (let i = 0; i < o.n; i++) S.show.splice(S.show.indexOf(o.r), 1);
+    addCoins(o.pay); addFame(o.fame); S.order = null; S.orderT = now(); sfx.levelup(); event('order'); closeWin(); paintOrder(); toast(`¡${o.name} está feliz! +${o.pay}`, 'coin');
+  });
+  $('#skip').addEventListener('click', () => { S.order = null; S.orderT = now() - 60; closeWin(); paintOrder(); });
+}
+
 /* ---------- Vecinos del pueblo que pasean ---------- */
 function spawnTownNpcs() {
   const m = maps.town; npcs = [];
@@ -1341,6 +1364,8 @@ function update(dt) {
       if (lucy.moving && Math.random() < dt * 4) sfx.step();
       updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt);
       // Llegan clientes (más seguido con más estrellas y mesitas)
+      if (!S.order && now() - (S.orderT || 0) > 150 && S.sold >= 3) newOrder();
+      if (Math.random() < dt) paintOrder();
       if (!customers.length) { game.custT -= dt; if (game.custT <= 0) { game.custT = custInterval() * rand(.6, 1); spawnCustomer(); } }
     }
   }
@@ -1350,6 +1375,7 @@ function update(dt) {
 function paintMute() { $('#muteBtn').innerHTML = muted ? ICON_OFF : ICON_ON; }
 $('#muteBtn').addEventListener('click', () => { muted = !muted; S.muted = muted; persist(); paintMute(); sfx.tap(); });
 $('#bagBtn').addEventListener('click', openBag);
+$('#orderBtn').addEventListener('click', openOrder);
 $('#upBtn').addEventListener('click', openUpgrades);
 $('#editBtn').addEventListener('click', () => setEdit(true));
 $('#doneBtn').addEventListener('click', () => setEdit(false));
@@ -1366,7 +1392,7 @@ paintMute();
   furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); updateDock();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
-  resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
+  resize(); render.snap = true; refreshHud(); paintTask(); paintOrder(); requestAnimationFrame(loop);
   // Mientras no estaba: el panadero saca lo horneado y la cajera vende lo de la vitrina
   if (S.seen && now() - S.seen > 60) {
     const away = Math.min(4 * 3600, now() - S.seen); let sold = 0, earned = 0, fameUp = 0;
