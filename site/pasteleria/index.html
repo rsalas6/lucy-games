@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023110305';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023110448';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -837,10 +837,11 @@ function drawBubble(c, r) {
   const p = clamp(1 - (game.t - c.since) / c.patience, 0, 1); cx.fillStyle = p > .35 ? '#ff8fc4' : '#ff4d6d'; cx.fillRect(x - s * .55, y + s * .72, s * 1.1 * p, 5);
 }
 let floaters = [];
-function floatText(wx, wy, txt, img, col = '#fff') { floaters.push({ wx, wy, txt, img, col, t: 0 }); }
+function floatText(wx, wy, txt, img, col = '#fff', map) { floaters.push({ wx, wy, txt, img, col, t: 0, map: map || (game && game.map) }); }
 function drawFloaters() {
   floaters = floaters.filter(f => f.t < 1.4);
   for (const f of floaters) {
+    if (f.map && f.map !== game.map) continue;
     const sx = (f.wx * T - cam.x) * SCALE, sy = (f.wy * T - cam.y) * SCALE - f.t * 50, a = Math.min(1, (1.4 - f.t) * 2); cx.globalAlpha = a;
     const s = T * SCALE * .7; if (f.img) drawSprite(f.img, sx - s - 4, sy - s * .75, s, s);
     cx.font = `${Math.round(T * SCALE * .55)}px Lilita One, sans-serif`; cx.lineWidth = 5; cx.strokeStyle = '#4a2a4a'; cx.fillStyle = f.col; cx.strokeText(f.txt, sx, sy); cx.fillText(f.txt, sx, sy); cx.globalAlpha = 1;
@@ -1223,12 +1224,12 @@ function updateCats(dt) {
   for (const k of cats) {
     if (k.moving || k.path.length) { const dx = k.path[0] ? k.path[0].x - k.x : 0; if (dx) k.face = dx; stepChar(k, dt, m, c => { if (!c.path.length && c.then) { const f = c.then; c.then = null; f(); } }); continue; }
     k.timer -= dt; if (k.timer > 0) continue;
-    if (k.wantEat) { k.wantEat = false; const b = furnOf(m, 'eat')[0]; if (b) { const p = findPath(m, k.x, k.y, b.fx, b.yb, true); if (p) { k.path = p; k.state = 'walk'; k.then = () => { k.state = 'eat'; k.timer = 3; floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; continue; } } }
+    if (k.wantEat) { k.wantEat = false; const b = furnOf(m, 'eat')[0]; if (b) { const p = findPath(m, k.x, k.y, b.fx, b.yb, true); if (p) { k.path = p; k.state = 'walk'; k.then = () => { k.state = 'eat'; k.timer = 3; floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066', 'home'); }; continue; } } }
     // Gatitos bien comidos: de vez en cuando le traen un regalito a Lucy
-    if (game.map === 'home' && bowlLevel() > .3 && Math.random() < .06 && game.t - (k.giftT || -999) > 90) { k.giftT = game.t; const n = 5 + (Math.random() * 11 | 0); addCoins(n); sfx.coin(); floatText(k.px + .5, k.py - .5, `${k.name} te trajo +${n}`, 'coin', '#ffe066'); }
+    if (game.map === 'home' && bowlLevel() > .3 && Math.random() < .06 && game.t - (k.giftT || -999) > 90) { k.giftT = game.t; const n = 5 + (Math.random() * 11 | 0); addCoins(n); sfx.coin(); floatText(k.px + .5, k.py - .5, `${k.name} te trajo +${n}`, 'coin', '#ffe066', 'home'); }
     // Si estaba arriba de un mueble, se baja de un brinco
     if (m.solid[k.x + k.y * m.w]) { const p = freeTile(m, k); if (p) { k.x = k.px = p.x; k.y = k.py = p.y; } k.on = false; }
-    const r = Math.random(), goTo = (o, st, dur, onTop) => { const p = findPath(m, k.x, k.y, o.fx, o.yb, true); if (!p) return false; k.path = p; k.state = 'walk'; k.then = () => { if (onTop) { k.x = k.px = o.fx; k.y = k.py = o.yb; k.on = onTop === 'up'; } k.state = st; k.timer = dur; if (st === 'eat') floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; return true; };
+    const r = Math.random(), goTo = (o, st, dur, onTop) => { const p = findPath(m, k.x, k.y, o.fx, o.yb, true); if (!p) return false; k.path = p; k.state = 'walk'; k.then = () => { if (onTop) { k.x = k.px = o.fx; k.y = k.py = o.yb; k.on = onTop === 'up'; } k.state = st; k.timer = dur; if (st === 'eat') floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066', 'home'); }; return true; };
     k.on = false;
     if (r < .18) { const bed = furnOf(m, 'sleep')[0]; if (!(bed && goTo(bed, 'sleep', rand(8, 14), 'in'))) { k.state = 'sleep'; k.timer = rand(6, 10); } }
     else if (r < .28) { const t = furnOf(m, 'climb')[0]; if (!(t && goTo(t, pick(['sit', 'groom']), rand(4, 8), 'up'))) { k.state = 'groom'; k.timer = 3; } }
@@ -1496,6 +1497,9 @@ paintMute();
     S.ups['t-fountain'] = 1; S.ups['t-lamps'] = 1; decorateTown();
     game.map = 'town'; lucy.x = lucy.px = 21; lucy.y = lucy.py = 15; resize(); render.snap = true; step(10);
     S.accs = ['crown', 'bow']; S.catAcc = { aceituna: 'crown', coco: 'bow' }; game.map = 'home'; resize(); for (const k of cats) { k.state = 'sit'; k.timer = 99; k.path = []; } step(3); post('lucy-accs', { catAcc: S.catAcc }); game.map = 'town'; resize(); step(3);
+    S.ups.icecream = 1; S.ups.cotton = 1; S.ups.van = 1; furnishBakery(); const menuNew = REC.filter(unlocked).filter(r => r.machine).map(r => r.id);
+    S.show = ['icecone']; S.vanT = 0; const cv0 = S.coins; update(1 / 30); const vanPay = S.coins - cv0; S.vanAway = 0; S.vanT = now();
+    game.map = 'bakery'; resize(); step(3); post('lucy-machines', { menuNew, vanPay }); game.map = 'town'; resize(); step(3);
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
