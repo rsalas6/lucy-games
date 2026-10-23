@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023111511';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023111603';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -196,6 +196,7 @@ img{-webkit-user-drag:none;pointer-events:none}
   <button class="ibtn" id="muteBtn" aria-label="Sonido"></button>
 </div>
 <div class="dock">
+  <button class="big" id="partyBtn" aria-label="Hacer una fiesta" hidden style="background:#ffd23a"><img alt="" src="../img/bakery/des-bdaycake.webp">FIESTA</button>
   <button class="big" id="editBtn" aria-label="Acomodar la casa" hidden><img alt="" src="../img/bakery/h-sofa.webp">ACOMODAR</button>
   <button class="big" id="orderBtn" aria-label="Pedido especial" hidden style="background:#ffb3d9"><img alt="" id="orderImg">PEDIDO</button>
   <button class="big mint" id="bagBtn" aria-label="Despensa"><img alt="" src="../img/bakery/ing-flour.webp">DESPENSA</button>
@@ -397,6 +398,7 @@ const TASKS = [
   { t: 'Pon flores frente a tu pastelería', img: 'p-flowers', ev: 'up:t-flowers1', n: 1, r: 30 },
   { t: 'Ponle un accesorio a un gatito', img: 'cat-coco-icon', ev: 'dresscat', n: 1, r: 30 },
   { t: 'Haz tu casa más acogedora', img: 'b-home', ev: 'comfort', n: 1, r: 40 },
+  { t: 'Haz una fiesta en tu casa', img: 'des-bdaycake', ev: 'party', n: 1, r: 60 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -810,7 +812,7 @@ function render() {
   list.push({ y: lucy.py + .5, c: lucy });
   if (game.map === 'town' && S.ups.van && !(S.vanAway > now())) list.push({ y: 19.4, o: { img: 'p-van', x: 23.4, yb: 19, tw: 3.2, fx: 0, fw: 0, fh: 0 } });
   if (game.map === 'town') { for (const n of npcs) list.push({ y: n.py + .5, c: n }); for (const a of m.animals) list.push({ y: a.py + .5, a }); }
-  else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on ? 1 : 0), cat: k }); }
+  else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on ? 1 : 0), cat: k }); for (const g of guests) list.push({ y: g.py + .5, c: g }); }
   else { for (const c of customers) list.push({ y: c.py + .5, c, cust: 1 }); for (const s of staffEls) list.push({ y: s.role === 'cashier' ? m.counter.yb + 1 : s.py + .5, c: s, clip: s.role === 'cashier' }); }
   list.sort((a, b) => a.y - b.y);
   for (const it of list) {
@@ -901,6 +903,7 @@ function guideTarget() {
   if (kind === 'feedcats') { if (!(S.inv.catfood > 0)) return game.map === 'town' ? doorOf('shop:grocery') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbowl'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'dresscat') { if (!S.accs.length) return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbed'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (kind === 'party') return game.map === 'home' ? { btn: '#partyBtn' } : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'comfort') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('shop:furniture') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
@@ -1176,7 +1179,7 @@ function enter(to) {
 let fadeT0 = 0, fadeCb = null;
 function fade(cb) { fadeT0 = performance.now(); fadeCb = cb; setTimeout(() => { if (fadeCb) { fadeCb(); fadeCb = null; } }, 300); }
 
-function updateDock() { $('#editBtn').hidden = game.map !== 'home'; $('#homeChip').hidden = game.map !== 'home'; if (game.map === 'home') checkComfort(); }
+function updateDock() { paintParty(); $('#editBtn').hidden = game.map !== 'home'; $('#homeChip').hidden = game.map !== 'home'; if (game.map === 'home') checkComfort(); }
 
 /* ---------- Dedo: tocar para caminar o para usar algo ---------- */
 let drag = null;
@@ -1315,10 +1318,33 @@ function checkComfort() {
   while (S.comfortGot < COMFORT_GOALS.length && c >= COMFORT_GOALS[S.comfortGot]) { const k = ++S.comfortGot, pay = 80 * k; addCoins(pay); addFame(3 * k); sfx.levelup(); toast(`¡Tu casa es más acogedora! Premio +${pay}`, 'b-home'); event('comfort'); }
 }
 
+/* ---------- Fiesta en casa: los vecinos vienen a comer postres y a jugar con los gatos ---------- */
+let guests = [];
+const partyReady = () => comfortOf() >= 60 && now() - (S.partyT || 0) > 600;
+function openParty() {
+  sfx.tap();
+  if (comfortOf() < 60) { toast('Haz tu casa más acogedora (60) para hacer fiestas', 'b-home'); return; }
+  if (now() - (S.partyT || 0) < 600) { toast(`Tu próxima fiesta en ${Math.ceil((600 - (now() - S.partyT)) / 60)} min`, 'des-bdaycake'); return; }
+  if (S.show.length < 3) { sfx.no(); toast('Necesitas 3 postres en la vitrina para la fiesta', 'f-vitrina'); return; }
+  const served = S.show.splice(0, 3), pay = Math.round(served.reduce((a, r) => a + priceOf(RECI[r]), 0) * 1.5) + 40, m = maps.home;
+  S.partyT = now(); guests = ['npc-a', 'npc-b', 'npc-c'].map((sh, i) => { const g = mkChar(sh, m.door.x, m.door.y); g.speed = 2.6; g.wait = i * .8; g.guest = 1; return g; });
+  game.party = { t: 0, pay, served }; sfx.levelup(); toast('¡Llegan tus invitados!', 'des-bdaycake'); paintParty();
+}
+function updateParty(dt) {
+  const P = game.party; if (!P) return; const m = maps.home; P.t += dt;
+  for (const g of guests) {
+    stepChar(g, dt, m);
+    if (!g.moving && !g.path.length) { g.wait -= dt; if (g.wait < 0) { g.wait = rand(1.5, 3); const t = P.t > 18 ? { x: m.door.x, y: m.door.y } : freeTile(m); const p = t && findPath(m, g.x, g.y, t.x, t.y); if (p) g.path = p.slice(0, 10); if (Math.random() < .4) floatText(g.px + .5, g.py - 1, pick(['¡Qué rico!', '¡Qué bonita casa!', '¡Miau!', '♪', '¡Yummy!']), Math.random() < .5 ? 'des-' + pick(P.served) : 'heart', '#ff8fc4', 'home'); } }
+  }
+  if (Math.random() < dt * 1.5) beep(523 * Math.pow(2, pick([0, 4, 7, 12]) / 12), .12, 'triangle', .03);
+  if (P.t > 24) { guests = []; game.party = null; addCoins(P.pay); addFame(8); sfx.happy(); toast(`¡Qué fiesta tan divertida! +${P.pay}`, 'coin'); event('party'); paintParty(); }
+}
+function paintParty() { const b = $('#partyBtn'); b.hidden = game.map !== 'home' || game.edit || !!game.party; b.classList.toggle('pulse', partyReady() && S.show.length >= 3); }
+
 /* ---------- Acomodar la casa: tocar un mueble guardado para ponerlo, arrastrar para moverlo, arrastrar a la bandeja para guardarlo ---------- */
 let editSel = null;
 function setEdit(on) {
-  game.edit = on; $('#tray').hidden = !on; document.querySelector('.dock').style.visibility = on ? 'hidden' : ''; editSel = null;
+  game.edit = on; $('#tray').hidden = !on; $('#partyBtn').hidden = on || game.map !== 'home'; document.querySelector('.dock').style.visibility = on ? 'hidden' : ''; editSel = null;
   if (!on) { const m = maps.home; placeFurniture(m); for (const c of [lucy, ...cats]) if (m.solid[c.x + c.y * m.w]) { const p = freeTile(m, c); if (p) { c.x = c.px = p.x; c.y = c.py = p.y; c.path = []; c.on = false; } } persist(); }
   resize(); paintTray(); sfx.tap();
 }
@@ -1484,7 +1510,7 @@ function update(dt) {
         if (!c.path.length && c.goal) arrive();
       });
       if (lucy.moving && Math.random() < dt * 4) sfx.step();
-      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt);
+      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt); updateParty(dt); if (Math.random() < dt) paintParty();
       // Llegan clientes (más seguido con más estrellas y mesitas)
       // Camioneta: cada 2 minutos se lleva un postre de la vitrina y regresa con el dinero y propina
       if (S.ups.van && S.show.length && now() - (S.vanT || 0) > 120) { S.vanT = now(); S.vanAway = now() + 25; const r = RECI[S.show.shift()], pay = priceOf(r) + 8; addCoins(pay); addFame(r.star); S.sold++; event('sell'); if (game.map !== 'home') toast(`La camioneta entregó ${r.n.toLowerCase()} +${pay}`, 'p-van'); }
@@ -1502,6 +1528,7 @@ $('#bagBtn').addEventListener('click', openBag);
 $('#orderBtn').addEventListener('click', openOrder);
 $('#upBtn').addEventListener('click', openUpgrades);
 $('#editBtn').addEventListener('click', () => setEdit(true));
+$('#partyBtn').addEventListener('click', openParty);
 $('#doneBtn').addEventListener('click', () => setEdit(false));
 $('#task').addEventListener('click', () => { sfx.tap(); const t = curTask(); toast(t.t, t.img); });
 if (window.LEON_HUB) { const b = $('#homeBtn'); b.hidden = false; b.addEventListener('click', () => { persist(); location.href = window.LEON_HUB; }); }
