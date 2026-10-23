@@ -265,6 +265,7 @@ const TASKS = [
   { t: 'Pon una alfombra bonita', img: 'd-rug', ev: 'up:rug', n: 1, r: 20 },
   { t: 'Compra un mueble en la mueblería', img: 'h-sofa', ev: 'furn', n: 1, r: 30 },
   { t: 'Acomoda un mueble en tu casa', img: 'h-bookshelf', ev: 'place', n: 1, r: 20 },
+  { t: 'Estrena ropa de la boutique', img: 'b-boutique', ev: 'outfit', n: 1, r: 30 },
   { t: 'Vende 5 postres', img: 'coin', ev: 'sell', n: 5, r: 40 },
   { t: 'Compra el segundo horno', img: 'f-oven1', ev: 'up:oven2', n: 1, r: 40 },
   { t: 'Recoge 2 manzanas', img: 'ing-apple', ev: 'gather:apple', n: 2, r: 20 },
@@ -319,6 +320,9 @@ const FURN = [
   { id: 'console', n: 'Videojuegos', img: 'h-console', cost: 350, fw: 2, fh: 1, play: 'tv', star: 3 },
 ];
 const FURNI = Object.fromEntries(FURN.map(f => [f.id, f]));
+// Ropa de Lucy (se compra en la boutique y se cambia en el ropero de su casa)
+const OUTFITS = [{ id: 'lucy', n: 'Delantal de chef', cost: 0 }, { id: 'fresa', n: 'Vestido de fresa', cost: 150 }, { id: 'pintora', n: 'Overol de pintora', cost: 180 }, { id: 'gatita', n: 'Disfraz de gatita', cost: 220 }, { id: 'princesa', n: 'Vestido de princesa', cost: 500, star: 3 }];
+const sheetOf = id => id === 'lucy' ? 'lucy' : 'lucy-' + id;
 // Paredes [papel, raya, puntitos] y pisos [A, B] que se pueden comprar
 const WALLS = [{ n: 'Rosa', c: ['#ffe3ef', '#ffd0e4', '#ffffff'], cost: 0 }, { n: 'Menta', c: ['#dff7ee', '#c6efe0', '#ffffff'], cost: 80 }, { n: 'Lavanda', c: ['#ece4ff', '#ddd0ff', '#ffffff'], cost: 80 }, { n: 'Limón', c: ['#fff6d6', '#ffedb0', '#ffffff'], cost: 80 }, { n: 'Cielo', c: ['#e0f1ff', '#c8e6ff', '#ffffff'], cost: 120 }];
 const FLOORS = [{ n: 'Madera', c: ['#e8c49c', '#dcb488'], cost: 0, wood: 1 }, { n: 'Cuadros rosas', c: ['#fff3e4', '#ffd3e4'], cost: 90 }, { n: 'Cuadros menta', c: ['#f2fff9', '#c9efe0'], cost: 90 }, { n: 'Alfombra azul', c: ['#bcdcff', '#b0d4ff'], cost: 140 }, { n: 'Madera oscura', c: ['#b07a50', '#a06c44'], cost: 140, wood: 1 }];
@@ -329,6 +333,7 @@ const FRESH = () => ({ v: 1, home: null, coins: 40, fame: 0, inv: { egg: 1, flou
 let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 // Casa nueva: viene con cama, camita y platos para los gatos y un tapete
+if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
 if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 1, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 9, y: 6 }], store: [] };
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
 setInterval(() => { S.seen = now(); persist(); }, 4000); addEventListener('pagehide', persist); document.addEventListener('visibilitychange', () => document.hidden && persist());
@@ -341,11 +346,11 @@ const bakeMul = () => S.ups.fastoven ? .5 : 1;
 
 /* ---------- Imágenes ---------- */
 const IMG = {};
-const CHARS = ['lucy', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', 'helper'];
+const CHARS = ['lucy', 'lucy-fresa', 'lucy-pintora', 'lucy-gatita', 'lucy-princesa', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', 'helper'];
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-furniture', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart',
 ];
@@ -386,7 +391,7 @@ function buildTown() {
   bld('b-choco', 4, 26, 7, 3, 7, 'shop:choco');
   bld('b-grocery', 32, 26, 7, 3, 35, 'shop:grocery');
   bld('b-home', 13, 25, 5, 3, 15, 'home');
-  addObj(m, 'house-2', 24, 30, 5, 5, 3); addObj(m, 'house-3', 13, 31, 5, 5, 3);
+  bld('b-boutique', 24, 30, 5, 3, 26, 'shop:boutique'); addObj(m, 'house-3', 13, 31, 5, 5, 3);
   bld('b-furniture', 38, 31, 6, 3, 40, 'shop:furniture');
   // Plaza con fuente, bancas y faroles
   addObj(m, 'p-fountain', 27, 23, 3, 3, 2); addObj(m, 'p-bench', 25, 25, 2, 2, 1); addObj(m, 'p-bench', 30, 25, 2, 2, 1); addObj(m, 'p-lamp', 25, 21, 1, 1, 1); addObj(m, 'p-lamp', 31, 21, 1, 1, 1);
@@ -396,7 +401,7 @@ function buildTown() {
   [[37, 11], [40, 11]].forEach(([x, y], k) => addObj(m, 'p-appletree', x, y, 2, 1, 1, { gather: 'apple', gid: 'a' + k }));
   [[11, 22], [16, 21], [41, 28], [29, 28], [3, 15], [17, 15]].forEach(([x, y]) => addObj(m, 'p-flowers', x, y, 2, 2, 1));
   for (let x = 3; x <= 11; x++) if (x !== 7) addObj(m, 'p-fence', x, 16, 1, 1, 1);
-  [[2, 22], [10, 31], [27, 31], [43, 22], [19, 22], [28, 15]].forEach(([x, y]) => addObj(m, 'p-tree', x, y, 2, 1, 1));
+  [[2, 22], [10, 31], [31, 31], [43, 22], [19, 22], [28, 15]].forEach(([x, y]) => addObj(m, 'p-tree', x, y, 2, 1, 1));
   m.animals = [{ img: 'p-hen', x: 4, y: 14, area: [3, 13, 11, 15], gather: 'egg', gid: 'h0' }, { img: 'p-hen', x: 9, y: 13, area: [3, 13, 11, 15], gather: 'egg', gid: 'h1' }, { img: 'p-cow', x: 6, y: 14, area: [3, 13, 11, 15], gather: 'milk', gid: 'c0', big: 1 }];
   m.spawn = { x: 21, y: 14 };
   return m;
@@ -699,6 +704,7 @@ function guideTarget() {
   const exitHome = { map: 'home', x: hm.door.x, y: hm.door.y };
   if (kind === 'visit') return game.map === 'home' ? null : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'pet') { if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const k = cats[S.taskN % 2] || cats[0]; return { map: 'home', x: k.px, y: k.py - (k.on ? 1 : 0), h: .7 }; }
+  if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (game.map === 'home') return kind === 'up' ? { btn: '#upBtn' } : exitHome;
@@ -956,6 +962,7 @@ function staffWork(dt) {
 
 /* ---------- Cambiar de mapa ---------- */
 function enter(to) {
+  if (to === 'shop:boutique') { openBoutique(); lucy.path = []; lucy.dir = 0; return; }
   if (to === 'shop:furniture') { openFurnShop(); lucy.path = []; lucy.dir = 0; return; }
   if (to.startsWith('shop:')) { openShop(to.slice(5)); const m = maps.town; lucy.path = []; lucy.dir = 0; const d = findPath(m, lucy.x, lucy.y, lucy.x, lucy.y + 1); return; }
   sfx.door(); fade(() => {
@@ -1073,6 +1080,7 @@ function useFurn(f) {
   if (f.play === 'tv') { [0, 7, 4, 12].forEach((n, i) => beep(660 * Math.pow(2, n / 12), .1, 'square', .04, 0, i * .1)); floatText(lucy.px + .5, lucy.py - 1, '¡Qué divertido!', null); return; }
   if (f.play === 'fish') { [0, 1, 2, 3].forEach(i => beep(rand(500, 900), .08, 'sine', .05, 400, i * .12)); floatText(lucy.px + .5, lucy.py - 1, 'blub blub', null, '#bfe6ff'); return; }
   if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
+  if (f.id === 'wardrobe') { openBoutique(true); return; }
   if (f.id === 'bed' || f.id === 'princessbed') { floatText(lucy.px + .5, lucy.py - 1, 'z z z', null); sfx.ding(); return; }
   floatText(lucy.px + .5, lucy.py - 1, f.n, null);
 }
@@ -1113,6 +1121,24 @@ function editUp() {
   else if (s.ok && (s.x !== s.it.x || s.y !== s.it.y)) { s.it.x = s.x; s.it.y = s.y; sfx.drop(); event('place'); }
   else if (!s.ok) sfx.no();
   placeFurniture(m); paintTray();
+}
+
+/* ---------- Boutique y ropero: la ropa de Lucy ---------- */
+function openBoutique(closet) {
+  sfx.door();
+  const draw = () => {
+    const st = starsOf(S.fame), list = closet ? OUTFITS.filter(o => S.outfits.includes(o.id)) : OUTFITS;
+    openWin(`<header><img alt="" src="${portrait(closet ? sheetOf(S.outfit) : 'cashier')}"><div style="flex:1"><h2>${closet ? 'Mi ropero' : 'Boutique'}</h2><p>${closet ? '¿Qué te quieres poner hoy?' : '¡La ropa más bonita del pueblo! Pruébatela y estrénala.'}</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="body"><div class="grid">` +
+      list.map(o => { const own = S.outfits.includes(o.id), lock = (o.star || 1) > st && !own, on = S.outfit === o.id;
+        return `<button class="card${lock ? ' lock off' : !own && S.coins < o.cost ? ' off' : ''}" data-o="${o.id}">${on ? '<span class="own">¡Puesto!</span>' : lock ? `<span class="own">${'★'.repeat(o.star)}</span>` : ''}<img class="pic" alt="" src="${portrait(sheetOf(o.id))}" style="width:84px;height:110px"><span class="name">${o.n}</span>${own ? '' : priceTag(o.cost)}</button>`; }).join('') + '</div>' + (closet ? '<p style="font-family:system-ui;font-weight:700;color:#9a6a8a;text-align:center">Compra más ropa en la boutique del pueblo.</p>' : '') + '</div>');
+    winEl.querySelectorAll('[data-o]').forEach(b => b.addEventListener('click', () => {
+      const o = OUTFITS.find(x => x.id === b.dataset.o), own = S.outfits.includes(o.id);
+      if (!own) { if ((o.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${o.star} estrellas`, 'heart'); return; } if (S.coins < o.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= o.cost; S.outfits.push(o.id); refreshHud(); sfx.levelup(); event('outfit'); }
+      else sfx.happy();
+      S.outfit = o.id; lucy.sheet = sheetOf(o.id); floatText(lucy.px + .5, lucy.py - 1.2, '¡Qué bonita!', null, '#ff8fc4'); draw();
+    }));
+  };
+  draw();
 }
 
 /* ---------- Mueblería: muebles, paredes, pisos y ampliar la casa ---------- */
@@ -1217,7 +1243,7 @@ paintMute();
   $('#loading').hidden = true;
   game = { map: ['bakery', 'home'].includes(S.map) ? S.map : 'town', t: 0, paused: false, custT: 8 };
   furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); updateDock();
-  const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar('lucy', sp.x, sp.y);
+  const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
   // Mientras no estaba: el panadero saca lo horneado y la cajera vende lo de la vitrina
