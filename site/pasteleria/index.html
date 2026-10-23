@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023110636';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023110746';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1531,6 +1531,7 @@ paintMute();
     S.ups.icecream = 1; S.ups.cotton = 1; S.ups.van = 1; furnishBakery(); const menuNew = REC.filter(unlocked).filter(r => r.machine).map(r => r.id);
     S.show = ['icecone']; S.vanT = 0; const cv0 = S.coins; update(1 / 30); const vanPay = S.coins - cv0; S.vanAway = 0; S.vanT = now();
     game.map = 'bakery'; resize(); step(3); post('lucy-machines', { menuNew, vanPay }); game.map = 'town'; resize(); step(3);
+    game.map = 'home'; resize(); updateDock(); step(2); const comfort = $('#comfort').textContent; game.map = 'town'; updateDock(); window.__hour = 21; lucy.x = lucy.px = 21; lucy.y = lucy.py = 15; resize(); render.snap = true; step(4); post('lucy-night', { comfort }); window.__hour = null;
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
