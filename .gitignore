@@ -1,0 +1,5 @@
+.DS_Store
+preview/
+art/gen/
+art/*.txt
+art/*.out

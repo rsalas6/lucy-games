@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
+<meta name="theme-color" content="#ff8fc4">
+<script>window.LEON_VERSION='20261023081938';</script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>Juegos de Lucy</title>
+<link rel="stylesheet" href="vendor/fonts.css">
+<style>
+/* Layout: valle prehistórico en 3D caricatura de fondo; título grande arriba y los juegos como íconos de app enormes en una fila centrada. Un solo look brillante, pensado para dedos pequeños. */
+:root{
+  --ink:#2a1f3d;
+  --sun:#ff8fc4;
+  --sky:#ffd6ea;
+  --grass:#6cc63a;
+  --paper:#fffaf0;
+  --display:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',sans-serif;
+  --body:'Nunito','Avenir Next',system-ui,sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;color:var(--ink);font-family:var(--display);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior:none;background:var(--sky)}
+a,button{touch-action:manipulation;-webkit-touch-callout:none}
+img{-webkit-user-drag:none}
+.world{position:fixed;inset:0;background:url(img/splash-wide.webp) 50% 60%/cover no-repeat var(--sky)}
+@media (orientation:portrait){.world{background-image:url(img/splash-tall.webp)}}
+.world::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(255,255,255,.28),rgba(255,255,255,0) 60%)}
+
+.page{position:relative;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(22px,5vh,52px);padding-top:calc(env(safe-area-inset-top,0px) + 20px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 44px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{margin:0;font-weight:400;display:flex;flex-direction:column;align-items:center;line-height:.95;text-align:center}
+.t1{font-size:clamp(22px,4.6vw,40px);color:#fff;letter-spacing:.06em;-webkit-text-stroke:.09em var(--ink);paint-order:stroke fill;text-shadow:0 .1em 0 var(--ink)}
+.t2{font-size:clamp(52px,min(12vw,13vh),130px);color:var(--sun);letter-spacing:.02em;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill;text-shadow:0 .07em 0 var(--ink),0 .14em .1em rgba(0,0,0,.25);animation:wob 3s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-2deg) scale(1.03)}}
+
+.apps{display:grid;grid-template-columns:repeat(auto-fit,auto);justify-content:center;column-gap:clamp(22px,5vw,60px);row-gap:clamp(14px,3vh,32px)}
+.app{display:flex;flex-direction:column;align-items:center;gap:12px;text-decoration:none;color:#fff}
+.icon{width:clamp(84px,min(17vw,21vh),190px);aspect-ratio:1;max-width:100%;border-radius:24%;overflow:hidden;background:#fff;box-shadow:0 0 0 6px #fff,0 0 0 10px var(--ink),0 14px 0 6px rgba(42,31,61,.35),0 24px 30px rgba(0,0,0,.2);animation:float 3s ease-in-out infinite;transition:transform .12s}
+.app:nth-child(2) .icon{animation-delay:-1s}
+.app:nth-child(3) .icon{animation-delay:-2s}
+.app:nth-child(4) .icon{animation-delay:-.5s}
+.app:nth-child(5) .icon{animation-delay:-1.5s}
+.icon img{width:100%;height:100%;display:block;object-fit:cover}
+@keyframes float{50%{transform:translateY(-10px)}}
+.app:active .icon{transform:scale(.92);animation:none}
+.app:focus-visible{outline:none}
+.app:focus-visible .icon{box-shadow:0 0 0 6px var(--sun),0 0 0 10px var(--ink)}
+.name{font-size:clamp(20px,4vw,32px);letter-spacing:.04em;white-space:nowrap;-webkit-text-stroke:.12em var(--ink);paint-order:stroke fill;text-shadow:0 .12em 0 var(--ink)}
+
+.parent{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 12px);border:0;border-radius:99px;background:rgba(42,31,61,.72);color:#fff;font-family:var(--body);font-weight:800;font-size:13px;padding:9px 16px;cursor:pointer}
+.upd{right:auto;left:max(14px,env(safe-area-inset-left,0px))}
+.upd.new{background:var(--sun);color:var(--ink);box-shadow:0 0 0 3px var(--ink);animation:glow .9s ease-in-out infinite}
+@keyframes glow{50%{transform:scale(1.08)}}
+.sheet{position:fixed;inset:0;display:flex;align-items:flex-start;overflow-y:auto;box-sizing:border-box;padding-top:calc(env(safe-area-inset-top,0px) + 16px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:rgba(42,31,61,.55)}
+.card{margin:auto;width:min(100%,440px);box-sizing:border-box;background:var(--paper);border-radius:28px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 5px var(--ink),0 12px 0 5px rgba(0,0,0,.2)}
+.card h2{font-family:var(--display);font-weight:400;font-size:30px;margin:0;text-align:center}
+.card p{margin:0;font-family:var(--body);font-weight:700;line-height:1.45;color:#5a4d6e}
+.card ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-family:var(--body);font-weight:800;line-height:1.4}
+.ok{align-self:center;font-family:var(--display);font-size:22px;letter-spacing:.06em;border:0;border-radius:99px;cursor:pointer;color:#fff;background:linear-gradient(#8fe04a,#5db82a);padding:12px 36px;box-shadow:0 5px 0 #3f8a1c}
+@media (orientation:landscape) and (max-height:520px){.icon{width:clamp(72px,19vh,130px)}.t2{font-size:44px}.page{gap:10px}.name{font-size:16px}}
+@media (prefers-reduced-motion:reduce){.icon,.t2{animation:none}}
+</style>
+<style>@media (display-mode: standalone), (display-mode: fullscreen){html,body{height:var(--fullh,100%)!important}#app,.bg,.world,#menu,#play,#win,#confetti,#leonIntro{bottom:auto!important;height:var(--fullh,100%)!important}}</style>
+<script>(()=>{const fit=()=>{if(!(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))return;const land=innerWidth>innerHeight,h=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height),gap=h-innerHeight;document.documentElement.style.setProperty('--fullh',(gap>0&&gap<=90?h:innerHeight)+'px')};fit();addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,300))})()</script>
+</head>
+<body>
+<div id="leonIntro" aria-hidden="true">
+  <div class="li-scene"></div>
+  <div class="li-top">
+    <div class="li-title"><span>L</span><span>U</span><span>C</span><span>Y</span></div>
+    <div class="li-sub">GAMES</div>
+  </div>
+  <div class="li-load">
+    <div class="li-bar"><i></i></div>
+  </div>
+</div>
+<style>
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:block;src:url(vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYEF8RXi4EwQ.woff2) format('woff2')}
+#leonIntro{--li-ink:#2a1f3d;--li-sun:#ff8fc4;position:fixed;inset:0;z-index:9999;overflow:hidden;background:#ffd6ea;font-family:'Lilita One','Arial Rounded MT Bold',sans-serif;color:#fff;transition:opacity .5s;-webkit-user-select:none;user-select:none;touch-action:none}
+#leonIntro.out{opacity:0}
+.li-scene{position:absolute;inset:-2%;background:url(img/splash-wide.webp) 50% 70%/cover no-repeat;animation:li-zoom 4s ease-out both}
+@media (orientation:portrait){.li-scene{background-image:url(img/splash-tall.webp)}}
+.li-scene::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(42,31,61,.35),rgba(42,31,61,0) 40%,rgba(42,31,61,0) 75%,rgba(42,31,61,.35))}
+.li-top{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + max(4vh,16px));display:flex;flex-direction:column;align-items:center}
+.li-title{display:flex;gap:.02em;font-size:min(22vw,17vh,150px);line-height:.95;color:var(--li-sun);-webkit-text-stroke:.05em var(--li-ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--li-ink),0 .16em .1em rgba(0,0,0,.25)}
+.li-title span{display:inline-block;opacity:0;transform:translateY(-120%) scale(.6);animation:li-drop .6s cubic-bezier(.3,1.6,.5,1) forwards}
+.li-title span:nth-child(1){animation-delay:.2s}
+.li-title span:nth-child(2){animation-delay:.33s}
+.li-title span:nth-child(3){animation-delay:.46s}
+.li-title span:nth-child(4){animation-delay:.59s}
+.li-sub{margin-top:-.1em;font-size:min(9vw,7vh,62px);letter-spacing:.3em;padding-left:.3em;-webkit-text-stroke:.07em var(--li-ink);paint-order:stroke fill;text-shadow:0 .1em 0 var(--li-ink);opacity:0;transform:scale(.4);animation:li-pop .5s cubic-bezier(.3,1.8,.5,1) .9s forwards}
+.li-load{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + max(4vh,16px));transform:translateX(-50%);width:min(62vw,420px)}
+.li-bar{height:min(5vw,26px);box-sizing:border-box;padding:4px;border-radius:99px;background:rgba(42,31,61,.75);box-shadow:0 0 0 4px #fff,0 6px 0 4px rgba(42,31,61,.3)}
+.li-bar i{display:block;height:100%;width:6%;border-radius:99px;background:linear-gradient(#ffc4e0,#ff7ab8);box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);transition:width .25s}
+@keyframes li-zoom{from{transform:scale(1.08)}to{transform:none}}
+@keyframes li-drop{to{opacity:1;transform:none}}
+@keyframes li-pop{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#leonIntro *{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
+<script>
+// Pantalla de carga de LUCY GAMES: dura al menos ~2.6 s; en los juegos 3D espera a que terminen de cargar los modelos
+// (la barra muestra el avance real). Tocar la pantalla la salta solo cuando ya no hay nada cargando.
+(() => {
+  const el = document.getElementById('leonIntro'), bar = el.querySelector('.li-bar i'), t0 = performance.now();
+  const MIN = matchMedia('(prefers-reduced-motion: reduce)').matches ? 800 : 2600;
+  let gone = false;
+  const ready = () => !window.LEON_WAIT || window.LEON_READY;
+  const done = () => { if (gone) return; gone = true; bar.style.width = '100%'; setTimeout(() => el.classList.add('out'), 150); setTimeout(() => el.remove(), 700); };
+  (function tick() {
+    if (gone) return;
+    const t = performance.now() - t0, timeP = Math.min(1, t / MIN);
+    const p = window.LEON_WAIT ? Math.min(timeP, .1 + .9 * (window.LEON_READY ? 1 : (window.LEON_PROGRESS || 0) * .95)) : timeP;
+    bar.style.width = Math.max(6, p * 100) + '%';
+    if ((t >= MIN && ready()) || t > 25000) done(); else setTimeout(tick, 100);
+  })();
+  // El toque que salta la intro no debe llegar a los botones de atrás
+  el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ready()) done(); });
+  ['click', 'pointerup', 'touchend'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+})();
+</script>
+
+<div class="world" aria-hidden="true"></div>
+
+<main class="page">
+  <h1 aria-label="Juegos de Lucy"><span class="t1">JUEGOS DE</span><span class="t2">LUCY</span></h1>
+  <nav class="apps">
+    <a class="app" href="pasteleria/" aria-label="Pastelería de Lucy"><span class="icon"><img src="icons/pasteleria.webp" alt=""></span><span class="name">Pastelería</span></a>
+  </nav>
+  <button class="parent" id="helpBtn">Instalar en el iPad</button>
+  <button class="parent upd" id="updBtn">Actualizar</button>
+</main>
+
+<div class="sheet" id="help" hidden>
+  <div class="card">
+    <h2>Instalar como app</h2>
+    <p>Así los juegos se abren en pantalla completa y funcionan sin internet:</p>
+    <ol>
+      <li>Abre esta página en Safari.</li>
+      <li>Toca Compartir (el cuadrito con la flecha).</li>
+      <li>Elige "Agregar a pantalla de inicio".</li>
+      <li>Abre "Juegos de Lucy" desde el ícono.</li>
+    </ol>
+    <button class="ok" id="helpOk">ENTENDIDO</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches;
+  const help = document.getElementById('help'), btn = document.getElementById('helpBtn');
+  btn.hidden = standalone;
+  btn.addEventListener('click', () => { help.hidden = false; });
+  document.getElementById('helpOk').addEventListener('click', () => { help.hidden = true; });
+  // Actualizar: revisa si hay una versión publicada más nueva; al tocar, borra la copia guardada y descarga todo otra vez
+  const upd = document.getElementById('updBtn');
+  fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(r => r.json()).then(d => {
+    if (window.LEON_VERSION && d.v !== window.LEON_VERSION) { upd.textContent = '¡Nueva versión! Actualizar'; upd.classList.add('new'); }
+  }).catch(() => {});
+  upd.addEventListener('click', async () => {
+    if (!navigator.onLine) { upd.textContent = 'Necesitas internet'; setTimeout(() => (upd.textContent = 'Actualizar'), 2500); return; }
+    upd.textContent = 'Actualizando…'; upd.classList.remove('new');
+    try {
+      if ('serviceWorker' in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+      if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+    } catch (e) {}
+    location.replace(location.pathname + '?v=' + Date.now());
+  });
+  ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+  document.addEventListener('contextmenu', e => e.preventDefault());
+})();
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js',{scope:'./'});</script>
+</body>
+</html>
