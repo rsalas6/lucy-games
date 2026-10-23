@@ -327,6 +327,7 @@ const TASKS = [
   { t: 'Ponle un accesorio a un gatito', img: 'cat-coco-icon', ev: 'dresscat', n: 1, r: 30 },
   { t: 'Haz tu casa más acogedora', img: 'b-home', ev: 'comfort', n: 1, r: 40 },
   { t: 'Haz una fiesta en tu casa', img: 'des-bdaycake', ev: 'party', n: 1, r: 60 },
+  { t: 'Junta 3 estampitas nuevas del álbum', img: 'des-macaron', ev: 'album', n: 3, r: 50 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -408,6 +409,7 @@ let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 // Casa nueva: viene con cama, camita y platos para los gatos y un tapete
 if (!S.recipes) S.recipes = [];
+if (!S.album) S.album = [];
 if (!S.accs) { S.accs = []; S.catAcc = {}; }
 if (S.bowl == null) { S.bowl = 1; S.bowlT = now(); S.mail = 0; }
 if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
@@ -846,7 +848,7 @@ function guideTarget() {
   }
   if (kind === 'up' || kind === 'recipe') return { btn: '#upBtn' };
   if (kind === 'order' && S.order && S.show.filter(x => x === S.order.r).length >= S.order.n) return { btn: '#orderBtn' };
-  if (kind === 'bake' || kind === 'star') {
+  if (kind === 'bake' || kind === 'star' || kind === 'album') {
     const r = RECI[arg] || REC.filter(r => r.star <= starsOf(S.fame) && canMake(r))[0] || REC[0];
     // Si algo ya está listo en el horno, a sacarlo; si faltan ingredientes, a la tienda
     const ready = S.ovens.findIndex(o => o && now() - o.start >= o.dur);
@@ -926,6 +928,7 @@ function openShop(id) {
 }
 function openBag() {
   sfx.tap();
+  setTimeout(() => { const t = document.createElement('div'); t.className = 'tabs'; t.innerHTML = `<button class="tab on">Despensa</button><button class="tab" id="albumTab2">Álbum ${S.album.length}/${REC.length}</button>`; const hd = winEl.querySelector('header'); if (hd) hd.after(t); const b = $('#albumTab2'); if (b) b.addEventListener('click', openAlbum); }, 0);
   const have = Object.keys(ING).filter(k => S.inv[k] > 0);
   openWin(head('ing-flour', 'Despensa', 'Tus ingredientes') + '<div class="body">' + (have.length ? '<div class="grid">' + have.map(k => `<div class="card"><span class="qty">${S.inv[k]}</span><img class="pic" alt="" src="${src('ing-' + k)}"><span class="name">${ING[k].n}</span></div>`).join('') + '</div>' : '<div class="empty">Tu despensa está vacía. ¡Ve a las tiendas del pueblo o recoge fresas y huevos!</div>') +
     (S.show.length ? `<h3 style="font-weight:400;margin:16px 4px 8px">Vitrina (${S.show.length}/${showCap()})</h3><div class="grid">` + S.show.map(r => `<div class="card"><img class="pic" alt="" src="${src('des-' + r)}"><span class="name">${RECI[r].n}</span></div>`).join('') + '</div>' : '') + '</div>');
@@ -933,11 +936,12 @@ function openBag() {
 const canMake = r => Object.entries(r.need).every(([k, n]) => (S.inv[k] || 0) >= n);
 function openRecipes() {
   sfx.tap(); const st = starsOf(S.fame), free = S.ovens.length < ovenCount() || S.ovens.some((o, k) => !o);
-  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + '<div class="body"><div class="grid">' + REC.filter(r => (!r.buy || (S.recipes || []).includes(r.id)) && (!r.machine || S.ups[r.machine])).map(r => {
+  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + `<div class="tabs"><button class="tab on">Hornear</button><button class="tab" id="albumTab">Álbum ${S.album.length}/${REC.length}</button></div>` + '<div class="body"><div class="grid">' + REC.filter(r => (!r.buy || (S.recipes || []).includes(r.id)) && (!r.machine || S.ups[r.machine])).map(r => {
     const lock = r.star > st, ok = !lock && canMake(r);
     return `<button class="card${lock ? ' lock off' : ok ? '' : ' off'}" data-r="${r.id}">${lock ? `<span class="own">${'★'.repeat(r.star)}</span>` : ''}<img class="pic" alt="" src="${src('des-' + r.id)}"><span class="name">${lock ? '???' : r.n}</span>` +
       (lock ? '' : `<span class="need">${Object.entries(r.need).map(([k, n]) => Array(n).fill(0).map((_, i) => `<span class="${(S.inv[k] || 0) > i ? '' : 'miss'}"><img alt="" src="${src('ing-' + k)}"></span>`).join('')).join('')}</span>${priceTag(priceOf(r))}`) + '</button>';
   }).join('') + '</div></div>');
+  $('#albumTab').addEventListener('click', openAlbum);
   winEl.querySelectorAll('.card').forEach(b => b.addEventListener('click', () => {
     const r = RECI[b.dataset.r]; if (r.star > st) { sfx.no(); toast(`Se desbloquea con ${r.star} estrellas`, 'heart'); return; }
     if (!canMake(r)) { sfx.no(); const miss = Object.keys(r.need).find(k => (S.inv[k] || 0) < r.need[k]); toast(`Te falta ${ING[miss].n.toLowerCase()}`, 'ing-' + miss); return; }
@@ -1033,9 +1037,19 @@ function unloadOvens() {
     if (!ov || now() - ov.start < ov.dur || S.show.length >= showCap()) return;
     const r = RECI[ov.r], n = S.ups.trays ? 2 : 1; S.ovens[k] = null;
     for (let i = 0; i < n && S.show.length < showCap(); i++) S.show.push(r.id);
-    addFame(1); event('bake:' + r.id);
+    addFame(1); event('bake:' + r.id); stamp(r.id);
     if (game.map === 'bakery') { const o = maps.bakery.ovens[k]; if (o) floatText(o.x + 1, o.yb - 1.2, n > 1 ? '¡x2!' : '¡Listo!', 'des-' + r.id); sfx.ding(); }
   });
+}
+// Álbum: la primera vez que sale cada postre del horno, estampita y premio
+function stamp(id) {
+  if (S.album.includes(id)) return; S.album.push(id); addCoins(15); setTimeout(() => toast(`¡Nueva estampita: ${RECI[id].n}! (${S.album.length}/${REC.length})`, 'des-' + id), 1200);
+  if (S.album.length === REC.length) setTimeout(() => { addCoins(500); addFame(20); sfx.levelup(); toast('¡Completaste el álbum de postres! +500', 'heart'); }, 3000);
+  event('album');
+}
+function openAlbum() {
+  sfx.tap();
+  openWin(head('des-bdaycake', 'Álbum de postres', `${S.album.length} de ${REC.length} estampitas · al completarlo: +500`) + '<div class="body"><div class="grid">' + REC.map(r => { const got = S.album.includes(r.id); return `<div class="card${got ? '' : ' lock'}">${got ? '<span class="own">★</span>' : ''}<img class="pic" alt="" src="${src('des-' + r.id)}"><span class="name">${got ? r.n : '???'}</span></div>`; }).join('') + '</div></div>');
 }
 function takeOut(k) {
   const ov = S.ovens[k];
