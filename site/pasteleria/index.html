@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023113835';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023113944';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1668,6 +1668,7 @@ paintMute();
     S.home.items = S.home.items.filter(i => ['bed', 'catbed', 'catbowl', 'rug1'].includes(i.id)); S.home.store = ['bathtub', 'sink', 'duck']; maps.home = buildHome(); game.map = 'home'; resize(); setEdit(true); ['bathtub', 'sink', 'duck'].forEach(placeFromStore); setEdit(false); useFurn(FURNI.bathtub); step(4); post('lucy-bath', { placed: S.home.items.filter(i => ['bathtub', 'sink', 'duck'].includes(i.id)).length }); game.map = 'town'; resize(); step(2);
     S.contest = 0; S.wins = 0; S.show = ['strawcake']; S.home.store = S.home.store.filter(x => x !== 'trophy'); const cc0 = S.coins; openContest(); $('#compete').click(); post('lucy-contest', { gain: S.coins - cc0, wins: S.wins, trophy: S.home.store.includes('trophy') });
     S.skates = 0; lucy.speed = 4.2; S.coins += 300; openBoutique(); winEl.querySelector('[data-skates]').click(); closeWin(); post('lucy-skates', { skates: S.skates, speed: lucy.speed });
+    S.disc = 0; useFurn(FURNI.jukebox); const d1 = S.disc; useFurn(FURNI.jukebox); post('lucy-disc', { d1, d2: S.disc, name: DISCS[S.disc] && DISCS[S.disc].n }); S.disc = 0;
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
