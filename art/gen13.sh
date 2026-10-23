@@ -1,0 +1,4 @@
+#!/bin/zsh
+cd "$(dirname "$0")"
+codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Usa tu herramienta de generación de imágenes. ESTILO: pixel art de videojuego estilo Pokémon Esmeralda (Game Boy Advance) pero en alta resolución, vista desde arriba en 3/4, colores brillantes y tiernos, contornos oscuros limpios. SIN texto, SIN letras, SIN números. El FONDO debe ser magenta puro liso (#FF00FF), sin sombras; cada objeto bien separado con mucho espacio magenta. Crea contest.png (imagen ancha 16:9) en $(pwd)/gen/ con EXACTAMENTE 3 objetos en una fila: 1) trofeo dorado brillante con un cupcake en la punta sobre una base de madera, 2) mesa de jurado con mantel rojo y una campanita, 3) listón de primer lugar azul con medalla dorada." < /dev/null > log13.txt 2>&1
+echo ALLDONE

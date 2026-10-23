@@ -336,6 +336,7 @@ const TASKS = [
   { t: 'Haz tu casa más acogedora', img: 'b-home', ev: 'comfort', n: 1, r: 40 },
   { t: 'Haz una fiesta en tu casa', img: 'des-bdaycake', ev: 'party', n: 1, r: 60 },
   { t: 'Junta 3 estampitas nuevas del álbum', img: 'des-macaron', ev: 'album', n: 3, r: 50 },
+  { t: 'Gana el concurso de pasteles de la plaza', img: 'h-trophy', ev: 'contest', n: 1, r: 60 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -393,6 +394,8 @@ const FURN = [
   { id: 'globe', n: 'Globo terráqueo', img: 'h-globe', cost: 100, fw: 1, fh: 1 },
   { id: 'lavalamp', n: 'Lámpara de lava', img: 'h-lavalamp', cost: 80, fw: 1, fh: 1 },
   { id: 'rainbowrug', n: 'Alfombra arcoíris', img: 'h-rainbowrug', cost: 120, fw: 3, fh: 2, flat: 1 },
+  { id: 'trophy', n: 'Trofeo del concurso', img: 'h-trophy', cost: 0, fw: 1, fh: 1, prize: 1 },
+  { id: 'ribbon', n: 'Listón de primer lugar', img: 'h-ribbon', cost: 0, fw: 1, fh: 1, prize: 1 },
   { id: 'bathtub', n: 'Tina de burbujas', img: 'h-bathtub', cost: 320, fw: 2, fh: 1, play: 'bath', star: 2 },
   { id: 'sink', n: 'Lavabo con espejo', img: 'h-sink', cost: 140, fw: 1, fh: 1 },
   { id: 'towels', n: 'Toallero', img: 'h-towels', cost: 70, fw: 1, fh: 1 },
@@ -443,7 +446,7 @@ const CHARS = ['lucy', 'lucy-pijama', 'lucy-sirena', 'lucy-fresa', 'lucy-pintora
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-furniture', 'b-boutique', 'p-van', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
@@ -489,6 +492,7 @@ function buildTown() {
   // Plaza con fuente, bancas y faroles
   addObj(m, 'p-fountain', 27, 23, 3, 3, 2); addObj(m, 'p-bench', 25, 25, 2, 2, 1); addObj(m, 'p-bench', 30, 25, 2, 2, 1); addObj(m, 'p-lamp', 25, 21, 1, 1, 1); addObj(m, 'p-lamp', 31, 21, 1, 1, 1);
   addObj(m, 'p-mailbox', 20, 13, 1, 1, 1, { mail: 1 });
+  addObj(m, 'p-judgetable', 28, 21, 2, 2, 1, { judge: 1 });
   // Cosas para recolectar gratis: fresas, manzanas, gallinas y la vaca
   [[37, 15], [39, 15], [41, 15], [37, 17], [39, 17]].forEach(([x, y], k) => addObj(m, 'p-berry', x, y, 2, 1, 1, { gather: 'strawberry', gid: 'b' + k }));
   [[37, 11], [40, 11]].forEach(([x, y], k) => addObj(m, 'p-appletree', x, y, 2, 1, 1, { gather: 'apple', gid: 'a' + k }));
@@ -855,6 +859,7 @@ function guideTarget() {
   if (kind === 'feedcats') { if (!(S.inv.catfood > 0)) return game.map === 'town' ? doorOf('shop:grocery') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbowl'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'dresscat') { if (!S.accs.length) return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbed'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (kind === 'contest') return game.map === 'town' ? { map: 'town', x: 28.5, y: 20, h: 1.6 } : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'party') return game.map === 'home' ? { btn: '#partyBtn' } : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'comfort') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('shop:furniture') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
@@ -1179,7 +1184,8 @@ function findTarget(w, m) {
     for (const o of m.objs) { if (!o.img.startsWith('b-')) continue; const im = IMG[o.img], h = im && im.width ? o.tw * im.height / im.width : 5; if (w.fx >= o.x * T && w.fx < (o.x + o.tw) * T && w.fy > (o.yb + 1 - h) * T && w.fy < (o.yb + 1) * T) { const d = Object.entries(m.doors).find(([i]) => (i % m.w) >= o.x && (i % m.w) < o.x + o.tw && Math.floor(i / m.w) === o.yb); if (d) return { door: d[1], x: d[0] % m.w, y: Math.floor(d[0] / m.w) }; } }
     for (const o of m.objs) if (o.mail && w.x === o.fx && (w.y === o.yb || w.y === o.yb - 1)) return { mail: o, x: o.fx, y: o.yb };
     for (const o of m.objs) if (o.gather && w.x >= o.fx - 1 && w.x <= o.fx + o.fw && w.y >= o.yb - 1 && w.y <= o.yb) return { obj: o, x: o.fx, y: o.yb };
-    for (const n of npcs) if (n.x === w.x && (n.y === w.y || n.y === w.y + 1)) return { npc: n, x: n.x, y: n.y };
+    for (const o of m.objs) if (o.judge && w.x >= o.fx && w.x < o.fx + o.fw && (w.y === o.yb || w.y === o.yb - 1 || w.y === o.yb - 2)) return { judge: 1, x: o.fx, y: o.yb };
+    for (const n of npcs) if (n.x === w.x && (n.y === w.y || n.y === w.y + 1)) return n.judge ? { judge: 1, x: 28, y: 21 } : { npc: n, x: n.x, y: n.y };
   } else if (m.home) {
     // Tocar exactamente un mueble gana (así los platos se llenan aunque pase un gato)
     for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y && w.y < it.y + f.fh && !cats.some(k => k.x === w.x && k.y === w.y)) return { furn: f, it, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
@@ -1200,6 +1206,7 @@ function arrive() {
   if (g.npc) { look(g.npc.x, g.npc.y); sfx.tap(); toast(pick(['¡Hola, Lucy!', '¡Me encantan tus pasteles!', '¡Qué rico huele tu pastelería!', 'Las fresas de aquí son las mejores', '¿Ya probaste hacer pay de manzana?']), null); return; }
   if (g.cust) { lucy.dir = 0; serve(g.cust); return; }
   if (g.cat) { look(g.cat.x, g.cat.y); pet(g.cat); return; }
+  if (g.judge) { lucy.dir = 3; openContest(); return; }
   if (g.mail) { look(g.mail.fx, g.mail.yb); const day = Math.floor(Date.now() / 864e5); if (S.mail === day) { toast('Hoy ya abriste tu correo. ¡Vuelve mañana!', 'p-mailbox'); return; } S.mail = day; const gifts = [['egg', 3], ['strawberry', 4], ['choco', 2], ['cream', 2], ['catfood', 2]], [k, n] = pick(gifts), c = 30 + starsOf(S.fame) * 15; addInv(k, n); addCoins(c); sfx.levelup(); toast(`¡Carta de los vecinos! +${c} y ${n} ${ING[k].n.toLowerCase()}`, 'ing-' + k); return; }
   if (g.furn) { look(g.x, g.y); useFurn(g.furn, g.it); return; }
   const o = g.obj; if (!o) return; look(o.fx + (o.fw > 1 ? 1 : 0), o.yb);
@@ -1422,16 +1429,38 @@ function openOrder() {
   $('#skip').addEventListener('click', () => { S.order = null; S.orderT = now() - 60; closeWin(); paintOrder(); });
 }
 
+/* ---------- Concurso de pasteles (una vez al día): el jurado prueba tu mejor postre ---------- */
+function openContest() {
+  sfx.bell(); const day = Math.floor(Date.now() / 864e5), done = S.contest === day;
+  const best = S.show.map(id => RECI[id]).sort((a, b) => b.star - a.star || b.price - a.price)[0];
+  openWin(`<header><img alt="" src="${portrait('baker')}"><div style="flex:1"><h2>Concurso de pasteles</h2><p>${done ? '¡Ya concursaste hoy! Vuelve mañana.' : 'Tráeme tu mejor postre en la vitrina. ¡De 3 estrellas o más gana!'}</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="body"><div class="grid">` +
+    `<div class="card"><img class="pic" alt="" src="${src(best ? 'des-' + best.id : 'h-trophy')}"><span class="name">${best ? best.n + ' ' + '★'.repeat(best.star) : 'Tu vitrina está vacía'}</span></div><div class="card"><img class="pic" alt="" src="${src('h-trophy')}"><span class="name">Premio: 150 + trofeo</span><span style="font-size:13px;color:#9a6a8a">Ganados: ${S.wins || 0}</span></div></div>` +
+    (done ? '' : `<div style="display:flex;justify-content:center;margin-top:14px"><button class="card" id="compete" style="min-width:200px;background:${best ? '#fff3c4' : '#eee'}">¡Concursar!</button></div>`) + '</div>');
+  const b = $('#compete'); if (!b) return;
+  b.addEventListener('click', () => {
+    if (!best) { sfx.no(); toast('Pon un postre en la vitrina primero', 'f-vitrina'); return; }
+    S.contest = day; S.show.splice(S.show.indexOf(best.id), 1);
+    if (best.star >= 3) {
+      S.wins = (S.wins || 0) + 1; addCoins(150); addFame(10); sfx.levelup();
+      const prize = S.wins === 1 ? 'trophy' : S.wins === 2 ? 'ribbon' : null; if (prize) S.home.store.push(prize);
+      closeWin(); toast(prize ? `¡Ganaste! +150 y ${FURNI[prize].n.toLowerCase()} para tu casa` : '¡Ganaste otra vez! +150', prize ? FURNI[prize].img : 'h-trophy'); event('contest');
+    } else { addCoins(30); sfx.happy(); closeWin(); toast('¡Muy rico! El jurado te dio +30. Con un postre de 3★ ganas', 'des-' + best.id); }
+  });
+}
+
 /* ---------- Vecinos del pueblo que pasean ---------- */
 function spawnTownNpcs() {
   const m = maps.town; npcs = [];
   [['npc-a', 26, 19], ['npc-b', 10, 19], ['npc-c', 33, 21], ['npc-d', 22, 27]].forEach(([s, x, y]) => { const n = mkChar(s, x, y); n.speed = 2.2; n.wait = rand(1, 4); npcs.push(n); });
+  // El jurado del concurso de pasteles se queda detrás de su mesa
+  const j = mkChar('baker', 28, 20); j.judge = 1; j.dir = 0; j.wait = 1e9; npcs.push(j);
   for (const a of m.animals) { a.px = a.x; a.py = a.y; a.wait = rand(1, 3); a.face = 1; }
 }
 function updateTown(dt) {
   const m = maps.town;
   for (const n of npcs) {
     stepChar(n, dt, m);
+    if (n.judge) continue;
     if (!n.moving && !n.path.length) { n.wait -= dt; if (n.wait < 0) { n.wait = rand(2, 6); const tx = clamp(n.x + (Math.random() * 9 | 0) - 4, 2, m.w - 3), ty = clamp(n.y + (Math.random() * 7 | 0) - 3, 2, m.h - 3); const p = findPath(m, n.x, n.y, tx, ty); if (p && p.length < 12) n.path = p; } }
   }
   for (const a of m.animals) {
