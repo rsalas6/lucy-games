@@ -1469,6 +1469,7 @@ paintMute();
     S.show = ['icecone']; S.vanT = 0; const cv0 = S.coins; update(1 / 30); const vanPay = S.coins - cv0; S.vanAway = 0; S.vanT = now();
     game.map = 'bakery'; resize(); step(3); post('lucy-machines', { menuNew, vanPay }); game.map = 'town'; resize(); step(3);
     game.map = 'home'; resize(); updateDock(); step(2); const comfort = $('#comfort').textContent; game.map = 'town'; updateDock(); window.__hour = 21; lucy.x = lucy.px = 21; lucy.y = lucy.py = 15; resize(); render.snap = true; step(4); post('lucy-night', { comfort }); window.__hour = null;
+    S.ups.bigbakery = 1; maps.bakery = buildBakery(); furnishBakery(); spawnStaff(); customers.length = 0; game.map = 'bakery'; lucy.x = lucy.px = maps.bakery.spawn.x; lucy.y = lucy.py = maps.bakery.spawn.y; resize(); spawnCustomer(); step(120); post('lucy-big', { w: maps.bakery.w, cust: customers.map(c => c.state) }); game.map = 'town'; resize(); step(2);
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
