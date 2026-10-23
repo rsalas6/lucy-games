@@ -262,7 +262,7 @@ const FRESH = () => ({ v: 1, coins: 40, fame: 0, inv: { egg: 1, flour: 1, sugar:
 let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
-setInterval(persist, 4000); addEventListener('pagehide', persist); document.addEventListener('visibilitychange', () => document.hidden && persist());
+setInterval(() => { S.seen = now(); persist(); }, 4000); addEventListener('pagehide', persist); document.addEventListener('visibilitychange', () => document.hidden && persist());
 muted = !!S.muted;
 const starsOf = f => { let s = 1; for (let i = 2; i < STARS.length; i++) if (f >= STARS[i]) s = i; return s; };
 const ovenCount = () => 1 + (S.ups.oven2 ? 1 : 0) + (S.ups.oven3 ? 1 : 0);
@@ -916,6 +916,17 @@ paintMute();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar('lucy', sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
+  // Mientras no estaba: el panadero saca lo horneado y la cajera vende lo de la vitrina
+  if (S.seen && now() - S.seen > 60) {
+    const away = Math.min(4 * 3600, now() - S.seen); let sold = 0, earned = 0, fameUp = 0;
+    if (S.ups.baker) S.ovens.forEach((o, k) => { if (o && now() - o.start >= o.dur && S.show.length < showCap()) { S.show.push(o.r); S.ovens[k] = null; } });
+    if (S.ups.cashier) { const n = Math.min(S.show.length, Math.floor(away / custInterval())); for (let i = 0; i < n; i++) { const r = RECI[S.show.shift()]; earned += r.price; fameUp += r.star; sold++; } }
+    if (sold) {
+      S.coins += earned; S.sold += sold; S.fame += fameUp; refreshHud();
+      setTimeout(() => { openWin(head('ch-cashier' in IMG ? 'coin' : 'coin', '¡Bienvenida otra vez!', 'Mientras no estabas…') + `<div class="body"><div class="grid"><div class="card"><img class="pic" alt="" src="${portrait('cashier')}"><span class="name">Sofi vendió ${sold} postre${sold > 1 ? 's' : ''}</span>${priceTag(earned)}<span style="font-size:14px;color:#d0508a">+${fameUp} fama</span></div></div></div>`); sfx.coin(); }, 900);
+    }
+  }
+  S.seen = now();
   // Diagnóstico (solo pruebas): #diag juega un poco solo y manda fotos a un servidor local
   if (location.hash === '#diag') (async () => {
     const errs = []; addEventListener('error', e => errs.push(e.message));
