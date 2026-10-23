@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023120402';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023120542';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1718,6 +1718,11 @@ paintMute();
     S.contest = 0; S.wins = 0; S.show = ['strawcake']; S.home.store = S.home.store.filter(x => x !== 'trophy'); const cc0 = S.coins; openContest(); $('#compete').click(); post('lucy-contest', { gain: S.coins - cc0, wins: S.wins, trophy: S.home.store.includes('trophy') });
     S.skates = 0; lucy.speed = 4.2; S.coins += 300; openBoutique(); winEl.querySelector('[data-skates]').click(); closeWin(); post('lucy-skates', { skates: S.skates, speed: lucy.speed });
     S.disc = 0; useFurn(FURNI.jukebox); const d1 = S.disc; useFurn(FURNI.jukebox); post('lucy-disc', { d1, d2: S.disc, name: DISCS[S.disc] && DISCS[S.disc].n }); S.disc = 0;
+    // Botones por lugar, Mejorar de la casa, tarjetas compradas, pestañas en una fila y casa con cuartos
+    game.map = 'home'; resize(); updateDock(); const dockHome = ['bagBtn', 'upBtn', 'orderBtn', 'editBtn'].map(i => i + ':' + !$('#' + i).hidden).join(' '); $('#upBtn').click(); const homeShop = winEl.querySelector('h2') && winEl.querySelector('h2').textContent; closeWin();
+    game.map = 'town'; updateDock(); const dockTown = ['bagBtn', 'upBtn'].map(i => i + ':' + !$('#' + i).hidden).join(' ');
+    game.map = 'bakery'; updateDock(); S.ups.plant = 1; $('#upBtn').click(); winEl.querySelector('.tab[data-t=deco]').click(); const have = winEl.querySelectorAll('.have').length, tabsWrap = getComputedStyle(winEl.querySelector('.tabs')).flexWrap, tabsOneRow = new Set([...winEl.querySelectorAll('.tab')].map(t => t.offsetTop)).size === 1; closeWin();
+    const lvl0 = S.home.lvl; S.home.lvl = 2; maps.home = buildHome(); const rooms = maps.home.rooms.map(r => r.n).join(','), walls = maps.home.wallT.reduce((a, b) => a + b, 0); game.map = 'home'; resize(); step(3); post('lucy-rooms', { dockHome, homeShop, dockTown, have, tabsWrap, tabsOneRow, rooms, walls }); S.home.lvl = lvl0; maps.home = buildHome(); game.map = 'town'; resize(); updateDock(); step(2);
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
