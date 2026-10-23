@@ -730,9 +730,28 @@ function render() {
     else { const r = drawChar(it.c); if (it.cust && r) drawBubble(it.c, r); }
   }
   if (game.map === 'bakery') drawBakeryOverlays(m);
+  if (game.map === 'town') drawDaylight(m);
   if (game.edit) drawEditOverlay(m);
   drawGuide();
   drawFloaters();
+}
+// Luz del día según la hora real: atardecer naranja, noche azul con los faroles encendidos
+function daylight() { const d = new Date(), h = (window.__hour != null ? window.__hour : d.getHours() + d.getMinutes() / 60); if (h >= 7 && h < 17.5) return 0; if (h >= 17.5 && h < 19.5) return (h - 17.5) / 2 * .55; if (h >= 19.5 || h < 5.5) return .55; return .55 - (h - 5.5) / 1.5 * .55; }
+function drawDaylight(m) {
+  const k = daylight(); if (k <= 0) return;
+  const dusk = k < .35;
+  cx.fillStyle = dusk ? `rgba(255,120,60,${k * .35})` : `rgba(20,25,80,${k})`; cx.fillRect(0, 0, VW, VH);
+  // Halo de los faroles y ventanas iluminadas
+  cx.globalCompositeOperation = 'lighter';
+  for (const o of m.objs) {
+    const isLamp = o.img === 'p-lamp', isBld = o.img.startsWith('b-') || o.img.startsWith('house');
+    if (!isLamp && !isBld) continue;
+    const r = (isLamp ? 2.2 : o.tw * .5) * T * SCALE, x = ((o.x + o.tw / 2) * T - cam.x) * SCALE, y = ((o.yb + (isLamp ? -1.2 : -.6)) * T - cam.y) * SCALE;
+    if (x < -r || x > VW + r || y < -r || y > VH + r) continue;
+    const g = cx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(255,210,120,${(isLamp ? .55 : .3) * k / .55})`); g.addColorStop(1, 'rgba(255,210,120,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill();
+  }
+  cx.globalCompositeOperation = 'source-over';
 }
 function drawAnimal(a) {
   const nest = a.gather === 'egg' && gatherReady(a) && IMG['p-hen-nest'] && IMG['p-hen-nest'].width, im = nest ? IMG['p-hen-nest'] : IMG[a.img]; if (!im || !im.width) return; const w = T * SCALE * (a.big ? 2.2 : nest ? 1.35 : 1.2), h = w * im.height / im.width;
