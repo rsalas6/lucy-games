@@ -211,8 +211,19 @@ const REC = [
   { id: 'lemonpie', n: 'Pay de limón', need: { lemon: 2, egg: 1, sugar: 1, butter: 1, flour: 1 }, price: 52, bake: 24, star: 4 },
   { id: 'chococake', n: 'Pastel de chocolate', need: { choco: 2, flour: 1, egg: 2, milk: 1, cream: 1 }, price: 75, bake: 30, star: 4 },
   { id: 'bdaycake', n: 'Pastel de cumpleaños', need: { flour: 2, egg: 2, milk: 1, sugar: 1, sprinkles: 1, cream: 1 }, price: 95, bake: 34, star: 5 },
+  // Recetas que se compran (pestaña "Recetas" de Mejorar)
+  { id: 'catcookie', n: 'Galletas de gatito', need: { flour: 1, choco: 1, butter: 1, sugar: 1 }, price: 30, bake: 14, star: 1, buy: 90 },
+  { id: 'concha', n: 'Concha', need: { flour: 1, sugar: 1, butter: 1, egg: 1 }, price: 28, bake: 15, star: 2, buy: 120 },
+  { id: 'gelatina', n: 'Gelatina de fresa', need: { sugar: 1, strawberry: 2, milk: 1 }, price: 32, bake: 16, star: 2, buy: 140 },
+  { id: 'chocodonut', n: 'Dona de chocolate', need: { flour: 1, egg: 1, milk: 1, choco: 1 }, price: 34, bake: 15, star: 2, buy: 160 },
+  { id: 'churros', n: 'Churros', need: { flour: 1, sugar: 1, milk: 1, butter: 1 }, price: 36, bake: 16, star: 3, buy: 180 },
+  { id: 'flan', n: 'Flan', need: { egg: 2, milk: 1, sugar: 1, vanilla: 1 }, price: 48, bake: 22, star: 3, buy: 220 },
+  { id: 'tresleches', n: 'Pastel tres leches', need: { flour: 1, egg: 2, milk: 3, cream: 1, strawberry: 1 }, price: 80, bake: 30, star: 4, buy: 380 },
+  { id: 'catcake', n: 'Pastel de Aceituna y Coco', need: { flour: 2, egg: 2, milk: 1, cream: 1, choco: 1, strawberry: 1 }, price: 120, bake: 36, star: 5, buy: 600 },
 ];
 const RECI = Object.fromEntries(REC.map(r => [r.id, r]));
+// ¿Se puede hornear? (estrellas suficientes y, si es de las que se compran, ya comprada)
+const unlocked = r => r.star <= starsOf(S.fame) && (!r.buy || (S.recipes || []).includes(r.id));
 const STARS = [0, 0, 25, 70, 160, 320];   // fama para cada estrella
 // Tiendas del pueblo: quién atiende y qué vende
 const SHOPS = {
@@ -270,6 +281,7 @@ const TASKS = [
   { t: 'Compra el segundo horno', img: 'f-oven1', ev: 'up:oven2', n: 1, r: 40 },
   { t: 'Recoge 2 manzanas', img: 'ing-apple', ev: 'gather:apple', n: 2, r: 20 },
   { t: 'Llega a 2 estrellas', img: 'heart', ev: 'star', n: 2, r: 50, abs: 1 },
+  { t: 'Compra una receta nueva', img: 'des-concha', ev: 'recipe', n: 1, r: 40 },
   { t: 'Contrata a la cajera', img: 'ch-cashier', ev: 'up:cashier', n: 1, r: 60 },
   { t: 'Hornea un pay de manzana', img: 'des-applepie', ev: 'bake:applepie', n: 1, r: 40 },
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
@@ -318,6 +330,10 @@ const FURN = [
   { id: 'swing', n: 'Columpio', img: 'h-swing', cost: 320, fw: 2, fh: 1, play: 'swing', star: 3 },
   { id: 'tipi', n: 'Tienda de juguete', img: 'h-tipi', cost: 240, fw: 2, fh: 2, star: 2, cat: 'hide' },
   { id: 'console', n: 'Videojuegos', img: 'h-console', cost: 350, fw: 2, fh: 1, play: 'tv', star: 3 },
+  { id: 'yarn', n: 'Bolita de estambre', img: 'h-yarn', cost: 30, fw: 1, fh: 1, flat: 1, cat: 'play' },
+  { id: 'mouse', n: 'Ratoncito de juguete', img: 'h-mouse', cost: 35, fw: 1, fh: 1, flat: 1, cat: 'play' },
+  { id: 'tunnel', n: 'Túnel para gatos', img: 'h-tunnel', cost: 90, fw: 2, fh: 1, flat: 1, cat: 'play' },
+  { id: 'catcastle', n: 'Castillito de cartón', img: 'h-catcastle', cost: 120, fw: 1, fh: 1, cat: 'hide', star: 2 },
 ];
 const FURNI = Object.fromEntries(FURN.map(f => [f.id, f]));
 // Ropa de Lucy (se compra en la boutique y se cambia en el ropero de su casa)
@@ -333,6 +349,7 @@ const FRESH = () => ({ v: 1, home: null, coins: 40, fame: 0, inv: { egg: 1, flou
 let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 // Casa nueva: viene con cama, camita y platos para los gatos y un tapete
+if (!S.recipes) S.recipes = [];
 if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
 if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 1, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 9, y: 6 }], store: [] };
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
@@ -352,7 +369,7 @@ const NEED = [
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
   'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
-  ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart',
+  ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle',
 ];
 const src = n => UP + n + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
@@ -595,8 +612,9 @@ function drawCat(k) {
   const im = IMG['cat-' + k.id]; if (!im || !im.width) return;
   const cw = im.width / 4, ch = im.height / 2; let col = 0, row = 0;
   if (k.moving) { const f = (k.anim * 2 | 0) % 2; row = k.face > 0 ? 1 : 0; col = 1 + f; }
+  else if (k.state === 'play') { const f = (game.t * 4 | 0) % 2; row = k.face > 0 ? 1 : 0; col = f ? 3 : 1; }
   else if (k.state === 'sleep') { row = 0; col = 3; } else if (k.state === 'groom') { row = 1; col = 0; } else if (k.state === 'stretch') { row = 1; col = 3; }
-  const w = T * SCALE * 1.05, h = w * ch / cw, lift = k.on ? T * SCALE * .9 : 0, sx = ((k.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((k.py + 1) * T - cam.y) * SCALE - h - lift + (k.state === 'sleep' ? T * SCALE * .1 : 0);
+  const w = T * SCALE * 1.05, h = w * ch / cw, lift = (k.on ? T * SCALE * .9 : 0) + (k.state === 'play' ? Math.abs(Math.sin(game.t * 8)) * T * SCALE * .25 : 0), sx = ((k.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((k.py + 1) * T - cam.y) * SCALE - h - lift + (k.state === 'sleep' ? T * SCALE * .1 : 0);
   cx.fillStyle = 'rgba(40,20,40,.16)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h + lift - T * SCALE * .05, w * .32, T * SCALE * .1, 0, 0, 7); cx.fill();
   cx.drawImage(im, col * cw, row * ch, cw, ch, sx, sy, w, h);
   if (k.state === 'sleep' && game.t % 2 < 1.4) { cx.font = `${Math.round(T * SCALE * .4)}px Lilita One`; cx.fillStyle = '#fff'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 3; const zx = sx + w * .8, zy = sy - (game.t % 2) * 8; cx.strokeText('z', zx, zy); cx.fillText('z', zx, zy); }
@@ -707,7 +725,7 @@ function guideTarget() {
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
-  if (game.map === 'home') return kind === 'up' ? { btn: '#upBtn' } : exitHome;
+  if (game.map === 'home') return kind === 'up' || kind === 'recipe' ? { btn: '#upBtn' } : exitHome;
   const toBakery = () => inside ? null : doorOf('bakery');
   if (kind === 'buy') return inside ? { map: 'bakery', x: bm.door.x, y: bm.door.y } : doorOf('shop:' + SELLS[arg]);
   if (kind === 'gather') {
@@ -716,7 +734,7 @@ function guideTarget() {
     const ready = list.filter(gatherReady); const o = (ready.length ? ready : list).sort((a, b) => Math.hypot((a.x ?? a.fx) - lucy.x, (a.y ?? a.yb) - lucy.y) - Math.hypot((b.x ?? b.fx) - lucy.x, (b.y ?? b.yb) - lucy.y))[0];
     return o ? { map: 'town', x: o.px != null ? o.px : o.x + o.tw / 2 - .5, y: o.py != null ? o.py : o.yb, h: o.px != null ? .8 : 1.6 } : null;
   }
-  if (kind === 'up') return { btn: '#upBtn' };
+  if (kind === 'up' || kind === 'recipe') return { btn: '#upBtn' };
   if (kind === 'bake' || kind === 'star') {
     const r = RECI[arg] || REC.filter(r => r.star <= starsOf(S.fame) && canMake(r))[0] || REC[0];
     // Si algo ya está listo en el horno, a sacarlo; si faltan ingredientes, a la tienda
@@ -804,7 +822,7 @@ function openBag() {
 const canMake = r => Object.entries(r.need).every(([k, n]) => (S.inv[k] || 0) >= n);
 function openRecipes() {
   sfx.tap(); const st = starsOf(S.fame), free = S.ovens.length < ovenCount() || S.ovens.some((o, k) => !o);
-  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + '<div class="body"><div class="grid">' + REC.map(r => {
+  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + '<div class="body"><div class="grid">' + REC.filter(r => !r.buy || (S.recipes || []).includes(r.id)).map(r => {
     const lock = r.star > st, ok = !lock && canMake(r);
     return `<button class="card${lock ? ' lock off' : ok ? '' : ' off'}" data-r="${r.id}">${lock ? `<span class="own">${'★'.repeat(r.star)}</span>` : ''}<img class="pic" alt="" src="${src('des-' + r.id)}"><span class="name">${lock ? '???' : r.n}</span>` +
       (lock ? '' : `<span class="need">${Object.entries(r.need).map(([k, n]) => Array(n).fill(0).map((_, i) => `<span class="${(S.inv[k] || 0) > i ? '' : 'miss'}"><img alt="" src="${src('ing-' + k)}"></span>`).join('')).join('')}</span>${priceTag(priceOf(r))}`) + '</button>';
@@ -820,13 +838,14 @@ function freeOven() { for (let k = 0; k < ovenCount(); k++) if (!S.ovens[k]) ret
 function openUpgrades() {
   sfx.tap(); let tab = openUpgrades.tab || 'equipo';
   const draw = () => {
-    const st = starsOf(S.fame), list = UPS.filter(u => u.cat === tab);
-    openWin(head('coin', 'Mejorar pastelería', `Tienes ${S.coins} monedas · ${'★'.repeat(st)}`) + `<div class="tabs"><button class="tab${tab === 'equipo' ? ' on' : ''}" data-t="equipo">Equipo y empleados</button><button class="tab${tab === 'deco' ? ' on' : ''}" data-t="deco">Decoración</button></div><div class="body"><div class="grid">` +
-      list.map(u => { const own = S.ups[u.id], lock = u.star > st || (u.need && !S.ups[u.need]);
+    const st = starsOf(S.fame), list = tab === 'recetas' ? REC.filter(r => r.buy).map(r => ({ id: 'rec:' + r.id, rec: r, n: r.n, img: 'des-' + r.id, cost: r.buy, star: r.star, d: `Se vende en ${priceOf(r)}` })) : UPS.filter(u => u.cat === tab);
+    openWin(head('coin', 'Mejorar pastelería', `Tienes ${S.coins} monedas · ${'★'.repeat(st)}`) + `<div class="tabs"><button class="tab${tab === 'equipo' ? ' on' : ''}" data-t="equipo">Equipo y empleados</button><button class="tab${tab === 'deco' ? ' on' : ''}" data-t="deco">Decoración</button><button class="tab${tab === 'recetas' ? ' on' : ''}" data-t="recetas">Recetas</button></div><div class="body"><div class="grid">` +
+      list.map(u => { const own = u.rec ? S.recipes.includes(u.rec.id) : S.ups[u.id], lock = u.star > st || (u.need && !S.ups[u.need]);
         const pic = u.img.startsWith('ch-') ? portrait(u.img.slice(3)) : src(u.img);
         return `<button class="card${own ? '' : lock ? ' lock off' : S.coins < u.cost ? ' off' : ''}" data-u="${u.id}">${own ? '<span class="own">¡Listo!</span>' : lock ? `<span class="own">${'★'.repeat(u.star)}</span>` : ''}<img class="pic" alt="" src="${pic}"><span class="name">${u.n}</span>${u.d ? `<span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">${u.d}</span>` : ''}${own ? '' : priceTag(u.cost)}${u.fame && !own ? `<span style="font-size:13px;color:#d0508a">+${u.fame} fama</span>` : ''}</button>`; }).join('') + '</div></div>');
     winEl.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = openUpgrades.tab = b.dataset.t; sfx.tap(); draw(); }));
     winEl.querySelectorAll('.card').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.u.startsWith('rec:')) { const r = RECI[b.dataset.u.slice(4)]; if (S.recipes.includes(r.id)) return; if (r.star > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${r.star} estrellas`, 'heart'); return; } if (S.coins < r.buy) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= r.buy; S.recipes.push(r.id); refreshHud(); sfx.levelup(); toast(`¡Nueva receta: ${r.n}!`, 'des-' + r.id); event('recipe'); draw(); return; }
       const u = UPI[b.dataset.u]; if (S.ups[u.id]) return;
       if (u.star > starsOf(S.fame) || (u.need && !S.ups[u.need])) { sfx.no(); toast(u.need && !S.ups[u.need] ? `Primero compra: ${UPI[u.need].n}` : `Se desbloquea con ${u.star} estrellas`, 'heart'); return; }
       if (S.coins < u.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; }
@@ -918,7 +937,7 @@ const CUST_SHEETS = ['npc-a', 'npc-b', 'npc-c', 'npc-d'];
 function custInterval() { const st = starsOf(S.fame); return Math.max(7, 22 - st * 2.5 - (S.ups.table1 ? 3 : 0) - (S.ups.table2 ? 3 : 0)); }
 function spawnCustomer() {
   const m = maps.bakery; if (customers.length) return;   // uno a la vez: el siguiente llega cuando se va el anterior
-  const st = starsOf(S.fame), menu = REC.filter(r => r.star <= st), inShow = S.show.filter(r => menu.some(x => x.id === r));
+  const st = starsOf(S.fame), menu = REC.filter(unlocked), inShow = S.show.filter(r => menu.some(x => x.id === r));
   const want = inShow.length && Math.random() < .75 ? pick(inShow) : pick(menu).id;
   const c = mkChar(pick(CUST_SHEETS), m.door.x, m.door.y); c.want = want; c.state = 'in'; c.since = game.t; c.patience = 70; c.speed = 3; c.dir = 3;
   customers.push(c); assignQueue(); if (game.map === 'bakery') sfx.bell();
@@ -949,12 +968,12 @@ function staffWork(dt) {
       s.cd = 4;
       // Mete a hornear lo que piden los clientes (o lo más caro que se pueda)
       const slot = freeOven(), st = starsOf(S.fame);
-      if (slot >= 0 && S.show.length + S.ovens.filter(Boolean).length < showCap()) { const wanted = customers.filter(c => c.state === 'wait' && !S.show.includes(c.want) && !S.ovens.some(o => o && o.r === c.want)).map(c => RECI[c.want]).filter(r => canMake(r)); const r = wanted[0] || REC.filter(r => r.star <= st && canMake(r)).sort((a, b) => b.price - a.price)[0]; if (r) { Object.entries(r.need).forEach(([k, n]) => (S.inv[k] -= n)); S.ovens[slot] = { r: r.id, start: now(), dur: r.bake * bakeMul() * 1.3 }; } }
+      if (slot >= 0 && S.show.length + S.ovens.filter(Boolean).length < showCap()) { const wanted = customers.filter(c => c.state === 'wait' && !S.show.includes(c.want) && !S.ovens.some(o => o && o.r === c.want)).map(c => RECI[c.want]).filter(r => canMake(r)); const r = wanted[0] || REC.filter(r => unlocked(r) && canMake(r)).sort((a, b) => b.price - a.price)[0]; if (r) { Object.entries(r.need).forEach(([k, n]) => (S.inv[k] -= n)); S.ovens[slot] = { r: r.id, start: now(), dur: r.bake * bakeMul() * 1.3 }; } }
     }
     if (s.role === 'helper' && s.cd <= 0) {
       s.cd = 12;
       // Compra lo que falte para la receta más barata que no se puede hacer
-      const st = starsOf(S.fame), r = REC.filter(r => r.star <= st).find(r => !canMake(r));
+      const st = starsOf(S.fame), r = REC.filter(unlocked).find(r => !canMake(r));
       if (r) { let spent = 0; for (const [k, n] of Object.entries(r.need)) { const miss = n - (S.inv[k] || 0); if (miss > 0 && S.coins - spent >= ING[k].p * miss + 10) { spent += ING[k].p * miss; S.inv[k] = (S.inv[k] || 0) + miss; } } if (spent) { S.coins -= spent; refreshHud(); if (game.map === 'bakery') floatText(s.px + .5, s.py - 1, '-' + spent, 'coin', '#ffb0b0'); } }
     }
   }
@@ -1059,12 +1078,13 @@ function updateCats(dt) {
     if (m.solid[k.x + k.y * m.w]) { const p = freeTile(m, k); if (p) { k.x = k.px = p.x; k.y = k.py = p.y; } k.on = false; }
     const r = Math.random(), goTo = (o, st, dur, onTop) => { const p = findPath(m, k.x, k.y, o.fx, o.yb, true); if (!p) return false; k.path = p; k.state = 'walk'; k.then = () => { if (onTop) { k.x = k.px = o.fx; k.y = k.py = o.yb; k.on = onTop === 'up'; } k.state = st; k.timer = dur; if (st === 'eat') floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; return true; };
     k.on = false;
-    if (r < .22) { const bed = furnOf(m, 'sleep')[0]; if (!(bed && goTo(bed, 'sleep', rand(8, 14), 'in'))) { k.state = 'sleep'; k.timer = rand(6, 10); } }
-    else if (r < .34) { const t = furnOf(m, 'climb')[0]; if (!(t && goTo(t, pick(['sit', 'groom']), rand(4, 8), 'up'))) { k.state = 'groom'; k.timer = 3; } }
-    else if (r < .44) { const b = furnOf(m, 'eat')[0]; if (!(b && goTo(b, 'eat', 3))) { k.state = 'sit'; k.timer = 2; } }
-    else if (r < .52) { const c = furnOf(m, 'sit').concat(furnOf(m, 'warm'), furnOf(m, 'hide')); const o = c.length ? pick(c) : null; if (!(o && goTo(o, 'sit', rand(4, 7), o.furn.flat ? 'in' : null))) { k.state = 'stretch'; k.timer = 1.5; } }
-    else if (r < .62 && game.map === 'home') { const p = findPath(m, k.x, k.y, lucy.x, lucy.y, true); if (p && p.length < 14) { k.path = p; k.then = () => { k.state = 'sit'; k.timer = rand(2, 4); }; } }
-    else if (r < .82) { const t = freeTile(m); const p = t && findPath(m, k.x, k.y, t.x, t.y); if (p && p.length < 12) { k.path = p; k.then = () => { k.state = pick(['sit', 'groom', 'stretch']); k.timer = rand(1.5, 4); }; } }
+    if (r < .18) { const bed = furnOf(m, 'sleep')[0]; if (!(bed && goTo(bed, 'sleep', rand(8, 14), 'in'))) { k.state = 'sleep'; k.timer = rand(6, 10); } }
+    else if (r < .28) { const t = furnOf(m, 'climb')[0]; if (!(t && goTo(t, pick(['sit', 'groom']), rand(4, 8), 'up'))) { k.state = 'groom'; k.timer = 3; } }
+    else if (r < .36) { const b = furnOf(m, 'eat')[0]; if (!(b && goTo(b, 'eat', 3))) { k.state = 'sit'; k.timer = 2; } }
+    else if (r < .52 && furnOf(m, 'play').length) { const o = pick(furnOf(m, 'play')); if (!goTo(o, 'play', rand(3, 5), 'in')) { k.state = 'stretch'; k.timer = 1.5; } }
+    else if (r < .58) { const c = furnOf(m, 'sit').concat(furnOf(m, 'warm'), furnOf(m, 'hide')); const o = c.length ? pick(c) : null; if (!(o && goTo(o, 'sit', rand(4, 7), o.furn.flat ? 'in' : null))) { k.state = 'stretch'; k.timer = 1.5; } }
+    else if (r < .66 && game.map === 'home') { const p = findPath(m, k.x, k.y, lucy.x, lucy.y, true); if (p && p.length < 14) { k.path = p; k.then = () => { k.state = 'sit'; k.timer = rand(2, 4); }; } }
+    else if (r < .86) { const t = freeTile(m); const p = t && findPath(m, k.x, k.y, t.x, t.y); if (p && p.length < 12) { k.path = p; k.then = () => { k.state = pick(['sit', 'groom', 'stretch']); k.timer = rand(1.5, 4); }; } }
     else { k.state = pick(['sit', 'groom', 'stretch']); k.timer = rand(2, 4); }
   }
 }
