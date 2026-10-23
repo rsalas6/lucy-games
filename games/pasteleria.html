@@ -220,11 +220,17 @@ const REC = [
   { id: 'churros', n: 'Churros', need: { flour: 1, sugar: 1, milk: 1, butter: 1 }, price: 36, bake: 16, star: 3, buy: 180 },
   { id: 'flan', n: 'Flan', need: { egg: 2, milk: 1, sugar: 1, vanilla: 1 }, price: 48, bake: 22, star: 3, buy: 220 },
   { id: 'tresleches', n: 'Pastel tres leches', need: { flour: 1, egg: 2, milk: 3, cream: 1, strawberry: 1 }, price: 80, bake: 30, star: 4, buy: 380 },
+  // Productos que necesitan su máquina
+  { id: 'icecone', n: 'Cono de fresa', need: { milk: 1, strawberry: 1, sugar: 1 }, price: 26, bake: 8, star: 1, machine: 'icecream' },
+  { id: 'sundae', n: 'Copa de chocolate', need: { milk: 1, choco: 1, cream: 1 }, price: 40, bake: 10, star: 2, machine: 'icecream' },
+  { id: 'popsicle', n: 'Paleta de limón', need: { lemon: 1, sugar: 1 }, price: 22, bake: 8, star: 1, machine: 'icecream' },
+  { id: 'chocoberry', n: 'Fresas con chocolate', need: { strawberry: 2, choco: 1 }, price: 38, bake: 9, star: 2, machine: 'chocofountain' },
+  { id: 'cottoncandy', n: 'Algodón de azúcar', need: { sugar: 2 }, price: 20, bake: 6, star: 1, machine: 'cotton' },
   { id: 'catcake', n: 'Pastel de Aceituna y Coco', need: { flour: 2, egg: 2, milk: 1, cream: 1, choco: 1, strawberry: 1 }, price: 120, bake: 36, star: 5, buy: 600 },
 ];
 const RECI = Object.fromEntries(REC.map(r => [r.id, r]));
 // ¿Se puede hornear? (estrellas suficientes y, si es de las que se compran, ya comprada)
-const unlocked = r => r.star <= starsOf(S.fame) && (!r.buy || (S.recipes || []).includes(r.id));
+const unlocked = r => r.star <= starsOf(S.fame) && (!r.buy || (S.recipes || []).includes(r.id)) && (!r.machine || S.ups[r.machine]);
 const STARS = [0, 0, 25, 70, 160, 320];   // fama para cada estrella
 // Tiendas del pueblo: quién atiende y qué vende
 const SHOPS = {
@@ -246,6 +252,9 @@ const UPS = [
   { id: 'automix', cat: 'equipo', n: 'Batidora industrial', img: 'm-mixer', cost: 500, star: 3, d: '¡Mezcla sola, sin batir!' },
   { id: 'decorator', cat: 'equipo', n: 'Máquina decoradora', img: 'm-decor', cost: 420, star: 3, d: 'Los postres valen 25% más' },
   { id: 'trays', cat: 'equipo', n: 'Bandejas dobles', img: 'm-trays', cost: 650, star: 4, d: 'Salen 2 postres por horneada' },
+  { id: 'icecream', cat: 'equipo', n: 'Máquina de helados', img: 'm-icecream', cost: 300, star: 1, d: 'Nuevos: conos, copas y paletas' },
+  { id: 'chocofountain', cat: 'equipo', n: 'Fuente de chocolate', img: 'm-chocofountain', cost: 380, star: 2, d: 'Nuevo: fresas con chocolate' },
+  { id: 'cotton', cat: 'equipo', n: 'Algodón de azúcar', img: 'm-cotton', cost: 240, star: 1, d: 'Nuevo: algodón de azúcar' },
   { id: 'fridge', cat: 'equipo', n: 'Refri de pasteles', img: 'm-fridge', cost: 520, star: 4, d: 'Caben 4 postres más' },
   { id: 'show3', cat: 'equipo', n: 'Vitrina gigante', img: 'f-vitrina', cost: 320, star: 3, need: 'show2', d: 'Caben 12 postres' },
   { id: 'cashier', cat: 'equipo', staff: 1, n: 'Cajera Sofi', img: 'ch-cashier', cost: 220, star: 2, d: 'Atiende a los clientes ella sola' },
@@ -308,6 +317,8 @@ const TASKS = [
   { t: 'Hornea un pay de manzana', img: 'des-applepie', ev: 'bake:applepie', n: 1, r: 40 },
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
   { t: 'Entrega un pedido especial', img: 'des-bdaycake', ev: 'order', n: 1, r: 60 },
+  { t: 'Compra la máquina de helados', img: 'm-icecream', ev: 'up:icecream', n: 1, r: 50 },
+  { t: 'Prepara un cono de fresa', img: 'des-icecone', ev: 'bake:icecone', n: 1, r: 30 },
   { t: 'Pon flores frente a tu pastelería', img: 'p-flowers', ev: 'up:t-flowers1', n: 1, r: 30 },
   { t: 'Ponle un accesorio a un gatito', img: 'cat-coco-icon', ev: 'dresscat', n: 1, r: 30 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
@@ -399,7 +410,7 @@ const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
   'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
-  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
+  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
 const src = n => UP + n + '.webp';
@@ -491,6 +502,9 @@ function furnishBakery() {
   if (S.ups.table2) addObj(m, 'f-table', 11, 9, 2, 2, 1);
   if (S.ups.plant) addObj(m, 'f-plant', 12, 7, 1, 1, 1);
   if (S.ups.board) addObj(m, 'd-menuboard', 9, 9, 1, 1, 1);
+  if (S.ups.icecream) addObj(m, 'm-icecream', 2, 9, 1, 1, 1, { dw: 1.3, dx: -.15 });
+  if (S.ups.chocofountain) addObj(m, 'm-chocofountain', 3, 9, 1, 1, 1, { dw: 1.25, dx: -.1 });
+  if (S.ups.cotton) addObj(m, 'm-cotton', 7, 9, 1, 1, 1, { dw: 1.3, dx: -.15 });
   if (S.ups.balloons) addObj(m, 'd-balloons', 1, 9, 1, 1, 1);
   m.lamp = false;
   m.queue = [{ x: 5, y: 8 }];   // donde espera el cliente (uno a la vez)
@@ -871,7 +885,7 @@ function openBag() {
 const canMake = r => Object.entries(r.need).every(([k, n]) => (S.inv[k] || 0) >= n);
 function openRecipes() {
   sfx.tap(); const st = starsOf(S.fame), free = S.ovens.length < ovenCount() || S.ovens.some((o, k) => !o);
-  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + '<div class="body"><div class="grid">' + REC.filter(r => !r.buy || (S.recipes || []).includes(r.id)).map(r => {
+  openWin(head('des-cupcake', 'Recetario', free ? 'Escoge qué hornear' : 'Los hornos están ocupados') + '<div class="body"><div class="grid">' + REC.filter(r => (!r.buy || (S.recipes || []).includes(r.id)) && (!r.machine || S.ups[r.machine])).map(r => {
     const lock = r.star > st, ok = !lock && canMake(r);
     return `<button class="card${lock ? ' lock off' : ok ? '' : ' off'}" data-r="${r.id}">${lock ? `<span class="own">${'★'.repeat(r.star)}</span>` : ''}<img class="pic" alt="" src="${src('des-' + r.id)}"><span class="name">${lock ? '???' : r.n}</span>` +
       (lock ? '' : `<span class="need">${Object.entries(r.need).map(([k, n]) => Array(n).fill(0).map((_, i) => `<span class="${(S.inv[k] || 0) > i ? '' : 'miss'}"><img alt="" src="${src('ing-' + k)}"></span>`).join('')).join('')}</span>${priceTag(priceOf(r))}`) + '</button>';
