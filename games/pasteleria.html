@@ -195,7 +195,7 @@ const ICON_OFF = '<svg viewBox="0 0 16 16" fill="#4a2a4a"><path d="M1 6h3l4-4h1v
 const UP = '__UP__img/bakery/';
 const ING = {
   egg: { n: 'Huevo', p: 3 }, milk: { n: 'Leche', p: 4 }, butter: { n: 'Mantequilla', p: 5 }, flour: { n: 'Harina', p: 3 }, sugar: { n: 'Azúcar', p: 3 }, strawberry: { n: 'Fresa', p: 4 },
-  apple: { n: 'Manzana', p: 4 }, lemon: { n: 'Limón', p: 4 }, choco: { n: 'Chocolate', p: 6 }, vanilla: { n: 'Vainilla', p: 6 }, sprinkles: { n: 'Chispas', p: 5 }, cream: { n: 'Crema', p: 5 },
+  apple: { n: 'Manzana', p: 4 }, lemon: { n: 'Limón', p: 4 }, choco: { n: 'Chocolate', p: 6 }, vanilla: { n: 'Vainilla', p: 6 }, sprinkles: { n: 'Chispas', p: 5 }, cream: { n: 'Crema', p: 5 }, catfood: { n: 'Croquetas', p: 6, pet: 1 },
 };
 // Recetas: ingredientes, precio de venta, tiempo de horno (s) y estrellas de fama necesarias
 const REC = [
@@ -231,7 +231,7 @@ const SHOPS = {
   mill: { n: 'Molino', who: 'npc-a', items: ['flour', 'sugar'] },
   fruit: { n: 'Frutería', who: 'npc-c', items: ['strawberry', 'apple', 'lemon'] },
   choco: { n: 'Chocolatería', who: 'npc-a', items: ['choco', 'cream', 'vanilla'] },
-  grocery: { n: 'Abarrotes', who: 'npc-b', items: ['sugar', 'flour', 'sprinkles', 'vanilla'] },
+  grocery: { n: 'Abarrotes', who: 'npc-b', items: ['sugar', 'flour', 'sprinkles', 'vanilla', 'catfood'] },
 };
 // Mejoras: equipo, vitrina, empleados y decoración (la decoración da fama)
 const UPS = [
@@ -277,6 +277,7 @@ const TASKS = [
   { t: 'Compra un mueble en la mueblería', img: 'h-sofa', ev: 'furn', n: 1, r: 30 },
   { t: 'Acomoda un mueble en tu casa', img: 'h-bookshelf', ev: 'place', n: 1, r: 20 },
   { t: 'Estrena ropa de la boutique', img: 'b-boutique', ev: 'outfit', n: 1, r: 30 },
+  { t: 'Dales croquetas a los gatitos', img: 'ing-catfood', ev: 'feedcats', n: 1, r: 25 },
   { t: 'Vende 5 postres', img: 'coin', ev: 'sell', n: 5, r: 40 },
   { t: 'Compra el segundo horno', img: 'f-oven1', ev: 'up:oven2', n: 1, r: 40 },
   { t: 'Recoge 2 manzanas', img: 'ing-apple', ev: 'gather:apple', n: 2, r: 20 },
@@ -350,6 +351,7 @@ let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 // Casa nueva: viene con cama, camita y platos para los gatos y un tapete
 if (!S.recipes) S.recipes = [];
+if (S.bowl == null) { S.bowl = 1; S.bowlT = now(); S.mail = 0; }
 if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
 if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 1, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 9, y: 6 }], store: [] };
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
@@ -369,7 +371,7 @@ const NEED = [
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
   'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
-  ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle',
+  ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
 const src = n => UP + n + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
@@ -412,7 +414,7 @@ function buildTown() {
   bld('b-furniture', 38, 31, 6, 3, 40, 'shop:furniture');
   // Plaza con fuente, bancas y faroles
   addObj(m, 'p-fountain', 27, 23, 3, 3, 2); addObj(m, 'p-bench', 25, 25, 2, 2, 1); addObj(m, 'p-bench', 30, 25, 2, 2, 1); addObj(m, 'p-lamp', 25, 21, 1, 1, 1); addObj(m, 'p-lamp', 31, 21, 1, 1, 1);
-  addObj(m, 'p-mailbox', 20, 13, 1, 1, 1);
+  addObj(m, 'p-mailbox', 20, 13, 1, 1, 1, { mail: 1 });
   // Cosas para recolectar gratis: fresas, manzanas, gallinas y la vaca
   [[37, 15], [39, 15], [41, 15], [37, 17], [39, 17]].forEach(([x, y], k) => addObj(m, 'p-berry', x, y, 2, 1, 1, { gather: 'strawberry', gid: 'b' + k }));
   [[37, 11], [40, 11]].forEach(([x, y], k) => addObj(m, 'p-appletree', x, y, 2, 1, 1, { gather: 'apple', gid: 'a' + k }));
@@ -590,6 +592,7 @@ function drawObj(o, m) {
   if (lucy && lucy.py < o.yb && lucy.px >= o.x - .5 && lucy.px < o.x + o.tw - .5 && lucy.py > o.yb - h / SCALE / T) alpha = .55;
   cx.globalAlpha = alpha;
   cx.drawImage(img, sx, sy, w, w * img.height / img.width); cx.globalAlpha = 1;
+  if (o.mail && S.mail !== Math.floor(Date.now() / 864e5) && game.t % 2 < 1.2) drawSparkle((o.x + .5) * T, (o.yb - .6) * T);
   if (o.gather && gatherReady(o) && game.t % 2 < 1.2) { cx.fillStyle = '#fff'; drawSparkle((o.x + o.tw / 2) * T, (o.yb - .3) * T - (h / SCALE) * .55); }
 }
 // Mueble de la casa: dibujado a lo ancho de su lugar, apoyado abajo; al arrastrarlo se ve verde (cabe) o rojo (no cabe)
@@ -600,6 +603,7 @@ function drawFurn(f, it, m) {
   const sy = f.flat ? ((y + f.fh / 2) * T - cam.y) * SCALE - h / 2 : ((y + f.fh) * T - cam.y) * SCALE - h;
   if (ex) { cx.fillStyle = ex.ok ? 'rgba(80,220,140,.35)' : 'rgba(255,80,100,.35)'; cx.fillRect((x * T - cam.x) * SCALE, (y * T - cam.y) * SCALE, f.fw * T * SCALE, f.fh * T * SCALE); cx.globalAlpha = .9; }
   cx.drawImage(im, sx, sy, w, h); cx.globalAlpha = 1;
+  if (f.id === 'catbowl' && bowlLevel() < .25 && !game.edit) { const bx = sx + w / 2, by = sy - T * SCALE * .2 + Math.sin(game.t * 5) * 3; cx.font = `${Math.round(T * SCALE * .55)}px Lilita One`; cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeStyle = '#4a2a4a'; cx.fillStyle = '#ff6fae'; cx.strokeText('¡Miau!', bx, by); cx.fillText('¡Miau!', bx, by); cx.textAlign = 'start'; }
   if (game.edit && !ex) { cx.strokeStyle = 'rgba(255,111,174,.8)'; cx.lineWidth = 2; cx.setLineDash([6, 4]); cx.strokeRect((x * T - cam.x) * SCALE + 2, (y * T - cam.y) * SCALE + 2, f.fw * T * SCALE - 4, f.fh * T * SCALE - 4); cx.setLineDash([]); }
 }
 function drawEditOverlay(m) {
@@ -722,6 +726,7 @@ function guideTarget() {
   const exitHome = { map: 'home', x: hm.door.x, y: hm.door.y };
   if (kind === 'visit') return game.map === 'home' ? null : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'pet') { if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const k = cats[S.taskN % 2] || cats[0]; return { map: 'home', x: k.px, y: k.py - (k.on ? 1 : 0), h: .7 }; }
+  if (kind === 'feedcats') { if (!(S.inv.catfood > 0)) return game.map === 'town' ? doorOf('shop:grocery') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbowl'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
@@ -1029,9 +1034,12 @@ function findTarget(w, m) {
     for (const a of m.animals) if (Math.abs(a.x - w.x) <= (a.big ? 1 : 0) && Math.abs(a.y - w.y) <= 1) return { animal: a, x: a.x, y: a.y };
     // Tocar un edificio = ir a su puerta
     for (const o of m.objs) { if (!o.img.startsWith('b-')) continue; const im = IMG[o.img], h = im && im.width ? o.tw * im.height / im.width : 5; if (w.fx >= o.x * T && w.fx < (o.x + o.tw) * T && w.fy > (o.yb + 1 - h) * T && w.fy < (o.yb + 1) * T) { const d = Object.entries(m.doors).find(([i]) => (i % m.w) >= o.x && (i % m.w) < o.x + o.tw && Math.floor(i / m.w) === o.yb); if (d) return { door: d[1], x: d[0] % m.w, y: Math.floor(d[0] / m.w) }; } }
+    for (const o of m.objs) if (o.mail && w.x === o.fx && (w.y === o.yb || w.y === o.yb - 1)) return { mail: o, x: o.fx, y: o.yb };
     for (const o of m.objs) if (o.gather && w.x >= o.fx - 1 && w.x <= o.fx + o.fw && w.y >= o.yb - 1 && w.y <= o.yb) return { obj: o, x: o.fx, y: o.yb };
     for (const n of npcs) if (n.x === w.x && (n.y === w.y || n.y === w.y + 1)) return { npc: n, x: n.x, y: n.y };
   } else if (m.home) {
+    // Tocar exactamente un mueble gana (así los platos se llenan aunque pase un gato)
+    for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y && w.y < it.y + f.fh && !cats.some(k => k.x === w.x && k.y === w.y)) return { furn: f, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
     for (const k of cats) if (Math.abs(k.px - w.x) < 1 && w.y >= Math.round(k.py) - 1 - (k.on ? 1 : 0) && w.y <= Math.round(k.py)) return { cat: k, x: k.x, y: k.y };
     for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y - 1 && w.y < it.y + f.fh) return { furn: f, obj: null, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
   } else {
@@ -1049,6 +1057,7 @@ function arrive() {
   if (g.npc) { look(g.npc.x, g.npc.y); sfx.tap(); toast(pick(['¡Hola, Lucy!', '¡Me encantan tus pasteles!', '¡Qué rico huele tu pastelería!', 'Las fresas de aquí son las mejores', '¿Ya probaste hacer pay de manzana?']), null); return; }
   if (g.cust) { lucy.dir = 0; serve(g.cust); return; }
   if (g.cat) { look(g.cat.x, g.cat.y); pet(g.cat); return; }
+  if (g.mail) { look(g.mail.fx, g.mail.yb); const day = Math.floor(Date.now() / 864e5); if (S.mail === day) { toast('Hoy ya abriste tu correo. ¡Vuelve mañana!', 'p-mailbox'); return; } S.mail = day; const gifts = [['egg', 3], ['strawberry', 4], ['choco', 2], ['cream', 2], ['catfood', 2]], [k, n] = pick(gifts), c = 30 + starsOf(S.fame) * 15; addInv(k, n); addCoins(c); sfx.levelup(); toast(`¡Carta de los vecinos! +${c} y ${n} ${ING[k].n.toLowerCase()}`, 'ing-' + k); return; }
   if (g.furn) { look(g.x, g.y); useFurn(g.furn); return; }
   const o = g.obj; if (!o) return; look(o.fx + (o.fw > 1 ? 1 : 0), o.yb);
   if (o.gather) return gather({ ...o, px: o.fx, py: o.yb });
@@ -1059,6 +1068,14 @@ function arrive() {
 }
 
 /* ---------- Aceituna y Coco ---------- */
+const bowlLevel = () => clamp(S.bowl - (now() - S.bowlT) / 1200, 0, 1);
+function fillBowl() {
+  if (bowlLevel() > .8) { toast('Los platos ya están llenos', 'h-catbowl'); return; }
+  if (!(S.inv.catfood > 0)) { sfx.no(); toast('No tienes croquetas: cómpralas en abarrotes', 'ing-catfood'); return; }
+  S.inv.catfood--; S.bowl = 1; S.bowlT = now(); sfx.pick(); event('feedcats');
+  for (const k of cats) { k.timer = 0; k.wantEat = true; }
+  floatText(lucy.px + .5, lucy.py - 1, '¡A comer!', 'ing-catfood');
+}
 let cats = [];
 function spawnCats() {
   const m = maps.home; cats = [{ id: 'aceituna', name: 'Aceituna' }, { id: 'coco', name: 'Coco' }].map((c, i) => { const p = freeTile(m) || { x: 3 + i, y: 5 }; return Object.assign(mkChar('lucy', p.x, p.y), c, { speed: 2.3, face: i ? -1 : 1, state: 'sit', timer: rand(1, 4) }); });
@@ -1074,6 +1091,9 @@ function updateCats(dt) {
   for (const k of cats) {
     if (k.moving || k.path.length) { const dx = k.path[0] ? k.path[0].x - k.x : 0; if (dx) k.face = dx; stepChar(k, dt, m, c => { if (!c.path.length && c.then) { const f = c.then; c.then = null; f(); } }); continue; }
     k.timer -= dt; if (k.timer > 0) continue;
+    if (k.wantEat) { k.wantEat = false; const b = furnOf(m, 'eat')[0]; if (b) { const p = findPath(m, k.x, k.y, b.fx, b.yb, true); if (p) { k.path = p; k.state = 'walk'; k.then = () => { k.state = 'eat'; k.timer = 3; floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; continue; } } }
+    // Gatitos bien comidos: de vez en cuando le traen un regalito a Lucy
+    if (game.map === 'home' && bowlLevel() > .3 && Math.random() < .06 && game.t - (k.giftT || -999) > 90) { k.giftT = game.t; const n = 5 + (Math.random() * 11 | 0); addCoins(n); sfx.coin(); floatText(k.px + .5, k.py - .5, `${k.name} te trajo +${n}`, 'coin', '#ffe066'); }
     // Si estaba arriba de un mueble, se baja de un brinco
     if (m.solid[k.x + k.y * m.w]) { const p = freeTile(m, k); if (p) { k.x = k.px = p.x; k.y = k.py = p.y; } k.on = false; }
     const r = Math.random(), goTo = (o, st, dur, onTop) => { const p = findPath(m, k.x, k.y, o.fx, o.yb, true); if (!p) return false; k.path = p; k.state = 'walk'; k.then = () => { if (onTop) { k.x = k.px = o.fx; k.y = k.py = o.yb; k.on = onTop === 'up'; } k.state = st; k.timer = dur; if (st === 'eat') floatText(k.x + .5, k.y - .3, '¡ñam!', null, '#ffe066'); }; return true; };
@@ -1101,6 +1121,7 @@ function useFurn(f) {
   if (f.play === 'fish') { [0, 1, 2, 3].forEach(i => beep(rand(500, 900), .08, 'sine', .05, 400, i * .12)); floatText(lucy.px + .5, lucy.py - 1, 'blub blub', null, '#bfe6ff'); return; }
   if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
   if (f.id === 'wardrobe') { openBoutique(true); return; }
+  if (f.id === 'catbowl') { fillBowl(); return; }
   if (f.id === 'bed' || f.id === 'princessbed') { floatText(lucy.px + .5, lucy.py - 1, 'z z z', null); sfx.ding(); return; }
   floatText(lucy.px + .5, lucy.py - 1, f.n, null);
 }
