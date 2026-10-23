@@ -116,6 +116,7 @@ img{-webkit-user-drag:none;pointer-events:none}
     <button class="ibtn" id="homeBtn" aria-label="Volver a los juegos" hidden><svg viewBox="0 0 16 16"><path fill="#4a2a4a" d="M8 1h0l7 6v1h-2v7H9v-4H7v4H3V8H1V7z"/><path fill="#ff8fc4" d="M4 8h8v6h-2v-4H6v4H4z"/></svg></button>
     <div class="chips">
       <div class="chip" id="coinChip"><img alt="" src="__UP__img/bakery/coin.webp"><span id="coins">0</span></div>
+      <div class="chip" id="homeChip" hidden><img alt="" src="__UP__img/bakery/b-home.webp"><span id="comfort">0</span><span style="font-size:.7em;color:#9a6a8a" id="comfortNext"></span></div>
       <div class="chip" id="fameChip"><img alt="" src="__UP__img/bakery/heart.webp"><span id="fame">0</span> <span class="stars" id="stars">★</span></div>
     </div>
   </div>
@@ -322,6 +323,7 @@ const TASKS = [
   { t: 'Prepara un cono de fresa', img: 'des-icecone', ev: 'bake:icecone', n: 1, r: 30 },
   { t: 'Pon flores frente a tu pastelería', img: 'p-flowers', ev: 'up:t-flowers1', n: 1, r: 30 },
   { t: 'Ponle un accesorio a un gatito', img: 'cat-coco-icon', ev: 'dresscat', n: 1, r: 30 },
+  { t: 'Haz tu casa más acogedora', img: 'b-home', ev: 'comfort', n: 1, r: 40 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -788,6 +790,7 @@ function guideTarget() {
   if (kind === 'feedcats') { if (!(S.inv.catfood > 0)) return game.map === 'town' ? doorOf('shop:grocery') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbowl'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'dresscat') { if (!S.accs.length) return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbed'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
+  if (kind === 'comfort') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('shop:furniture') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (game.map === 'home') return kind === 'up' || kind === 'recipe' ? { btn: '#upBtn' } : exitHome;
@@ -1061,7 +1064,7 @@ function enter(to) {
 let fadeT0 = 0, fadeCb = null;
 function fade(cb) { fadeT0 = performance.now(); fadeCb = cb; setTimeout(() => { if (fadeCb) { fadeCb(); fadeCb = null; } }, 300); }
 
-function updateDock() { $('#editBtn').hidden = game.map !== 'home'; }
+function updateDock() { $('#editBtn').hidden = game.map !== 'home'; $('#homeChip').hidden = game.map !== 'home'; if (game.map === 'home') checkComfort(); }
 
 /* ---------- Dedo: tocar para caminar o para usar algo ---------- */
 let drag = null;
@@ -1190,6 +1193,15 @@ function useFurn(f, it) {
   floatText(lucy.px + .5, lucy.py - 1, f.n, null);
 }
 
+/* ---------- Comodidad: cada mueble acomodado suma; al llegar a cada meta hay premio ---------- */
+const COMFORT_GOALS = [25, 60, 110, 180, 260];
+const comfortOf = () => S.home.items.reduce((a, it) => a + Math.max(4, Math.round((FURNI[it.id] ? FURNI[it.id].cost : 0) / 15)), 0) + S.home.lvl * 20 + (S.home.walls.length - 1) * 4 + (S.home.floors.length - 1) * 4 + (S.accs ? S.accs.length * 3 : 0);
+function checkComfort() {
+  const c = comfortOf(); $('#comfort').textContent = c; const nx = COMFORT_GOALS.find(g => g > c); $('#comfortNext').textContent = nx ? ' / ' + nx : ' ★';
+  S.comfortGot = S.comfortGot || 0;
+  while (S.comfortGot < COMFORT_GOALS.length && c >= COMFORT_GOALS[S.comfortGot]) { const k = ++S.comfortGot, pay = 80 * k; addCoins(pay); addFame(3 * k); sfx.levelup(); toast(`¡Tu casa es más acogedora! Premio +${pay}`, 'b-home'); event('comfort'); }
+}
+
 /* ---------- Acomodar la casa: tocar un mueble guardado para ponerlo, arrastrar para moverlo, arrastrar a la bandeja para guardarlo ---------- */
 let editSel = null;
 function setEdit(on) {
@@ -1208,7 +1220,7 @@ function placeFromStore(id) {
   // Los tapetes van al centro; los muebles, primero contra la pared del fondo
   for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (fits(m, f, x, y)) { const d = f.flat ? Math.hypot(x + f.fw / 2 - c.x, y + f.fh / 2 - c.y) : (y - 3) * 2.2 + Math.abs(x + f.fw / 2 - c.x) * .45; if (!best || d < best.d) best = { x, y, d }; }
   if (!best) { sfx.no(); toast('Ya no cabe: ¡amplía tu casa en la mueblería!', 'b-home'); return; }
-  S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); placeFurniture(m); paintTray(); sfx.pick(); event('place');
+  S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); placeFurniture(m); paintTray(); sfx.pick(); event('place'); checkComfort();
 }
 function editDown(e) {
   const m = maps.home, fx = e.clientX / SCALE + cam.x, fy = e.clientY / SCALE + cam.y, tx = Math.floor(fx / T), ty = Math.floor(fy / T);
@@ -1222,7 +1234,7 @@ function editMove(e) {
 }
 function editUp() {
   if (!editSel) return; const s = editSel, m = maps.home; editSel = null; $('#tray').classList.remove('drop');
-  if (s.store) { S.home.items.splice(S.home.items.indexOf(s.it), 1); S.home.store.push(s.it.id); toast(`${s.f.n} guardado`, s.f.img); sfx.tap(); }
+  if (s.store) { S.home.items.splice(S.home.items.indexOf(s.it), 1); S.home.store.push(s.it.id); checkComfort(); toast(`${s.f.n} guardado`, s.f.img); sfx.tap(); }
   else if (s.ok && (s.x !== s.it.x || s.y !== s.it.y)) { s.it.x = s.x; s.it.y = s.y; sfx.drop(); event('place'); }
   else if (!s.ok) sfx.no();
   placeFurniture(m); paintTray();
@@ -1279,7 +1291,7 @@ function openFurnShop() {
     winEl.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { const f = FURNI[b.dataset.f]; if ((f.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${f.star} estrellas`, 'heart'); return; } if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.store.push(f.id); refreshHud(); sfx.buy(); toast(`¡${f.n}! Acomódalo en tu casa`, f.img); event('furn'); draw(); }));
     winEl.querySelectorAll('canvas[data-preview]').forEach(c => drawAccTo(c.getContext('2d'), c.dataset.preview, 35, 40, 34));
     winEl.querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => { const a = ACCS.find(q => q.id === b.dataset.acc); if (S.accs.includes(a.id)) return; if ((a.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${a.star} estrellas`, 'heart'); return; } if (S.coins < a.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= a.cost; S.accs.push(a.id); refreshHud(); sfx.buy(); toast(`¡${a.n} para los gatitos! Toca su camita para ponérselo`, 'cat-coco-icon'); draw(); }));
-    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); spawnCats(); refreshHud(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
+    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); spawnCats(); refreshHud(); checkComfort(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
     winEl.querySelectorAll('[data-wall]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.wall, w = WALLS[i]; if (!S.home.walls.includes(i)) { if (S.coins < w.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= w.cost; S.home.walls.push(i); sfx.buy(); } S.home.wall = i; homeTiles(); refreshHud(); draw(); }));
     winEl.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.floor, f = FLOORS[i]; if (!S.home.floors.includes(i)) { if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.floors.push(i); sfx.buy(); } S.home.floor = i; homeTiles(); refreshHud(); draw(); }));
   };
