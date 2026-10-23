@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023112436';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023112700';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -465,6 +465,12 @@ const FURN = [
   { id: 'globe', n: 'Globo terráqueo', img: 'h-globe', cost: 100, fw: 1, fh: 1 },
   { id: 'lavalamp', n: 'Lámpara de lava', img: 'h-lavalamp', cost: 80, fw: 1, fh: 1 },
   { id: 'rainbowrug', n: 'Alfombra arcoíris', img: 'h-rainbowrug', cost: 120, fw: 3, fh: 2, flat: 1 },
+  { id: 'bathtub', n: 'Tina de burbujas', img: 'h-bathtub', cost: 320, fw: 2, fh: 1, play: 'bath', star: 2 },
+  { id: 'sink', n: 'Lavabo con espejo', img: 'h-sink', cost: 140, fw: 1, fh: 1 },
+  { id: 'towels', n: 'Toallero', img: 'h-towels', cost: 70, fw: 1, fh: 1 },
+  { id: 'duck', n: 'Patito gigante', img: 'h-duck', cost: 90, fw: 1, fh: 1, cat: 'sit' },
+  { id: 'bathmat', n: 'Tapete de baño', img: 'h-bathmat', cost: 40, fw: 2, fh: 1, flat: 1 },
+  { id: 'hamper', n: 'Cesto de ropa', img: 'h-hamper', cost: 50, fw: 1, fh: 1, cat: 'hide' },
   { id: 'berrypot', n: 'Maceta de fresas', img: 'p-berry', cost: 110, fw: 1, fh: 1, grow: 'strawberry', give: 2 },
   { id: 'applepot', n: 'Manzanito', img: 'p-appletree', cost: 180, fw: 1, fh: 1, grow: 'apple', give: 1, star: 2 },
   { id: 'yarn', n: 'Bolita de estambre', img: 'h-yarn', cost: 30, fw: 1, fh: 1, flat: 1, cat: 'play' },
@@ -1330,6 +1336,7 @@ function useFurn(f, it) {
   if (f.play === 'piano') { [0, 4, 7, 12, 7, 4, 0].forEach((n, i) => beep(523 * Math.pow(2, n / 12), .25, 'triangle', .07, 0, i * .18)); floatText(lucy.px + .5, lucy.py - 1, '♪ ♫', null, '#ff8fc4'); return; }
   if (f.play === 'tv') { [0, 7, 4, 12].forEach((n, i) => beep(660 * Math.pow(2, n / 12), .1, 'square', .04, 0, i * .1)); floatText(lucy.px + .5, lucy.py - 1, '¡Qué divertido!', null); return; }
   if (f.play === 'fish') { [0, 1, 2, 3].forEach(i => beep(rand(500, 900), .08, 'sine', .05, 400, i * .12)); floatText(lucy.px + .5, lucy.py - 1, 'blub blub', null, '#bfe6ff'); return; }
+  if (f.play === 'bath') { for (let i = 0; i < 5; i++) beep(rand(600, 1200), .06, 'sine', .04, 500, i * .1); floatText(lucy.px + .5, lucy.py - 1, '¡Burbujas!', null, '#bfe6ff'); return; }
   if (f.play === 'bird') { [0, 1, 2].forEach(i => { beep(1400 + i * 150, .07, 'sine', .05, 300, i * .12); }); floatText(lucy.px + .5, lucy.py - 1, '¡Pío pío!', null, '#bfe6ff'); return; }
   if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
   if (f.id === 'wardrobe') { openBoutique(true); return; }
