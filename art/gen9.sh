@@ -1,0 +1,4 @@
+#!/bin/zsh
+cd "$(dirname "$0")"
+codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Usa tu herramienta de generación de imágenes. ESTILO: pixel art de videojuego estilo Pokémon Esmeralda (Game Boy Advance) pero en alta resolución, vista desde arriba en 3/4 como objeto del pueblo de Pokémon, colores pastel brillantes y tiernos, contornos oscuros limpios. SIN texto, SIN letras. El FONDO debe ser magenta puro liso (#FF00FF), sin sombras en el fondo. Crea van.png (imagen ancha 16:9) en $(pwd)/gen/ con EXACTAMENTE 1 objeto: una camioneta de repartos de pastelería color rosa pastel vista de lado (mirando a la derecha), con un cupcake gigante en el techo y un toldito de rayas, ventanas con pastelitos. Al final imprime NOMBRE => RUTA COMPLETA." < /dev/null > log9.txt 2>&1
+echo ALLDONE

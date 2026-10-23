@@ -252,6 +252,7 @@ const UPS = [
   { id: 'automix', cat: 'equipo', n: 'Batidora industrial', img: 'm-mixer', cost: 500, star: 3, d: '¡Mezcla sola, sin batir!' },
   { id: 'decorator', cat: 'equipo', n: 'Máquina decoradora', img: 'm-decor', cost: 420, star: 3, d: 'Los postres valen 25% más' },
   { id: 'trays', cat: 'equipo', n: 'Bandejas dobles', img: 'm-trays', cost: 650, star: 4, d: 'Salen 2 postres por horneada' },
+  { id: 'van', cat: 'equipo', n: 'Camioneta de repartos', img: 'p-van', cost: 550, star: 3, d: 'Reparte postres a domicilio con propina' },
   { id: 'icecream', cat: 'equipo', n: 'Máquina de helados', img: 'm-icecream', cost: 300, star: 1, d: 'Nuevos: conos, copas y paletas' },
   { id: 'chocofountain', cat: 'equipo', n: 'Fuente de chocolate', img: 'm-chocofountain', cost: 380, star: 2, d: 'Nuevo: fresas con chocolate' },
   { id: 'cotton', cat: 'equipo', n: 'Algodón de azúcar', img: 'm-cotton', cost: 240, star: 1, d: 'Nuevo: algodón de azúcar' },
@@ -409,7 +410,7 @@ const CHARS = ['lucy', 'lucy-fresa', 'lucy-pintora', 'lucy-gatita', 'lucy-prince
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-furniture', 'b-boutique', 'p-van', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
@@ -713,6 +714,7 @@ function render() {
   // Objetos y personajes ordenados por profundidad (los de abajo se dibujan encima)
   const list = m.objs.map(o => ({ y: o.sortY != null ? o.sortY : o.yb + .99, o }));
   list.push({ y: lucy.py + .5, c: lucy });
+  if (game.map === 'town' && S.ups.van && !(S.vanAway > now())) list.push({ y: 19.4, o: { img: 'p-van', x: 23.4, yb: 19, tw: 3.2, fx: 0, fw: 0, fh: 0 } });
   if (game.map === 'town') { for (const n of npcs) list.push({ y: n.py + .5, c: n }); for (const a of m.animals) list.push({ y: a.py + .5, a }); }
   else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on ? 1 : 0), cat: k }); }
   else { for (const c of customers) list.push({ y: c.py + .5, c, cust: 1 }); for (const s of staffEls) list.push({ y: s.role === 'cashier' ? m.counter.yb + 1 : s.py + .5, c: s, clip: s.role === 'cashier' }); }
@@ -1358,6 +1360,8 @@ function update(dt) {
       if (lucy.moving && Math.random() < dt * 4) sfx.step();
       updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt);
       // Llegan clientes (más seguido con más estrellas y mesitas)
+      // Camioneta: cada 2 minutos se lleva un postre de la vitrina y regresa con el dinero y propina
+      if (S.ups.van && S.show.length && now() - (S.vanT || 0) > 120) { S.vanT = now(); S.vanAway = now() + 25; const r = RECI[S.show.shift()], pay = priceOf(r) + 8; addCoins(pay); addFame(r.star); S.sold++; event('sell'); if (game.map !== 'home') toast(`La camioneta entregó ${r.n.toLowerCase()} +${pay}`, 'p-van'); }
       if (!S.order && now() - (S.orderT || 0) > 150 && S.sold >= 3) newOrder();
       if (Math.random() < dt) paintOrder();
       if (!customers.length) { game.custT -= dt; if (game.custT <= 0) { game.custT = custInterval() * rand(.6, 1); spawnCustomer(); } }
