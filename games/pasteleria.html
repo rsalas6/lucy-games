@@ -446,7 +446,7 @@ const CHARS = ['lucy', 'lucy-pijama', 'lucy-sirena', 'lucy-fresa', 'lucy-pintora
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'i-skates', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
@@ -1357,8 +1357,10 @@ function openBoutique(closet) {
   const draw = () => {
     const st = starsOf(S.fame), list = closet ? OUTFITS.filter(o => S.outfits.includes(o.id)) : OUTFITS;
     openWin(`<header><img alt="" src="${portrait(closet ? sheetOf(S.outfit) : 'cashier')}"><div style="flex:1"><h2>${closet ? 'Mi ropero' : 'Boutique'}</h2><p>${closet ? '¿Qué te quieres poner hoy?' : '¡La ropa más bonita del pueblo! Pruébatela y estrénala.'}</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="body"><div class="grid">` +
+      (closet ? '' : `<button class="card${S.skates ? '' : S.coins < 250 ? ' off' : ''}" data-skates="1">${S.skates ? '<span class="own">¡Tuyos!</span>' : ''}<img class="pic" alt="" src="${src('i-skates')}"><span class="name">Patines</span><span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">Caminas el doble de rápido</span>${S.skates ? '' : priceTag(250)}</button>`) +
       list.map(o => { const own = S.outfits.includes(o.id), lock = (o.star || 1) > st && !own, on = S.outfit === o.id;
         return `<button class="card${lock ? ' lock off' : !own && S.coins < o.cost ? ' off' : ''}" data-o="${o.id}">${on ? '<span class="own">¡Puesto!</span>' : lock ? `<span class="own">${'★'.repeat(o.star)}</span>` : ''}<img class="pic" alt="" src="${portrait(sheetOf(o.id))}" style="width:84px;height:110px"><span class="name">${o.n}</span>${own ? '' : priceTag(o.cost)}</button>`; }).join('') + '</div>' + (closet ? '<p style="font-family:system-ui;font-weight:700;color:#9a6a8a;text-align:center">Compra más ropa en la boutique del pueblo.</p>' : '') + '</div>');
+    winEl.querySelectorAll('[data-skates]').forEach(b => b.addEventListener('click', () => { if (S.skates) return; if (S.coins < 250) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= 250; S.skates = 1; lucy.speed = 7.5; refreshHud(); sfx.levelup(); toast('¡Patines! Ahora vas rapidísimo', 'i-skates'); draw(); }));
     winEl.querySelectorAll('[data-o]').forEach(b => b.addEventListener('click', () => {
       const o = OUTFITS.find(x => x.id === b.dataset.o), own = S.outfits.includes(o.id);
       if (!own) { if ((o.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${o.star} estrellas`, 'heart'); return; } if (S.coins < o.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= o.cost; S.outfits.push(o.id); refreshHud(); sfx.levelup(); event('outfit'); }
@@ -1535,7 +1537,7 @@ paintMute();
   $('#loading').hidden = true;
   game = { map: ['bakery', 'home'].includes(S.map) ? S.map : 'town', t: 0, paused: false, custT: 8 };
   furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); decorateTown(); updateDock();
-  const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y);
+  const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y); if (S.skates) lucy.speed = 7.5;
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); paintOrder(); requestAnimationFrame(loop);
   // Mientras no estaba: el panadero saca lo horneado y la cajera vende lo de la vitrina
