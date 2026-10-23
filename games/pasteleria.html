@@ -916,6 +916,17 @@ paintMute();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar('lucy', sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); requestAnimationFrame(loop);
+  // Diagnóstico (solo pruebas): #diag juega un poco solo y manda fotos a un servidor local
+  if (location.hash === '#diag') (async () => {
+    const errs = []; addEventListener('error', e => errs.push(e.message));
+    const post = (tag, extra) => fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag, img: cv.toDataURL('image/png'), info: Object.assign({ ua: navigator.userAgent, errs, map: game.map, coins: S.coins }, extra || {}) }) });
+    const step = n => { for (let i = 0; i < n; i++) update(1 / 30); render(); };
+    step(30); post('lucy-town');
+    tapAt({ clientX: ((14 + .5) * T - cam.x) * SCALE, clientY: ((8 + .5) * T - cam.y) * SCALE }); for (let i = 0; i < 80 && modal.hidden; i++) step(5);
+    post('lucy-shop', { shop: !modal.hidden }); closeWin();
+    game.map = 'bakery'; resize(); S.inv.flour = 3; S.inv.egg = 3; S.inv.sugar = 3; S.ovens = [{ r: 'cookie', start: now() - 99, dur: 12 }];
+    spawnCustomer(); step(60); spawnCustomer(); step(120); post('lucy-bakery', { cust: customers.length });
+  })();
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
 })();
