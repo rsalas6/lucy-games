@@ -263,7 +263,26 @@ const UPS = [
   { id: 'shelf', cat: 'deco', n: 'Estante de frascos', img: 'f-shelf', cost: 140, star: 4, fame: 8 },
   { id: 'board', cat: 'deco', n: 'Pizarrón de menú', img: 'd-menuboard', cost: 100, star: 4, fame: 7 },
 ];
+// Adornos del pueblo frente a la pastelería: { img, x, yb, tw } en cuadros del pueblo
+UPS.push(
+  { id: 't-flowers1', cat: 'pueblo', n: 'Flores en la entrada', img: 'p-flowers', cost: 60, star: 1, fame: 3, spot: [[16, 12, 2], [26, 12, 2]] },
+  { id: 't-lamps', cat: 'pueblo', n: 'Faroles', img: 'p-lamp', cost: 90, star: 1, fame: 4, spot: [[20, 15, 1], [23, 15, 1]] },
+  { id: 't-bench', cat: 'pueblo', n: 'Bancas', img: 'p-bench', cost: 120, star: 2, fame: 5, spot: [[16, 15, 2], [24, 15, 2]] },
+  { id: 't-berries', cat: 'pueblo', n: 'Más arbustos de fresa', img: 'p-berry', cost: 200, star: 2, fame: 3, berries: [[41, 17], [43, 15]] },
+  { id: 't-trees', cat: 'pueblo', n: 'Arbolitos', img: 'p-tree', cost: 150, star: 2, fame: 5, spot: [[16, 17, 2], [24, 17, 2]] },
+  { id: 't-fountain', cat: 'pueblo', n: 'Fuente de la pastelería', img: 'p-fountain', cost: 400, star: 3, fame: 12, spot: [[26, 16, 3]] },
+);
 const UPI = Object.fromEntries(UPS.map(u => [u.id, u]));
+// Pone en el pueblo los adornos comprados (cada uno ocupa su lugar sin tapar caminos)
+function decorateTown() {
+  const m = maps.town;
+  for (const u of UPS) {
+    if (u.cat !== 'pueblo' || !S.ups[u.id] || m.placed?.[u.id]) continue;
+    (m.placed = m.placed || {})[u.id] = 1;
+    (u.spot || []).forEach(([x, yb, tw]) => { if (!m.solid[x + yb * m.w] && !m.doors[x + yb * m.w]) addObj(m, u.img, x, yb, tw, Math.min(tw, 2), 1); });
+    (u.berries || []).forEach(([x, y], k) => addObj(m, 'p-berry', x, y, 2, 1, 1, { gather: 'strawberry', gid: 'tb' + k }));
+  }
+}
 // Tareas que guían (cuando se acaban, se repiten con más)
 const TASKS = [
   { t: 'Ve a la granja por huevos', img: 'ing-egg', ev: 'buy:egg', n: 1, r: 10 },
@@ -289,6 +308,7 @@ const TASKS = [
   { t: 'Hornea un pay de manzana', img: 'des-applepie', ev: 'bake:applepie', n: 1, r: 40 },
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
   { t: 'Entrega un pedido especial', img: 'des-bdaycake', ev: 'order', n: 1, r: 60 },
+  { t: 'Pon flores frente a tu pastelería', img: 'p-flowers', ev: 'up:t-flowers1', n: 1, r: 30 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -853,7 +873,7 @@ function openUpgrades() {
   sfx.tap(); let tab = openUpgrades.tab || 'equipo';
   const draw = () => {
     const st = starsOf(S.fame), list = tab === 'recetas' ? REC.filter(r => r.buy).map(r => ({ id: 'rec:' + r.id, rec: r, n: r.n, img: 'des-' + r.id, cost: r.buy, star: r.star, d: `Se vende en ${priceOf(r)}` })) : UPS.filter(u => u.cat === tab);
-    openWin(head('coin', 'Mejorar pastelería', `Tienes ${S.coins} monedas · ${'★'.repeat(st)}`) + `<div class="tabs"><button class="tab${tab === 'equipo' ? ' on' : ''}" data-t="equipo">Equipo y empleados</button><button class="tab${tab === 'deco' ? ' on' : ''}" data-t="deco">Decoración</button><button class="tab${tab === 'recetas' ? ' on' : ''}" data-t="recetas">Recetas</button></div><div class="body"><div class="grid">` +
+    openWin(head('coin', 'Mejorar pastelería', `Tienes ${S.coins} monedas · ${'★'.repeat(st)}`) + `<div class="tabs"><button class="tab${tab === 'equipo' ? ' on' : ''}" data-t="equipo">Equipo y empleados</button><button class="tab${tab === 'deco' ? ' on' : ''}" data-t="deco">Decoración</button><button class="tab${tab === 'recetas' ? ' on' : ''}" data-t="recetas">Recetas</button><button class="tab${tab === 'pueblo' ? ' on' : ''}" data-t="pueblo">Pueblo</button></div><div class="body"><div class="grid">` +
       list.map(u => { const own = u.rec ? S.recipes.includes(u.rec.id) : S.ups[u.id], lock = u.star > st || (u.need && !S.ups[u.need]);
         const pic = u.img.startsWith('ch-') ? portrait(u.img.slice(3)) : src(u.img);
         return `<button class="card${own ? '' : lock ? ' lock off' : S.coins < u.cost ? ' off' : ''}" data-u="${u.id}">${own ? '<span class="own">¡Listo!</span>' : lock ? `<span class="own">${'★'.repeat(u.star)}</span>` : ''}<img class="pic" alt="" src="${pic}"><span class="name">${u.n}</span>${u.d ? `<span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">${u.d}</span>` : ''}${own ? '' : priceTag(u.cost)}${u.fame && !own ? `<span style="font-size:13px;color:#d0508a">+${u.fame} fama</span>` : ''}</button>`; }).join('') + '</div></div>');
@@ -864,7 +884,7 @@ function openUpgrades() {
       if (u.star > starsOf(S.fame) || (u.need && !S.ups[u.need])) { sfx.no(); toast(u.need && !S.ups[u.need] ? `Primero compra: ${UPI[u.need].n}` : `Se desbloquea con ${u.star} estrellas`, 'heart'); return; }
       if (S.coins < u.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; }
       S.coins -= u.cost; S.ups[u.id] = 1; sfx.levelup(); refreshHud(); if (u.fame) addFame(u.fame);
-      furnishBakery(); spawnStaff(); toast(`¡${u.n}!`, u.img.startsWith('ch-') ? null : u.img); event('up:' + u.id); draw();
+      furnishBakery(); spawnStaff(); decorateTown(); toast(`¡${u.n}!`, u.img.startsWith('ch-') ? null : u.img); event('up:' + u.id); draw();
     }));
   };
   draw();
@@ -1317,7 +1337,7 @@ paintMute();
   await loadAll(p => { bar.style.width = Math.max(8, p * 100) + '%'; window.LEON_PROGRESS = p; });
   $('#loading').hidden = true;
   game = { map: ['bakery', 'home'].includes(S.map) ? S.map : 'town', t: 0, paused: false, custT: 8 };
-  furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); updateDock();
+  furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); decorateTown(); updateDock();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y);
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); paintOrder(); requestAnimationFrame(loop);
