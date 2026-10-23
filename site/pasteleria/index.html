@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023105315';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023105505';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -381,6 +381,7 @@ const TASKS = [
   { t: 'Vende 15 postres', img: 'coin', ev: 'sell', n: 15, r: 80 },
   { t: 'Entrega un pedido especial', img: 'des-bdaycake', ev: 'order', n: 1, r: 60 },
   { t: 'Pon flores frente a tu pastelería', img: 'p-flowers', ev: 'up:t-flowers1', n: 1, r: 30 },
+  { t: 'Ponle un accesorio a un gatito', img: 'cat-coco-icon', ev: 'dresscat', n: 1, r: 30 },
   { t: 'Llega a 3 estrellas', img: 'heart', ev: 'star', n: 3, r: 100, abs: 1 },
   { t: 'Amplía tu casa', img: 'b-home', ev: 'home:lvl', n: 1, r: 120 },
   { t: 'Hornea un pastel de fresa', img: 'des-strawcake', ev: 'bake:strawcake', n: 1, r: 80 },
@@ -440,6 +441,8 @@ const sheetOf = id => id === 'lucy' ? 'lucy' : 'lucy-' + id;
 // Paredes [papel, raya, puntitos] y pisos [A, B] que se pueden comprar
 const WALLS = [{ n: 'Rosa', c: ['#ffe3ef', '#ffd0e4', '#ffffff'], cost: 0 }, { n: 'Menta', c: ['#dff7ee', '#c6efe0', '#ffffff'], cost: 80 }, { n: 'Lavanda', c: ['#ece4ff', '#ddd0ff', '#ffffff'], cost: 80 }, { n: 'Limón', c: ['#fff6d6', '#ffedb0', '#ffffff'], cost: 80 }, { n: 'Cielo', c: ['#e0f1ff', '#c8e6ff', '#ffffff'], cost: 120 }];
 const FLOORS = [{ n: 'Madera', c: ['#e8c49c', '#dcb488'], cost: 0, wood: 1 }, { n: 'Cuadros rosas', c: ['#fff3e4', '#ffd3e4'], cost: 90 }, { n: 'Cuadros menta', c: ['#f2fff9', '#c9efe0'], cost: 90 }, { n: 'Alfombra azul', c: ['#bcdcff', '#b0d4ff'], cost: 140 }, { n: 'Madera oscura', c: ['#b07a50', '#a06c44'], cost: 140, wood: 1 }];
+// Accesorios para los gatos (se dibujan con código sobre la cabeza)
+const ACCS = [{ id: 'bow', n: 'Moño', cost: 60, c: '#ff6fae' }, { id: 'flower', n: 'Flor', cost: 70, c: '#ffd23a' }, { id: 'party', n: 'Gorrito de fiesta', cost: 90, c: '#7ad0ff' }, { id: 'crown', n: 'Corona', cost: 200, c: '#ffc83a', star: 2 }];
 const HOME_SIZES = [{ w: 11, h: 9, cost: 0 }, { w: 13, h: 10, cost: 450, n: 'Casa mediana' }, { w: 15, h: 11, cost: 1400, n: 'Casa grande' }];
 
 /* ---------- Guardado ---------- */
@@ -448,6 +451,7 @@ let S = FRESH();
 try { const j = JSON.parse(localStorage.getItem('lucyBakery')); if (j && j.v === 1) S = Object.assign(FRESH(), j); } catch (e) {}
 // Casa nueva: viene con cama, camita y platos para los gatos y un tapete
 if (!S.recipes) S.recipes = [];
+if (!S.accs) { S.accs = []; S.catAcc = {}; }
 if (S.bowl == null) { S.bowl = 1; S.bowlT = now(); S.mail = 0; }
 if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
 if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 1, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 9, y: 6 }], store: [] };
@@ -466,7 +470,7 @@ const CHARS = ['lucy', 'lucy-fresa', 'lucy-pintora', 'lucy-gatita', 'lucy-prince
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-furniture', 'b-boutique', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
@@ -667,7 +671,7 @@ function stepChar(c, dt, m, onArrive) {
 }
 
 /* ---------- Cámara y dibujo ---------- */
-const cv = $('#world'), cx = cv.getContext('2d');
+const cv = $('#world'); let cx = cv.getContext('2d');
 let SCALE = 3, VW = 0, VH = 0, cam = { x: 0, y: 0 };
 function resize() {
   const dpr = Math.min(2, devicePixelRatio || 1); VW = innerWidth; VH = innerHeight; cv.width = VW * dpr; cv.height = VH * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -721,7 +725,17 @@ function drawCat(k) {
   const w = T * SCALE * 1.05, h = w * ch / cw, lift = (k.on ? T * SCALE * .9 : 0) + (k.state === 'play' ? Math.abs(Math.sin(game.t * 8)) * T * SCALE * .25 : 0), sx = ((k.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((k.py + 1) * T - cam.y) * SCALE - h - lift + (k.state === 'sleep' ? T * SCALE * .1 : 0);
   cx.fillStyle = 'rgba(40,20,40,.16)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h + lift - T * SCALE * .05, w * .32, T * SCALE * .1, 0, 0, 7); cx.fill();
   cx.drawImage(im, col * cw, row * ch, cw, ch, sx, sy, w, h);
+  const acc = S.catAcc[k.id];
+  if (acc) { const HEAD = { '0,0': [.42, .14], '0,1': [.26, .2], '0,2': [.26, .2], '0,3': [.36, .3], '1,0': [.42, .14], '1,1': [.74, .2], '1,2': [.74, .2], '1,3': [.72, .32] }, hp = HEAD[row + ',' + col] || [.45, .15]; drawAcc(acc, sx + w * hp[0], sy + h * hp[1], w * .3); }
   if (k.state === 'sleep' && game.t % 2 < 1.4) { cx.font = `${Math.round(T * SCALE * .4)}px Lilita One`; cx.fillStyle = '#fff'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 3; const zx = sx + w * .8, zy = sy - (game.t % 2) * 8; cx.strokeText('z', zx, zy); cx.fillText('z', zx, zy); }
+}
+function drawAcc(id, x, y, s) {
+  const a = ACCS.find(q => q.id === id); if (!a) return; cx.save(); cx.translate(x, y); cx.lineWidth = Math.max(2, s * .12); cx.strokeStyle = '#4a2a4a'; cx.fillStyle = a.c;
+  if (id === 'bow') { cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(-s * .6, -s * .35); cx.lineTo(-s * .6, s * .35); cx.closePath(); cx.moveTo(0, 0); cx.lineTo(s * .6, -s * .35); cx.lineTo(s * .6, s * .35); cx.closePath(); cx.fill(); cx.stroke(); cx.beginPath(); cx.arc(0, 0, s * .18, 0, 7); cx.fill(); cx.stroke(); }
+  else if (id === 'flower') { for (let i = 0; i < 5; i++) { const g = i / 5 * Math.PI * 2; cx.beginPath(); cx.arc(Math.cos(g) * s * .3, Math.sin(g) * s * .3, s * .22, 0, 7); cx.fill(); cx.stroke(); } cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(0, 0, s * .18, 0, 7); cx.fill(); cx.stroke(); }
+  else if (id === 'party') { cx.beginPath(); cx.moveTo(-s * .4, s * .2); cx.lineTo(0, -s * .8); cx.lineTo(s * .4, s * .2); cx.closePath(); cx.fill(); cx.stroke(); cx.fillStyle = '#ff6fae'; cx.beginPath(); cx.arc(0, -s * .8, s * .14, 0, 7); cx.fill(); cx.stroke(); cx.fillStyle = '#fff'; cx.fillRect(-s * .2, -s * .3, s * .14, s * .14); }
+  else if (id === 'crown') { cx.beginPath(); cx.moveTo(-s * .5, s * .2); cx.lineTo(-s * .5, -s * .3); cx.lineTo(-s * .25, 0); cx.lineTo(0, -s * .45); cx.lineTo(s * .25, 0); cx.lineTo(s * .5, -s * .3); cx.lineTo(s * .5, s * .2); cx.closePath(); cx.fill(); cx.stroke(); cx.fillStyle = '#ff6fae'; cx.beginPath(); cx.arc(0, s * .02, s * .09, 0, 7); cx.fill(); }
+  cx.restore();
 }
 function drawSparkle(wx, wy) { const sx = (wx - cam.x) * SCALE, sy = (wy - cam.y) * SCALE, s = SCALE * 3; cx.fillStyle = '#fff8a0'; cx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, r = i % 2 ? s * .35 : s; cx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } cx.fill(); }
 function drawChar(c, scale = 1) {
@@ -827,6 +841,7 @@ function guideTarget() {
   if (kind === 'visit') return game.map === 'home' ? null : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'pet') { if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const k = cats[S.taskN % 2] || cats[0]; return { map: 'home', x: k.px, y: k.py - (k.on ? 1 : 0), h: .7 }; }
   if (kind === 'feedcats') { if (!(S.inv.catfood > 0)) return game.map === 'town' ? doorOf('shop:grocery') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbowl'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
+  if (kind === 'dresscat') { if (!S.accs.length) return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y }; if (game.map !== 'home') return game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y }; const b = maps.home.objs.find(o => o.furn && o.furn.id === 'catbed'); return b ? { map: 'home', x: b.it.x, y: b.it.y, h: .8 } : null; }
   if (kind === 'outfit') return game.map === 'town' ? doorOf('shop:boutique') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'furn' || kind === 'home') return game.map === 'town' ? doorOf('shop:furniture') : game.map === 'home' ? exitHome : { map: 'bakery', x: bm.door.x, y: bm.door.y };
   if (kind === 'place') return game.map === 'home' ? (game.edit ? null : { btn: '#editBtn' }) : game.map === 'town' ? doorOf('home') : { map: 'bakery', x: bm.door.x, y: bm.door.y };
@@ -1225,6 +1240,7 @@ function useFurn(f, it) {
   if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
   if (f.id === 'wardrobe') { openBoutique(true); return; }
   if (f.id === 'catbowl') { fillBowl(); return; }
+  if (f.id === 'catbed') { openCatDress(); return; }
   if (f.id === 'bed' || f.id === 'princessbed') { floatText(lucy.px + .5, lucy.py - 1, 'z z z', null); sfx.ding(); return; }
   floatText(lucy.px + .5, lucy.py - 1, f.n, null);
 }
@@ -1285,6 +1301,19 @@ function openBoutique(closet) {
   draw();
 }
 
+function openCatDress() {
+  sfx.meow();
+  const draw = () => {
+    const opts = [{ id: '', n: 'Nada' }, ...ACCS.filter(a => S.accs.includes(a.id))];
+    openWin(head('cat-coco-icon', 'Vestir a los gatitos', S.accs.length ? 'Escoge qué se pone cada uno' : 'Compra accesorios en la mueblería (pestaña Gatitos)') + '<div class="body">' + cats.map(k => `<h3 style="font-weight:400;margin:8px 4px">${k.name}</h3><div class="grid">` +
+      opts.map(o => `<button class="card" data-cat="${k.id}" data-acc="${o.id}">${(S.catAcc[k.id] || '') === o.id ? '<span class="own">¡Puesto!</span>' : ''}<canvas class="pic" width="70" height="70" data-preview="${o.id}"></canvas><span class="name">${o.n}</span></button>`).join('') + '</div>').join('') + '</div>');
+    winEl.querySelectorAll('canvas[data-preview]').forEach(c => c.dataset.preview && drawAccTo(c.getContext('2d'), c.dataset.preview, 35, 40, 34));
+    winEl.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { S.catAcc[b.dataset.cat] = b.dataset.acc; sfx.happy(); const k = cats.find(c => c.id === b.dataset.cat); if (k) floatText(k.px + .5, k.py - .5, '♥', 'heart', '#ff8fc4'); event('dresscat'); draw(); }));
+  };
+  draw();
+}
+function drawAccTo(ctx, id, x, y, s) { const keep = cx; cx = ctx; drawAcc(id, x, y, s); cx = keep; }
+
 /* ---------- Mueblería: muebles, paredes, pisos y ampliar la casa ---------- */
 function openFurnShop() {
   sfx.door(); let tab = openFurnShop.tab || 'muebles';
@@ -1293,15 +1322,18 @@ function openFurnShop() {
     let body = '';
     if (tab === 'muebles') body = '<div class="grid">' + FURN.filter(f => f.cost > 0).map(f => { const lock = (f.star || 1) > st, n = owned(f.id);
       return `<button class="card${lock ? ' lock off' : S.coins < f.cost ? ' off' : ''}" data-f="${f.id}">${n ? `<span class="qty">${n}</span>` : ''}${lock ? `<span class="own">${'★'.repeat(f.star)}</span>` : ''}<img class="pic" alt="" src="${src(f.img)}"><span class="name">${f.n}</span>${priceTag(f.cost)}</button>`; }).join('') + '</div>';
+    else if (tab === 'gatitos') body = '<p style="font-family:system-ui;font-weight:700;color:#9a6a8a;margin:4px">Para ponérselos, toca la camita de los gatos en tu casa.</p><div class="grid">' + ACCS.map(a => { const own = S.accs.includes(a.id), lock = (a.star || 1) > st && !own; return `<button class="card${own ? '' : lock ? ' lock off' : S.coins < a.cost ? ' off' : ''}" data-acc="${a.id}">${own ? '<span class="own">¡Tuyo!</span>' : lock ? `<span class="own">${'★'.repeat(a.star)}</span>` : ''}<canvas class="pic" width="70" height="70" data-preview="${a.id}"></canvas><span class="name">${a.n}</span>${own ? '' : priceTag(a.cost)}</button>`; }).join('') + '</div>';
     else {
       const nx = HOME_SIZES[S.home.lvl + 1];
       body = `<h3 style="font-weight:400;margin:4px 4px 8px">Ampliar la casa</h3><div class="grid">` + (nx ? `<button class="card${S.coins < nx.cost ? ' off' : ''}" data-grow="1"><img class="pic" alt="" src="${src('b-home')}"><span class="name">${nx.n}</span><span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">Más espacio para tus muebles</span>${priceTag(nx.cost)}</button>` : '<div class="card"><img class="pic" alt="" src="' + src('b-home') + '"><span class="name">¡Tu casa ya es la más grande!</span></div>') + '</div>' +
         `<h3 style="font-weight:400;margin:16px 4px 8px">Paredes</h3><div class="grid">` + WALLS.map((w, i) => { const own = S.home.walls.includes(i); return `<button class="card${S.home.wall === i ? '' : !own && S.coins < w.cost ? ' off' : ''}" data-wall="${i}">${S.home.wall === i ? '<span class="own">¡Puesta!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:repeating-linear-gradient(90deg,${w.c[0]} 0 12px,${w.c[1]} 12px 20px);box-shadow:inset 0 0 0 3px rgba(0,0,0,.06)"></span><span class="name">${w.n}</span>${own ? '' : priceTag(w.cost)}</button>`; }).join('') + '</div>' +
         `<h3 style="font-weight:400;margin:16px 4px 8px">Pisos</h3><div class="grid">` + FLOORS.map((f, i) => { const own = S.home.floors.includes(i); return `<button class="card${S.home.floor === i ? '' : !own && S.coins < f.cost ? ' off' : ''}" data-floor="${i}">${S.home.floor === i ? '<span class="own">¡Puesto!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:${f.wood ? `repeating-linear-gradient(0deg,${f.c[0]} 0 14px,${f.c[1]} 14px 16px)` : `conic-gradient(${f.c[0]} 25%,${f.c[1]} 0 50%,${f.c[0]} 0 75%,${f.c[1]} 0) 0 0/28px 28px`}"></span><span class="name">${f.n}</span>${own ? '' : priceTag(f.cost)}</button>`; }).join('') + '</div>';
     }
-    openWin(`<header><img alt="" src="${portrait('npc-c')}"><div style="flex:1"><h2>Mueblería</h2><p>¡Todo para tu casa, Lucy! Lo que compres queda guardado para acomodarlo.</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="tabs"><button class="tab${tab === 'muebles' ? ' on' : ''}" data-t="muebles">Muebles</button><button class="tab${tab === 'casa' ? ' on' : ''}" data-t="casa">Casa, paredes y pisos</button></div><div class="body">${body}</div>`);
+    openWin(`<header><img alt="" src="${portrait('npc-c')}"><div style="flex:1"><h2>Mueblería</h2><p>¡Todo para tu casa, Lucy! Lo que compres queda guardado para acomodarlo.</p></div><button class="close" aria-label="Cerrar">✕</button></header><div class="tabs"><button class="tab${tab === 'muebles' ? ' on' : ''}" data-t="muebles">Muebles</button><button class="tab${tab === 'casa' ? ' on' : ''}" data-t="casa">Casa, paredes y pisos</button><button class="tab${tab === 'gatitos' ? ' on' : ''}" data-t="gatitos">Gatitos</button></div><div class="body">${body}</div>`);
     winEl.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { tab = openFurnShop.tab = b.dataset.t; sfx.tap(); draw(); }));
     winEl.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { const f = FURNI[b.dataset.f]; if ((f.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${f.star} estrellas`, 'heart'); return; } if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.store.push(f.id); refreshHud(); sfx.buy(); toast(`¡${f.n}! Acomódalo en tu casa`, f.img); event('furn'); draw(); }));
+    winEl.querySelectorAll('canvas[data-preview]').forEach(c => drawAccTo(c.getContext('2d'), c.dataset.preview, 35, 40, 34));
+    winEl.querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => { const a = ACCS.find(q => q.id === b.dataset.acc); if (S.accs.includes(a.id)) return; if ((a.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${a.star} estrellas`, 'heart'); return; } if (S.coins < a.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= a.cost; S.accs.push(a.id); refreshHud(); sfx.buy(); toast(`¡${a.n} para los gatitos! Toca su camita para ponérselo`, 'cat-coco-icon'); draw(); }));
     winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); spawnCats(); refreshHud(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
     winEl.querySelectorAll('[data-wall]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.wall, w = WALLS[i]; if (!S.home.walls.includes(i)) { if (S.coins < w.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= w.cost; S.home.walls.push(i); sfx.buy(); } S.home.wall = i; homeTiles(); refreshHud(); draw(); }));
     winEl.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.floor, f = FLOORS[i]; if (!S.home.floors.includes(i)) { if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.floors.push(i); sfx.buy(); } S.home.floor = i; homeTiles(); refreshHud(); draw(); }));
