@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261024060512';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261024060855';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -607,7 +607,7 @@ const CHARS = ['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pi
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
-  'b-home', 'b-home2', 'b-home3', 'b-home4', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'i-skates', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
+  'b-home', 'b-home2', 'b-home3', 'b-home4', 't-cherry', 't-cherry2', 't-hedge', 't-flowerbed', 't-orange', 't-palm', 't-fount2', 't-balloons', 't-house-blue', 't-house-red', 't-house-green', 't-house-purple', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'i-skates', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
   'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mixtable-wide', 'mixtable-tall', 'mix-bowl2', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
@@ -620,7 +620,7 @@ function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(
 // Cada mapa: ancho/alto en cuadros, tipo de piso, cuadros sólidos, objetos con su dibujo y puertas
 const T = 16;
 function makeMap(w, h) { return { w, h, ground: new Uint8Array(w * h), solid: new Uint8Array(w * h), objs: [], doors: {}, acts: {} }; }
-const G_IWALL = 7, G_GRASS = 0, G_PATH = 1, G_FLOWER = 2, G_WATER = 3, G_FLOOR = 4, G_WALL = 5, G_PLAZA = 6;
+const G_BRIDGE = 8, G_IWALL = 7, G_GRASS = 0, G_PATH = 1, G_FLOWER = 2, G_WATER = 3, G_FLOOR = 4, G_WALL = 5, G_PLAZA = 6;
 function setRect(m, x0, y0, x1, y1, f) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (x >= 0 && y >= 0 && x < m.w && y < m.h) f(x + y * m.w, x, y); }
 // Objeto: dibujo `img` de `tw` cuadros de ancho, apoyado en (x, yb); bloquea `fw`×`fh` cuadros abajo
 function addObj(m, img, x, yb, tw, fw = tw, fh = 1, extra = {}) {
@@ -628,13 +628,15 @@ function addObj(m, img, x, yb, tw, fw = tw, fh = 1, extra = {}) {
   setRect(m, o.fx, yb - fh + 1, o.fx + fw - 1, yb, i => (m.solid[i] = 1)); return o;
 }
 function buildTown() {
-  const m = makeMap(46, 36), W = m.w, H = m.h;
+  const m = makeMap(62, 50), W = m.w, H = m.h;
   // Caminos
   const path = (x0, y0, x1, y1) => setRect(m, x0, y0, x1, y1, i => (m.ground[i] = G_PATH));
-  path(2, 18, 43, 19); path(21, 13, 22, 33); path(7, 12, 7, 17); path(14, 11, 14, 17); path(33, 13, 33, 17); path(7, 20, 7, 25); path(35, 20, 35, 25);
+  path(2, 18, 59, 19); path(21, 13, 22, 47); path(50, 13, 51, 47); path(2, 43, 59, 44); path(44, 28, 58, 29);
+  // Río con dos puentes de madera
+  setRect(m, 2, 38, W - 3, 39, i => { m.ground[i] = G_WATER; m.solid[i] = 1; }); setRect(m, 21, 38, 22, 39, i => { m.ground[i] = G_BRIDGE; m.solid[i] = 0; }); setRect(m, 50, 38, 51, 39, i => { m.ground[i] = G_BRIDGE; m.solid[i] = 0; }); path(7, 12, 7, 17); path(14, 11, 14, 17); path(33, 13, 33, 17); path(7, 20, 7, 25); path(35, 20, 35, 25);
   setRect(m, 25, 20, 31, 25, i => (m.ground[i] = G_PLAZA));
   // Flores sueltas
-  for (let k = 0; k < 120; k++) { const x = 3 + (Math.random() * (W - 6) | 0), y = 3 + (Math.random() * (H - 6) | 0), i = x + y * W; if (m.ground[i] === G_GRASS) m.ground[i] = G_FLOWER; }
+  for (let k = 0; k < 260; k++) { const x = 3 + (Math.random() * (W - 6) | 0), y = 3 + (Math.random() * (H - 6) | 0), i = x + y * W; if (m.ground[i] === G_GRASS) m.ground[i] = G_FLOWER; }
   // Árboles en la orilla del pueblo
   const trees = [];
   for (let x = 0; x < W; x += 2) { trees.push([x, 1], [x, H - 1]); }
@@ -664,6 +666,22 @@ function buildTown() {
   for (let x = 3; x <= 11; x++) if (x !== 7) addObj(m, 'p-fence', x, 16, 1, 1, 1);
   [[2, 22], [10, 31], [31, 31], [43, 22], [19, 22], [28, 15]].forEach(([x, y]) => addObj(m, 'p-tree', x, y, 2, 1, 1));
   m.animals = [{ img: 'p-hen', x: 4, y: 14, area: [3, 13, 11, 15], gather: 'egg', gid: 'h0' }, { img: 'p-hen', x: 9, y: 13, area: [3, 13, 11, 15], gather: 'egg', gid: 'h1' }, { img: 'p-cow', x: 6, y: 14, area: [3, 13, 11, 15], gather: 'milk', gid: 'c0', big: 1 }];
+  // Barrio de los vecinos al este: casas de colores con su caminito
+  [['t-house-blue', 44, 16, 46], ['t-house-red', 53, 16, 55], ['t-house-green', 44, 26, 46], ['t-house-purple', 53, 26, 55]].forEach(([img, x, yb, dx]) => { addObj(m, img, x, yb, 5, 5, 3); const py = yb < 20 ? [yb + 1, 17] : [yb + 1, 27]; setRect(m, dx, Math.min(...py), dx, Math.max(...py), i => { if (!m.solid[i]) m.ground[i] = G_PATH; }); });
+  [[45, 12], [52, 12], [57, 12]].forEach(([x, y]) => addObj(m, 't-cherry', x, y, 3, 2, 1));
+  [[45, 34], [48, 34], [53, 34], [56, 34]].forEach(([x, y]) => addObj(m, 't-cherry2', x, y, 2, 1, 1));
+  [[45, 21], [56, 21], [45, 31], [56, 31]].forEach(([x, y]) => addObj(m, 't-flowerbed', x, y, 2, 2, 1));
+  [[52, 22], [52, 31]].forEach(([x, y]) => addObj(m, 't-hedge', x, y, 1, 1, 1));
+  // Parque de los cerezos al sur del río: fuente, bancas, puesto de globos y flores
+  addObj(m, 't-fount2', 27, 47, 3, 3, 2); addObj(m, 't-balloons', 24, 41, 2, 2, 1); addObj(m, 'p-bench', 31, 41, 2, 2, 1); addObj(m, 'p-bench', 33, 47, 2, 2, 1); addObj(m, 'p-lamp', 25, 46, 1, 1, 1); addObj(m, 'p-lamp', 31, 46, 1, 1, 1);
+  [[24, 47], [35, 41], [38, 47], [41, 41], [44, 47], [55, 47]].forEach(([x, y]) => addObj(m, 't-cherry', x, y, 3, 2, 1));
+  [[37, 41], [43, 47], [53, 41], [57, 41]].forEach(([x, y]) => addObj(m, 't-flowerbed', x, y, 2, 2, 1));
+  [[34, 37], [16, 37], [45, 37], [56, 37]].forEach(([x, y]) => addObj(m, 't-palm', x, y, 1, 1, 1));
+  // Huerto de naranjos al suroeste
+  [[4, 42], [7, 42], [10, 42], [13, 42], [4, 47], [7, 47], [10, 47], [13, 47]].forEach(([x, y]) => addObj(m, 't-orange', x, y, 2, 1, 1));
+  [[16, 41], [16, 47], [18, 46]].forEach(([x, y]) => addObj(m, 't-hedge', x, y, 1, 1, 1));
+  // Más vida en el centro: cerezos y setos junto a la calle principal
+  [[24, 16], [28, 16]].forEach(([x, y]) => { if (!m.solid[x + y * W] && !m.solid[x + 1 + y * W]) addObj(m, 't-cherry2', x, y, 2, 1, 1); });
   m.spawn = { x: 21, y: 14 };
   return m;
 }
@@ -843,8 +861,14 @@ function homeTiles() {
   mkTile('h-wallC', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#c98a5e', 0, 0, 16, 3); px(x, '#e8b48a', 0, 3, 16, 1); px(x, '#a8693e', 0, 4, 16, 1); });
   mkTile('h-wallB', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#fff8ee', 0, 9, 16, 1); px(x, '#f0dcc8', 0, 10, 16, 4); px(x, '#c98a5e', 0, 13, 16, 3); px(x, '#e8b48a', 0, 13, 16, 1); px(x, '#8a5430', 0, 15, 16, 1); });
 }
-for (let v = 0; v < 4; v++) mkTile('grass' + v, x => { px(x, '#8fd45a', 0, 0, 16, 16); const r = seeded(v + 1); for (let i = 0; i < 9; i++) { const a = r() * 15 | 0, b = r() * 15 | 0; px(x, '#76c048', a, b, 1, 2); px(x, '#a8e070', a + 1, b, 1, 1); } });
-mkTile('flower', x => { x.drawImage(tileCv.grass0, 0, 0); const cols = ['#ff8fc4', '#fff', '#ffd23a']; [[3, 4], [10, 9], [6, 12]].forEach(([a, b], k) => { px(x, cols[k], a, b, 2, 2); px(x, '#fff7b0', a, b, 1, 1); }); });
+mkTile('water0', x => { px(x, '#4fb8f0', 0, 0, 16, 16); px(x, '#7ad0ff', 2, 4, 5, 1); px(x, '#7ad0ff', 9, 10, 5, 1); px(x, '#3a9ed8', 0, 15, 16, 1); px(x, '#c8f0ff', 3, 4, 2, 1); });
+mkTile('water1', x => { px(x, '#4fb8f0', 0, 0, 16, 16); px(x, '#7ad0ff', 6, 6, 5, 1); px(x, '#7ad0ff', 1, 12, 5, 1); px(x, '#3a9ed8', 0, 15, 16, 1); px(x, '#c8f0ff', 7, 6, 2, 1); });
+mkTile('waterTop', x => { px(x, '#4fb8f0', 0, 0, 16, 16); px(x, '#8fd45a', 0, 0, 16, 2); px(x, '#b07a4a', 0, 2, 16, 2); px(x, '#3a9ed8', 0, 4, 16, 1); px(x, '#7ad0ff', 3, 9, 6, 1); });
+mkTile('bridge', x => { px(x, '#4fb8f0', 0, 0, 16, 16); px(x, '#c88a52', 1, 0, 14, 16); for (let i = 0; i < 16; i += 4) px(x, '#a86a3a', 1, i + 3, 14, 1); px(x, '#e8b07a', 1, 0, 14, 1); px(x, '#7a4a2a', 0, 0, 1, 16); px(x, '#7a4a2a', 15, 0, 1, 16); });
+// Pasto con matitas de dos tonos (como Pokémon) y florecitas de colores
+for (let v = 0; v < 4; v++) mkTile('grass' + v, x => { px(x, '#86d050', 0, 0, 16, 16); const r = seeded(v + 1); for (let i = 0; i < 7; i++) { const a = r() * 14 | 0, b = r() * 14 | 0; px(x, '#5fae3a', a, b + 1, 1, 2); px(x, '#5fae3a', a + 2, b + 1, 1, 2); px(x, '#6cbf42', a + 1, b, 1, 3); px(x, '#b4ec7a', a + 1, b, 1, 1); } if (v === 3) { px(x, '#9ee060', 4, 9, 6, 2); px(x, '#9ee060', 6, 8, 3, 1); } });
+const FLOWER_SETS = [['#ff6fae', '#fff', '#ffd23a'], ['#c38bff', '#ff8fc4', '#fff'], ['#ff5a5a', '#ffd23a', '#7ad7ff']];
+FLOWER_SETS.forEach((cols, k) => mkTile('flower' + (k || ''), x => { x.drawImage(tileCv['grass' + k], 0, 0); [[2, 3], [10, 8], [5, 12], [12, 2]].forEach(([a, b], j) => { const c = cols[j % 3]; px(x, c, a + 1, b, 1, 1); px(x, c, a, b + 1, 1, 1); px(x, c, a + 2, b + 1, 1, 1); px(x, c, a + 1, b + 2, 1, 1); px(x, '#ffe14a', a + 1, b + 1, 1, 1); px(x, '#3f8f2a', a + 1, b + 3, 1, 1); }); }));
 mkTile('path', x => { px(x, '#f0d898', 0, 0, 16, 16); const r = seeded(7); for (let i = 0; i < 10; i++) px(x, '#e0c480', r() * 15 | 0, r() * 15 | 0, 2, 1); px(x, '#f8e6b0', 0, 0, 16, 1); });
 mkTile('plaza', x => { px(x, '#e8dcc8', 0, 0, 16, 16); px(x, '#d4c6ae', 0, 7, 16, 1); px(x, '#d4c6ae', 0, 15, 16, 1); px(x, '#d4c6ae', 7, 0, 1, 7); px(x, '#d4c6ae', 15, 8, 1, 7); });
 mkTile('floorA', x => { px(x, '#fff3e4', 0, 0, 16, 16); px(x, '#f6e2cc', 0, 15, 16, 1); px(x, '#f6e2cc', 15, 0, 1, 16); px(x, '#ffffff', 1, 1, 3, 1); });
@@ -942,7 +966,7 @@ function resize() {
   // Cuántos cuadros caben: en el pueblo ~13 de alto, adentro de la pastelería se ve toda
   const inside = game && game.map !== 'town', mm = game && maps[game.map];
   const port = VH > VW * 1.15 && !(game && game.edit);
-  SCALE = inside ? (port ? Math.min((VH - 215) / ((mm.h + .3) * T), VW / (6.6 * T)) : Math.min(VW / ((mm.w + .2) * T), (VH - (game.edit ? 210 : 120)) / ((mm.h + .5) * T))) : Math.max(VW, VH) / (T * (VW > VH ? 19 : 14));
+  SCALE = inside ? (port ? Math.min((VH - 215) / ((mm.h + .3) * T), VW / (6.6 * T)) : Math.min(VW / ((mm.w + .2) * T), (VH - (game.edit ? 210 : 120)) / ((mm.h + .5) * T))) : Math.max(VW, VH) / (T * (VW > VH ? 20 : 16.5));
   // Casas muy grandes en pantallas chicas: no se encogen de más; la cámara sigue a Lucy
   if (inside && !port && !(game && game.edit)) SCALE = Math.max(SCALE, Math.min(34 / T, (VH - 120) / (9.5 * T)));
   // Acomodando en pantallas chicas: los muebles no se ven diminutos; la casa se recorre arrastrando el piso
@@ -1103,7 +1127,7 @@ function render() {
     const g = m.ground[x + y * m.w], X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
     const hp = m.home ? 'h-' : '';
     const rk = m.roomKind ? m.roomKind[x + y * m.w] : 0;
-    let t = g === G_IWALL ? 'iwall' : g === G_FLOOR && rk === 1 ? ((x + y) % 2 ? 'kitB' : 'kitA') : g === G_FLOOR && rk === 2 ? 'bathT' : g === G_PATH ? 'path' : g === G_FLOWER ? 'flower' : g === G_PLAZA ? 'plaza' : g === G_FLOOR ? hp + ((x + y) % 2 ? 'floorB' : 'floorA') : g === G_WALL ? (x === 0 || x === m.w - 1 || y === m.h - 1 ? 'wallSide' : y === 0 ? hp + 'crown' : y === 1 ? hp + 'paper' : 'panel') : 'grass' + ((x * 7 + y * 13) % 4);
+    let t = g === G_IWALL ? 'iwall' : g === G_FLOOR && rk === 1 ? ((x + y) % 2 ? 'kitB' : 'kitA') : g === G_FLOOR && rk === 2 ? 'bathT' : g === G_PATH ? 'path' : g === G_FLOWER ? ['flower', 'flower1', 'flower2'][(x * 5 + y * 3) % 3] : g === G_PLAZA ? 'plaza' : g === G_BRIDGE ? 'bridge' : g === G_WATER ? (m.ground[x + (y - 1) * m.w] !== G_WATER ? 'waterTop' : (x + y + (game.t * 2 | 0)) % 2 ? 'water0' : 'water1') : g === G_FLOOR ? hp + ((x + y) % 2 ? 'floorB' : 'floorA') : g === G_WALL ? (x === 0 || x === m.w - 1 || y === m.h - 1 ? 'wallSide' : y === 0 ? hp + 'crown' : y === 1 ? hp + 'paper' : 'panel') : 'grass' + ((x * 7 + y * 13) % 4);
     if (t === 'wallSide' && inside) { wallTop(X, Y, ts, (a, b) => { const q = m.ground[a + b * m.w]; return a < 0 || b < 0 || a >= m.w || b >= m.h || q === G_WALL; }, x, y); continue; }
     cx.drawImage(tileCv[t], X, Y, ts, ts);
   }
@@ -1966,7 +1990,7 @@ function openContest() {
 /* ---------- Vecinos del pueblo que pasean ---------- */
 function spawnTownNpcs() {
   const m = maps.town; npcs = [];
-  [['npc-a', 26, 19], ['npc-b', 10, 19], ['npc-c', 33, 21], ['npc-d', 22, 27]].forEach(([s, x, y]) => { const n = mkChar(s, x, y); n.speed = 2.2; n.wait = rand(1, 4); npcs.push(n); });
+  [['npc-a', 26, 19], ['npc-b', 10, 19], ['npc-c', 33, 21], ['npc-d', 22, 27], ['npc-c', 48, 19], ['npc-a', 55, 28], ['npc-d', 28, 43], ['npc-b', 40, 44], ['npc-a', 9, 44], ['npc-d', 51, 33]].forEach(([s, x, y]) => { const n = mkChar(s, x, y); n.speed = 2.2; n.wait = rand(1, 4); npcs.push(n); });
   // El jurado del concurso de pasteles se queda detrás de su mesa
   const j = mkChar('baker', 28, 20); j.judge = 1; j.dir = 0; j.wait = 1e9; npcs.push(j);
   for (const a of m.animals) { a.px = a.x; a.py = a.y; a.wait = rand(1, 3); a.face = 1; }
