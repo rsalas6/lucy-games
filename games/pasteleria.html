@@ -448,7 +448,7 @@ const ACCS = [{ id: 'bow', n: 'Moño', cost: 60, c: '#ff6fae' }, { id: 'flower',
 // Planos de la casa: # muro, | y - muros entre cuartos, F cerca del patio, D puerta, espacio = afuera.
 // Letras = piso de cada cuarto: s sala, r recámara, k cocina, b baño, g patio con pasto
 const ROOM_N = { s: 'Sala', r: 'Recámara', k: 'Cocina', b: 'Baño', g: 'Patio', j: 'Cuarto de juegos', c: 'Cuarto de los gatos' };
-const ROOM_KIT = { k: ['kfridge', 'kcounter', 'ksink', 'kstove', 'kcounter'], g: ['flowerbed', 'berrypot', 'flowerbed'], b: ['towels', 'bathmat'], j: ['rainbowrug', 'toybox', 'rockinghorse'], c: ['cattree', 'catcastle', 'yarn', 'cushion'] };
+const ROOM_KIT = { k: ['kfridge', 'kcounter', 'ksink', 'kstove', 'kcounter', 'dining@'], g: ['flowerbed', 'berrypot', 'flowerbed'], b: ['towels', 'bathmat'], j: ['rainbowrug@', 'toybox', 'rockinghorse'], c: ['cattree', 'catcastle', 'yarn', 'cushion'] };
 const HOME_SIZES = [
   { cost: 0, n: 'Casita', desc: 'Sala y recámara', plan: [
     '################',
@@ -539,7 +539,7 @@ const NEED = [
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
 // Dibujos corregidos con nombre nuevo (el service worker guarda los viejos para siempre)
-const FIXED = new Set(['d-bigbear', 'd-cupcaketower', 'd-tablefountain', 'des-cottoncandy', 'h-bathmat', 'h-bookshelf', 'h-catbowl', 'h-cattree', 'h-desk', 'h-dollhouse', 'h-duck', 'h-hamper', 'h-nightstand', 'h-princessbed', 'h-rug2', 'h-rug3']);
+const FIXED = new Set(['d-flowerarch', 'd-bigbear', 'd-cupcaketower', 'd-tablefountain', 'des-cottoncandy', 'h-bathmat', 'h-bookshelf', 'h-catbowl', 'h-cattree', 'h-desk', 'h-dollhouse', 'h-duck', 'h-hamper', 'h-nightstand', 'h-princessbed', 'h-rug2', 'h-rug3']);
 const src = n => UP + n + (FIXED.has(n) ? '.v2' : '') + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
 
@@ -711,9 +711,12 @@ function buildHome() {
   for (const [rk, ids] of Object.entries(ROOM_KIT)) {
     const kr = rooms[rk]; if (!kr || S.home.kits[rk]) continue; S.home.kits[rk] = 1;
     if (rk === 'k' && S.home.items.concat(S.home.store.map(id => ({ id }))).some(it => FURNI[it.id] && FURNI[it.id].img.startsWith('h-k-'))) continue;
-    for (const id of ids) {
-      const f = FURNI[id]; let spot = null;
-      for (let y = kr.y0; y <= kr.y1 && !spot; y++) for (let x = kr.x0; x <= kr.x1 && !spot; x++) if (m.cell(x, y) === rk && !m.doorT[x + y * W] && fits(m, f, x, y) && !S.home.items.some(it => { const g = FURNI[it.id]; return g && x < it.x + g.fw && x + f.fw > it.x && y < it.y + g.fh && y + f.fh > it.y; })) spot = { x, y };
+    for (const id0 of ids) {
+      // Con @ va al centro del cuarto; los demás, contra la pared del fondo
+      const mid = id0.endsWith('@'), id = id0.replace('@', ''), f = FURNI[id]; let spot = null;
+      const order = []; for (let y = kr.y0; y <= kr.y1; y++) for (let x = kr.x0; x <= kr.x1; x++) order.push({ x, y, d: Math.hypot(x + f.fw / 2 - (kr.x0 + kr.x1 + 1) / 2, y + f.fh / 2 - (kr.y0 + kr.y1 + 1) / 2) });
+      if (mid) order.sort((a, b) => a.d - b.d);
+      for (const { x, y } of order) if (!spot && (m.cell(x, y) === rk && !m.doorT[x + y * W] && fits(m, f, x, y) && !S.home.items.some(it => { const g = FURNI[it.id]; return g && x < it.x + g.fw && x + f.fw > it.x && y < it.y + g.fh && y + f.fh > it.y; }))) spot = { x, y };
       if (spot) S.home.items.push({ id, x: spot.x, y: spot.y, g: f.grow ? now() - 1e6 : undefined }); else S.home.store.push(id);
     }
   }
@@ -1769,7 +1772,7 @@ function openFurnShop() {
     winEl.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { const f = FURNI[b.dataset.f]; if ((f.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${f.star} estrellas`, 'heart'); return; } if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.store.push(f.id); refreshHud(); sfx.buy(); toast(`¡${f.n}! Acomódalo en tu casa`, f.img); event('furn'); draw(); }));
     winEl.querySelectorAll('canvas[data-preview]').forEach(c => drawAccTo(c.getContext('2d'), c.dataset.preview, 35, 40, 34));
     winEl.querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => { const a = ACCS.find(q => q.id === b.dataset.acc); if (S.accs.includes(a.id)) return; if ((a.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${a.star} estrellas`, 'heart'); return; } if (S.coins < a.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= a.cost; S.accs.push(a.id); refreshHud(); sfx.buy(); toast(`¡${a.n} para los gatitos! Toca su camita para ponérselo`, 'cat-coco-icon'); draw(); }));
-    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if ((nx.star || 0) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${nx.star} estrellas`, 'heart'); return; } if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); homeLook(); spawnCats(); refreshHud(); checkComfort(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
+    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if ((nx.star || 0) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${nx.star} estrellas`, 'heart'); return; } if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); homeLook(); if (game.map === 'home') { const sp = maps.home.spawn; lucy.x = lucy.px = sp.x; lucy.y = lucy.py = sp.y; lucy.path = []; render.snap = render.snapY = true; } spawnCats(); refreshHud(); checkComfort(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
     winEl.querySelectorAll('[data-wall]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.wall, w = WALLS[i]; if (!S.home.walls.includes(i)) { if (S.coins < w.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= w.cost; S.home.walls.push(i); sfx.buy(); } S.home.wall = i; homeTiles(); refreshHud(); draw(); }));
     winEl.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.floor, f = FLOORS[i]; if (!S.home.floors.includes(i)) { if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.floors.push(i); sfx.buy(); } S.home.floor = i; homeTiles(); refreshHud(); draw(); }));
   };
@@ -1969,7 +1972,7 @@ paintMute();
     post('lucy-house', { townImg: maps.town.homeObj.img, size: maps.home.w + 'x' + maps.home.h, kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
     // Ampliar desde la mueblería: la casa crece y la del pueblo cambia de dibujo
     S.home.lvl = 0; maps.home = buildHome(); homeLook(); S.coins += 2000; openFurnShop(); winEl.querySelector('.tab[data-t=casa]').click(); winEl.querySelector('[data-grow]').click(); const g1 = { lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w }; winEl.querySelector('[data-grow]').click(); closeWin();
-    post('lucy-grow', { g1, lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w, doors: maps.home.doorT.reduce((a, b) => a + b, 0) });
+    post('lucy-grow', { lucyOk: game.map !== 'home' || !!maps.home.floorT[lucy.x + lucy.y * maps.home.w] || !!maps.home.doors[lucy.x + lucy.y * maps.home.w], g1, lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w, doors: maps.home.doorT.reduce((a, b) => a + b, 0) });
     // Batir: ingredientes al tazón, remolino de colores y al horno
     Object.assign(S.inv, { egg: 5, flour: 5, strawberry: 5, choco: 5 }); const mr = { id: 'cupcake', n: 'Cupcake', need: { egg: 1, flour: 1, strawberry: 1, choco: 1 }, bake: 5 };
     game.map = 'bakery'; resize(); startMix(mr, 0); { const bs = [...document.querySelectorAll('#mixRow button')]; bs[0].click(); for (let i = 0; i < 12; i++) mix.__st.tick(1 / 30); bs[1].click(); for (let i = 0; i < 8; i++) mix.__st.tick(1 / 30); const rb = bs[0].getBoundingClientRect(), gq = mixGeo(mix.__st); await fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag: 'lucy-mixdrop', img: mcv.toDataURL('image/png'), info: { errs, btnTop: Math.round(rb.top), bowlBottom: Math.round(gq.by + gq.bh), titleBottom: Math.round($('#mixTitle').getBoundingClientRect().bottom), bowlTop: Math.round(gq.by) } }) }); }
