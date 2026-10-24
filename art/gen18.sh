@@ -1,0 +1,7 @@
+#!/bin/zsh
+cd "$(dirname "$0")"
+D="$(pwd)/gen"
+S="ESTILO: pixel art de videojuego estilo Pokémon Esmeralda (Game Boy Advance) pero en alta resolución, vista desde arriba en 3/4 como los edificios de los pueblos de Pokémon, colores pastel brillantes y muy tiernos, contornos oscuros limpios. SIN texto, SIN letras, SIN números, SIN marcas de agua."
+KEY="El FONDO debe ser magenta puro liso (#FF00FF) en toda la imagen, sin degradado, sin sombras en el fondo; cada objeto bien separado con mucho espacio magenta alrededor. No uses magenta dentro de los dibujos."
+codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check "Usa tu herramienta de generación de imágenes. $S $KEY Crea homes2.png (imagen ancha 16:9) en $D/ con EXACTAMENTE 2 casas en UNA fila, bien separadas, del mismo estilo que una casita de muñecas color crema con techo de teja rosa, ventanas con cortinas rosas, jardineras con flores y dos gatitos asomados (uno negro y uno blanco con manchas cafés): 1) CASA MEDIANA: un poco más ancha, con un porche de madera blanca con barandal, una ventana redonda en el techo, lámparas y macetas a los lados de la puerta; 2) CASA GRANDE: una casa de dos pisos más ancha y elegante con torrecita redonda de techo cónico rosa a un lado, balcón con flores, porche con columnitas blancas y un pequeño jardín con cerca blanca a un costado. Las dos con la puerta al centro abajo y la vista de frente igual que en Pokémon. Al final imprime NOMBRE => RUTA COMPLETA." < /dev/null > log18.txt 2>&1
+echo ALLDONE
