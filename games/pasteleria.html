@@ -867,6 +867,8 @@ function resize() {
   SCALE = inside ? (port ? Math.min((VH - 270) / ((mm.h + .3) * T), VW / (7.2 * T)) : Math.min(VW / ((mm.w + .2) * T), (VH - (game.edit ? 210 : 120)) / ((mm.h + .5) * T))) : Math.max(VW, VH) / (T * (VW > VH ? 19 : 14));
   // Casas muy grandes en pantallas chicas: no se encogen de más; la cámara sigue a Lucy
   if (inside && !port && !(game && game.edit)) SCALE = Math.max(SCALE, Math.min(34 / T, (VH - 120) / (9.5 * T)));
+  // Acomodando en pantallas chicas: los muebles no se ven diminutos; la casa se recorre arrastrando el piso
+  if (inside && game && game.edit) SCALE = Math.max(SCALE, Math.min(28 / T, (VH - 200) / (6 * T), VW / (8 * T)));
 }
 addEventListener('resize', resize);
 function drawSprite(name, x, y, w, h) { const im = IMG[name]; if (im && im.width) cx.drawImage(im, x, y, w, h); }
@@ -1007,6 +1009,13 @@ function render() {
   if (inside) { cam.y = (m.h * T - vhT) / 2 + (game.edit ? 55 / SCALE : -18);
     if (m.h * T > vhT - 150 / SCALE && !game.edit) { const my = m.h * T - vhT + 40 / SCALE, ty = clamp((lucy.py + .5) * T - vhT / 2, -64 / SCALE, my); if (render.lastMap !== game.map || render.snapY) { cam.y = ty; render.snapY = false; } else cam.y = (render.camY != null ? render.camY : ty) + (ty - (render.camY != null ? render.camY : ty)) * .15; render.camY = cam.y; } if (m.w * T > vwT + 2) { const mx = m.w * T - vwT, tx = clamp((lucy.px + .5) * T - vwT / 2, 0, mx); if (render.lastMap !== game.map) render.snap = true; cam.x = clamp(cam.x + (tx - cam.x) * (render.snap ? 1 : .15), 0, mx); render.snap = false; } else cam.x = (m.w * T - vwT) / 2; }
   else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); if (render.snap) { render.snap = false; cam.x = clamp(tx, 0, m.w * T - vwT); cam.y = clamp(ty, 0, m.h * T - vhT); } cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
+  if (inside && game.edit) {
+    const mt = 60 / SCALE, mb = 130 / SCALE, ml = 20 / SCALE, W2 = m.w * T, H2 = m.h * T;
+    if (!game.pan) game.pan = { x: (lucy.px + .5) * T - vwT / 2, y: (lucy.py + .5) * T - vhT / 2 };
+    const fitX = W2 + 2 * ml <= vwT, fitY = H2 + mt + mb <= vhT;
+    game.pan.x = fitX ? (W2 - vwT) / 2 : clamp(game.pan.x, -ml, W2 - vwT + ml); game.pan.y = fitY ? (H2 - vhT) / 2 + (mb - mt) / 2 : clamp(game.pan.y, -mt, H2 - vhT + mb);
+    cam.x = game.pan.x; cam.y = game.pan.y;
+  }
   render.lastMap = game.map;
   const x0 = Math.max(0, Math.floor(cam.x / T)), y0 = Math.max(0, Math.floor(cam.y / T)), x1 = Math.min(m.w - 1, Math.ceil((cam.x + vwT) / T)), y1 = Math.min(m.h - 1, Math.ceil((cam.y + vhT) / T)), ts = T * SCALE + .5;
   if (m.plan) drawHomeTiles(m, x0, y0, x1, y1, ts);
@@ -1508,8 +1517,8 @@ cv.addEventListener('pointermove', e => {
   if (Math.hypot(dx, dy) > 28) { drag.moved = true; drag.dir = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 2) : (dy < 0 ? 3 : 0); }
 });
 // En modo acomodar el arrastre se escucha en toda la ventana (el dedo puede pasar sobre la bandeja)
-addEventListener('pointermove', e => { if (game && game.edit && editSel) editMove(e); });
-['pointerup', 'pointercancel'].forEach(ev => addEventListener(ev, () => { if (game && game.edit && editSel) editUp(); }));
+addEventListener('pointermove', e => { if (game && game.edit && (editSel || panDrag)) editMove(e); });
+['pointerup', 'pointercancel'].forEach(ev => addEventListener(ev, () => { panDrag = null; if (game && game.edit && editSel) editUp(); }));
 ['pointerup', 'pointercancel'].forEach(ev => cv.addEventListener(ev, e => { if (game && game.edit) return; if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null; if (!d.moved && ev === 'pointerup') tapAt(e); }));
 // Mantener el dedo arrastrado: camina en esa dirección como con la cruceta
 function joystick() {
@@ -1666,9 +1675,9 @@ function updateParty(dt) {
 function paintParty() { const b = $('#partyBtn'); b.hidden = game.map !== 'home' || game.edit || !!game.party; b.classList.toggle('pulse', partyReady() && S.show.length >= 3); }
 
 /* ---------- Acomodar la casa: tocar un mueble guardado para ponerlo, arrastrar para moverlo, arrastrar a la bandeja para guardarlo ---------- */
-let editSel = null;
+let editSel = null, panDrag = null;
 function setEdit(on) {
-  game.edit = on; $('#tray').hidden = !on; $('#partyBtn').hidden = on || game.map !== 'home'; document.querySelector('.dock').style.visibility = on ? 'hidden' : ''; editSel = null;
+  game.edit = on; game.pan = null; panDrag = null; $('#tray').hidden = !on; $('#partyBtn').hidden = on || game.map !== 'home'; document.querySelector('.dock').style.visibility = on ? 'hidden' : ''; editSel = null;
   if (!on) { const m = maps.home; placeFurniture(m); for (const c of [lucy, ...cats]) if (m.solid[c.x + c.y * m.w]) { const p = freeTile(m, c); if (p) { c.x = c.px = p.x; c.y = c.py = p.y; c.path = []; c.on = false; } } persist(); }
   resize(); paintTray(); sfx.tap();
 }
@@ -1683,15 +1692,19 @@ function placeFromStore(id) {
   // Los tapetes van al centro; los muebles, primero contra la pared del fondo
   for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (fits(m, f, x, y)) { const d = f.flat ? Math.hypot(x + f.fw / 2 - c.x, y + f.fh / 2 - c.y) : (m.floorT[x + (y - 1) * m.w] ? 6 : 0) + y * .3 + Math.abs(x + f.fw / 2 - c.x) * .45; if (!best || d < best.d) best = { x, y, d }; }
   if (!best) { sfx.no(); toast('Ya no cabe: ¡amplía tu casa en la mueblería!', 'b-home'); return; }
-  S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); placeFurniture(m); paintTray(); sfx.pick(); event('place'); checkComfort();
+  S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); if (game.pan) { game.pan.x = (best.x + f.fw / 2) * T - VW / SCALE / 2; game.pan.y = (best.y + f.fh / 2) * T - VH / SCALE / 2; } placeFurniture(m); paintTray(); sfx.pick(); event('place'); checkComfort();
 }
 function editDown(e) {
   const m = maps.home, fx = e.clientX / SCALE + cam.x, fy = e.clientY / SCALE + cam.y, tx = Math.floor(fx / T), ty = Math.floor(fy / T);
   const hit = S.home.items.filter(it => { const f = FURNI[it.id]; return tx >= it.x && tx < it.x + f.fw && ty >= it.y && ty < it.y + f.fh; }).sort((a, b) => !!FURNI[a.id].flat - !!FURNI[b.id].flat)[0];
   if (hit) { editSel = { it: hit, f: FURNI[hit.id], x: hit.x, y: hit.y, ox: tx - hit.x, oy: ty - hit.y, ok: true }; sfx.pick(); }
+  else if (game.pan) panDrag = { x: e.clientX, y: e.clientY, px: game.pan.x, py: game.pan.y };
 }
 function editMove(e) {
-  if (!editSel) return; const m = maps.home, tx = Math.floor((e.clientX / SCALE + cam.x) / T), ty = Math.floor((e.clientY / SCALE + cam.y) / T);
+  if (panDrag && game.pan) { game.pan.x = panDrag.px - (e.clientX - panDrag.x) / SCALE; game.pan.y = panDrag.py - (e.clientY - panDrag.y) / SCALE; return; }
+  if (!editSel) return;
+  // Al arrastrar un mueble cerca de la orilla, la casa se recorre sola
+  if (game.pan) { const k = 6 / SCALE; if (e.clientX < 50) game.pan.x -= k; else if (e.clientX > VW - 50) game.pan.x += k; if (e.clientY < 70) game.pan.y -= k; } const m = maps.home, tx = Math.floor((e.clientX / SCALE + cam.x) / T), ty = Math.floor((e.clientY / SCALE + cam.y) / T);
   editSel.x = tx - editSel.ox; editSel.y = ty - editSel.oy; editSel.ok = fits(m, editSel.f, editSel.x, editSel.y, editSel.it);
   editSel.store = e.clientY > $('#tray').getBoundingClientRect().top; $('#tray').classList.toggle('drop', editSel.store);
 }
@@ -1914,7 +1927,9 @@ paintMute();
     game.map = 'bakery'; resize(); S.inv.flour = 3; S.inv.egg = 3; S.inv.sugar = 3; S.ovens = [{ r: 'cookie', start: now() - 99, dur: 12 }];
     spawnCustomer(); step(60); spawnCustomer(); step(120); post('lucy-bakery', { cust: customers.length });
     game.map = 'home'; resize(); render.snap = true; step(90); post('lucy-home', { cats: cats.map(k => k.state) });
-    setEdit(true); step(5); post('lucy-edit', { store: S.home.store.length }); setEdit(false);
+    setEdit(true); step(5); { const p0 = Object.assign({}, game.pan), fl = maps.home; let ex = null; for (let y = 1; y < fl.h && !ex; y++) for (let x = 1; x < fl.w && !ex; x++) if (fl.floorT[x + y * fl.w] && !S.home.items.some(it => { const f = FURNI[it.id]; return x >= it.x && x < it.x + f.fw && y >= it.y && y < it.y + f.fh; })) { const q = toScreenXY(x, y); if (q.x > 40 && q.x < VW - 40 && q.y > 80 && q.y < VH - 160) ex = q; }
+      if (ex) { cv.dispatchEvent(new PointerEvent('pointerdown', { clientX: ex.x, clientY: ex.y, pointerId: 3, bubbles: true })); dispatchEvent(new PointerEvent('pointermove', { clientX: ex.x - 120, clientY: ex.y - 60, pointerId: 3 })); dispatchEvent(new PointerEvent('pointerup', { pointerId: 3 })); }
+      step(2); post('lucy-edit', { store: S.home.store.length, tilePx: Math.round(T * SCALE), panFrom: [Math.round(p0.x), Math.round(p0.y)], panTo: [Math.round(game.pan.x), Math.round(game.pan.y)], grabbed: !!ex }); } setEdit(false);
     S.coins = 3000; S.home.store.push('yarn', 'tunnel'); setEdit(true); placeFromStore('yarn'); placeFromStore('tunnel'); setEdit(false);
     let plays = 0; for (let i = 0; i < 600 && !plays; i++) { update(1 / 10); if (cats.some(k => k.state === 'play')) plays++; } render(); post('lucy-toys', { plays, items: S.home.items.length });
     game.map = 'town'; resize(); openBoutique(); winEl.querySelector('[data-o=gatita]').click(); closeWin(); render.snap = true; step(10); post('lucy-outfit', { outfit: S.outfit, sheet: lucy.sheet });
@@ -1971,6 +1986,7 @@ paintMute();
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
 })();
+const toScreenXY = (x, y) => ({ x: ((x + .5) * T - cam.x) * SCALE, y: ((y + .5) * T - cam.y) * SCALE });
 window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, mixTick: (n, dt = 1 / 30) => { for (let i = 0; i < n && mix.__st; i++) mix.__st.tick(dt); }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
 })();
 </script>
