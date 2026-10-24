@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023185222';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023185302';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -782,6 +782,8 @@ function buildHome() {
   S.home.kits = S.home.kits || {};
   for (const [rk, ids] of Object.entries(ROOM_KIT)) {
     const kr = rooms[rk]; if (!kr || S.home.kits[rk]) continue; S.home.kits[rk] = 1;
+    // Si Lucy ya acomodó ese cuarto a su gusto, no le metemos nada
+    if (S.home.items.filter(it => m.cell(it.x, it.y) === rk && FURNI[it.id] && !FURNI[it.id].flat).length >= 2) continue;
     if (rk === 'k' && S.home.items.concat(S.home.store.map(id => ({ id }))).some(it => FURNI[it.id] && FURNI[it.id].img.startsWith('h-k-'))) continue;
     for (const id0 of ids) {
       // Con @ va al centro del cuarto; los demás, contra la pared del fondo
