@@ -2,7 +2,7 @@
 // - CORE (pages, fonts, icons, loading screen, hub art) is stored when the app is installed.
 // - Everything else (3D models, game pictures) is stored the first time a game asks for it, so each game only
 //   downloads its own files when it is opened, and then keeps working offline.
-const CACHE = 'lucy-games-20261023181422';
+const CACHE = 'lucy-games-20261023181632';
 const CORE = ['./', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/pasteleria.webp', 'img/hub-tall.webp', 'img/hub-wide.webp', 'img/splash2-tall.webp', 'img/splash2-wide.webp', 'index.html', 'manifest.webmanifest', 'pasteleria/', 'pasteleria/index.html', 'vendor/fonts.css', 'vendor/fonts/XRXV3I6Li01BKofINeaBTMnFcQ.woff2', 'vendor/fonts/XRXV3I6Li01BKofIO-aBTMnFcQIG.woff2', 'vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYE98RXi4EwSsbg.woff2', 'vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYEF8RXi4EwQ.woff2'];
 self.addEventListener('install', e => {
   // cache: 'reload' skips the browser's HTTP cache so a new version never stores old copies

@@ -427,6 +427,7 @@ const FURN = [
   { id: 'duck', n: 'Patito gigante', img: 'h-duck', cost: 90, fw: 1, fh: 1, cat: 'sit' },
   { id: 'bathmat', n: 'Tapete de baño', img: 'h-bathmat', cost: 40, fw: 2, fh: 1, flat: 1 },
   { id: 'hamper', n: 'Cesto de ropa', img: 'h-hamper', cost: 50, fw: 1, fh: 1, cat: 'hide' },
+  { id: 'flowerbed', n: 'Jardinera de flores', img: 'p-flowers', cost: 40, fw: 1, fh: 1 },
   { id: 'berrypot', n: 'Maceta de fresas', img: 'p-berry', cost: 110, fw: 1, fh: 1, grow: 'strawberry', give: 2 },
   { id: 'applepot', n: 'Manzanito', img: 'p-appletree', cost: 180, fw: 1, fh: 1, grow: 'apple', give: 1, star: 2 },
   { id: 'yarn', n: 'Bolita de estambre', img: 'h-yarn', cost: 30, fw: 1, fh: 1, flat: 1, cat: 'play' },
@@ -447,6 +448,7 @@ const ACCS = [{ id: 'bow', n: 'Moño', cost: 60, c: '#ff6fae' }, { id: 'flower',
 // Planos de la casa: # muro, | y - muros entre cuartos, F cerca del patio, D puerta, espacio = afuera.
 // Letras = piso de cada cuarto: s sala, r recámara, k cocina, b baño, g patio con pasto
 const ROOM_N = { s: 'Sala', r: 'Recámara', k: 'Cocina', b: 'Baño', g: 'Patio' };
+const ROOM_KIT = { k: ['kfridge', 'kcounter', 'ksink', 'kstove', 'kcounter'], g: ['flowerbed', 'berrypot', 'flowerbed'], b: ['towels', 'bathmat'] };
 const HOME_SIZES = [
   { cost: 0, n: 'Casita', desc: 'Sala y recámara', plan: [
     '################',
@@ -647,6 +649,18 @@ function buildHome() {
   // Los cuartos: su nombre, de dónde a dónde van (renglón de arriba de cada columna) y su ventana en la pared del fondo
   m.rooms = Object.values(rooms).map(r => { let y0 = r.y1; for (let x = r.x0; x <= r.x1; x++) for (let y = r.y0; y <= r.y1; y++) if (plan[y][x] === r.k) { y0 = Math.min(y0, y); break; } return Object.assign(r, { y0 }); });
   m.spawn = { x: m.door.x, y: m.door.y - 1 };
+  // Pasos entre cuartos (huecos de 1 o 2 cuadros en un muro): ningún mueble los puede tapar
+  m.doorT = new Uint8Array(W * H);
+  const isFl = (x, y) => !!ROOM_N[m.cell(x, y)];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!isFl(x, y)) continue;
+    for (const [dx, dy, wc] of [[1, 0, '-'], [0, 1, '|']]) {
+      let a = 0, b = 0; while (isFl(x - dx * (a + 1), y - dy * (a + 1))) a++; while (isFl(x + dx * (b + 1), y + dy * (b + 1))) b++;
+      if (a + b + 1 > 2) continue;
+      const e1 = m.cell(x - dx * (a + 1), y - dy * (a + 1)), e2 = m.cell(x + dx * (b + 1), y + dy * (b + 1));
+      if ((e1 === wc || e2 === wc) && '#|-F'.includes(e1) && '#|-F'.includes(e2)) m.doorT[x + y * W] = 1;
+    }
+  }
   m.wall = [];
   for (const r of m.rooms) {
     if (r.k === 'g') continue;
@@ -665,15 +679,16 @@ function buildHome() {
     S.home.items = others; if (ok) keep.push(it); else S.home.store.push(it.id);
   }
   S.home.items = keep;
-  // Al estrenar cocina viene equipada: refri, barras, fregadero y estufa pegados a la pared
-  const kr = rooms.k;
-  if (kr && !S.home.kit) {
-    S.home.kit = 1;
-    if (S.home.items.concat(S.home.store.map(id => ({ id }))).some(it => /^k[a-z]/.test(it.id) && FURNI[it.id] && FURNI[it.id].img.startsWith('h-k-'))) { placeFurniture(m); return m; }
-    for (const id of ['kfridge', 'kcounter', 'ksink', 'kstove', 'kcounter']) {
+  // Al estrenar un cuarto viene equipado: la cocina con refri, barras, fregadero y estufa; el patio con flores y fresas; el baño con tapete y toallero
+  if (S.home.kit && !S.home.kits) S.home.kits = { k: 1 };
+  S.home.kits = S.home.kits || {};
+  for (const [rk, ids] of Object.entries(ROOM_KIT)) {
+    const kr = rooms[rk]; if (!kr || S.home.kits[rk]) continue; S.home.kits[rk] = 1;
+    if (rk === 'k' && S.home.items.concat(S.home.store.map(id => ({ id }))).some(it => FURNI[it.id] && FURNI[it.id].img.startsWith('h-k-'))) continue;
+    for (const id of ids) {
       const f = FURNI[id]; let spot = null;
-      for (let y = kr.y0; y <= kr.y1 && !spot; y++) for (let x = kr.x0; x <= kr.x1 && !spot; x++) if (fits(m, f, x, y)) spot = { x, y };
-      if (spot) S.home.items.push({ id, x: spot.x, y: spot.y }); else S.home.store.push(id);
+      for (let y = kr.y0; y <= kr.y1 && !spot; y++) for (let x = kr.x0; x <= kr.x1 && !spot; x++) if (m.cell(x, y) === rk && fits(m, f, x, y)) spot = { x, y };
+      if (spot) S.home.items.push({ id, x: spot.x, y: spot.y, g: f.grow ? now() - 1e6 : undefined }); else S.home.store.push(id);
     }
   }
   placeFurniture(m); return m;
@@ -690,7 +705,7 @@ function placeFurniture(m) {
 // ¿Cabe un mueble ahí? (dentro del piso, sin encimarse y sin tapar la puerta)
 function fits(m, f, x, y, self) {
   if (x < 1 || y < 1 || x + f.fw > m.w - 1 || y + f.fh > m.h - 1) return false;
-  for (let yy = y; yy < y + f.fh; yy++) for (let xx = x; xx < x + f.fw; xx++) if (!m.floorT[xx + yy * m.w]) return false;
+  for (let yy = y; yy < y + f.fh; yy++) for (let xx = x; xx < x + f.fw; xx++) if (!m.floorT[xx + yy * m.w] || (!f.flat && m.doorT && m.doorT[xx + yy * m.w])) return false;
   if (f.wall) for (let xx = x; xx < x + f.fw; xx++) if (m.cell(xx, y - 1) !== '#') return false;
   // No tapar la entrada
   if (!f.flat && x <= m.door.x && x + f.fw > m.door.x && y + f.fh >= m.door.y) return false;
@@ -1885,9 +1900,12 @@ paintMute();
     const caps = []; for (const ups of [[], ['table1'], ['table1', 'table2'], ['table1', 'table2', 'bigbakery']]) { ['table1', 'table2', 'bigbakery'].forEach(k => delete S.ups[k]); ups.forEach(k => (S.ups[k] = 1)); maps.bakery = buildBakery(); furnishBakery(); customers.length = 0; for (let i = 0; i < 6; i++) { spawnCustomer(); step(20); } step(150); caps.push(customers.length + '/' + custCap()); }
     post('lucy-caps', { caps }); customers.length = 0;
     // Casa grande con cuartos de formas distintas y cocina equipada; los gatos nunca quedan fuera del piso
-    S.home.lvl = 2; S.home.kit = 0; maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
+    S.home.lvl = 2; S.home.kit = 0; S.home.kits = {}; S.home.items = S.home.items.filter(i => !['flowerbed', 'berrypot', 'towels', 'bathmat'].includes(i.id) && !(FURNI[i.id] && FURNI[i.id].img.startsWith('h-k-'))); maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
     let offFloor = 0; for (let i = 0; i < 400; i++) { update(1 / 10); for (const k of cats) if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; } render();
-    post('lucy-house', { kit: S.home.items.filter(i => i.id[0] === 'k').map(i => i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
+    post('lucy-house', { kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
+    // Ampliar desde la mueblería: la casa crece y la del pueblo cambia de dibujo
+    S.home.lvl = 0; maps.home = buildHome(); homeLook(); S.coins += 2000; openFurnShop(); winEl.querySelector('.tab[data-t=casa]').click(); winEl.querySelector('[data-grow]').click(); const g1 = { lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w }; winEl.querySelector('[data-grow]').click(); closeWin();
+    post('lucy-grow', { g1, lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w, doors: maps.home.doorT.reduce((a, b) => a + b, 0) });
     // Batir: ingredientes al tazón, remolino de colores y al horno
     Object.assign(S.inv, { egg: 5, flour: 5, strawberry: 5, choco: 5 }); const mr = { id: 'cupcake', n: 'Cupcake', need: { egg: 1, flour: 1, strawberry: 1, choco: 1 }, bake: 5 };
     game.map = 'bakery'; resize(); startMix(mr, 0); for (const b of [...document.querySelectorAll('#mixRow button')]) { b.click(); mix.__st.tick(.2); } for (let i = 0; i < 20; i++) mix.__st.tick(1 / 30);
