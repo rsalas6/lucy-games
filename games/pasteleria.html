@@ -1942,7 +1942,7 @@ function updateBakery(dt) {
   const m = maps.bakery;
   for (const c of customers) {
     stepChar(c, dt, m);
-    if (c.state === 'in' && !c.moving && !c.path.length) { c.state = 'wait'; c.dir = 3; c.since = game.t; custTalk(c, pick(['¡Hola, Lucy! Quiero ', '¿Me das ', 'Se me antoja ', '¡Hola! Vengo por ']) + RECI[c.want].n.toLowerCase(), true); }
+    if (c.state === 'in' && !c.moving && !c.path.length) { c.state = 'wait'; c.dir = 3; c.since = game.t; { const w = RECI[c.want].n.toLowerCase(); custTalk(c, pick([`¡Hola, Lucy! Quiero ${w}`, `¿Me das ${w}?`, `Se me antoja ${w}`, `¡Hola! Vengo por ${w}`]), true); } }
     if (c.state === 'wait' && !c.hurry && game.t - c.since > c.patience * .7) { c.hurry = true; custTalk(c, '¿Ya casi está? 🥺'); }
     if (c.state === 'wait' && game.t - c.since > c.patience) { leave(c, true); }
     if (c.state === 'leave' && !c.moving && !c.path.length) c.gone = true;
