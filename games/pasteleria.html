@@ -1296,7 +1296,7 @@ function startMix(r, slot) {
   const say = t => { title.textContent = t; title.style.animation = 'none'; void title.offsetWidth; title.style.animation = ''; };
   say('¡ECHA LOS INGREDIENTES!');
   const items = Object.entries(r.need).flatMap(([k, n]) => Array(n).fill(k));
-  const st = { dropped: 0, total: items.length, fly: [], blobs: [], parts: [], rip: [], stir: 0, phase: 'drop', ang: 0, wh: null, idle: 0, done: false, flash: 0, col: r.need.choco ? '#8a5030' : r.need.strawberry ? '#ffb0c8' : r.need.lemon ? '#fff09a' : r.need.apple ? '#f2d098' : '#fbe3b0' };
+  const st = { rid: r.id, rname: r.n, dropped: 0, total: items.length, fly: [], blobs: [], parts: [], rip: [], stir: 0, phase: 'drop', ang: 0, wh: null, idle: 0, done: false, flash: 0, col: r.need.choco ? '#8a5030' : r.need.strawberry ? '#ffb0c8' : r.need.lemon ? '#fff09a' : r.need.apple ? '#f2d098' : '#fbe3b0' };
   const row = $('#mixRow'); row.innerHTML = '';
   const fit = () => { const d = Math.min(2, window.devicePixelRatio || 1); mcv.width = innerWidth * d; mcv.height = innerHeight * d; mcx.setTransform(d, 0, 0, d, 0, 0); };
   fit(); window.addEventListener('resize', fit);
@@ -1318,12 +1318,12 @@ function startMix(r, slot) {
   let prev = performance.now();
   st.tick = dt => {
     if (st.phase === 'drop' && st.dropped === st.total && !st.fly.length) { st.phase = 'stir'; say('¡BATE EN CÍRCULOS!'); row.innerHTML = ''; }
-    if (st.phase === 'stir' && st.stir >= need && !st.done) { st.done = true; sfx.ding(); say('¡PERFECTO!'); for (let i = 0; i < 26; i++) st.parts.push({ star: 1, x: 0, y: 0, vx: rand(-1, 1) * 2.4, vy: rand(-2.6, -.6), t: 0 }); setTimeout(() => { window.removeEventListener('resize', fit); toOven(r, slot); }, 700); }
+    if (st.phase === 'stir' && st.stir >= need && !st.done) { st.done = true; sfx.ding(); say('¡PERFECTO!'); for (let i = 0; i < 26; i++) st.parts.push({ star: 1, x: 0, y: 0, vx: rand(-1, 1) * 2.4, vy: rand(-2.6, -.6), t: 0 }); setTimeout(() => { window.removeEventListener('resize', fit); toOven(r, slot); }, 1000); }
     st.idle += dt; if (st.done) st.flash += dt;
     drawMixScene(st, dt, Math.min(1, st.stir / need));
   };
   (function frame(now) {
-    if (st.done && st.flash > 1.6) return;
+    if (st.done && st.flash > 2.2) return;
     const dt = Math.min(.05, ((now || performance.now()) - prev) / 1000); prev = now || performance.now();
     st.tick(dt); requestAnimationFrame(frame);
   })();
@@ -1392,7 +1392,7 @@ function drawMixScene(st, dt, prog) {
     let wx, wy;
     if (st.wh && st.idle < 1.2) { const dx = (st.wh.x - g.cx) / g.rx, dy = (st.wh.y - g.cy) / g.ry, d = Math.hypot(dx, dy), k = d > .8 ? .8 / d : 1; wx = g.cx + dx * k * g.rx; wy = g.cy + dy * k * g.ry; }
     else { const t = performance.now() / 420; wx = g.cx + Math.cos(t) * g.rx * .5; wy = g.cy + Math.sin(t) * g.ry * .5; }
-    if (wh && wh.width) { const ww = Math.min(150, g.bw * .2), hh = ww * wh.height / wh.width; mcx.save(); mcx.translate(wx, wy); mcx.rotate(Math.PI - .3 + (wx - g.cx) / g.rx * .35); mcx.drawImage(wh, -ww / 2, -hh * .08, ww, hh); mcx.restore(); }
+    if (wh && wh.width && !st.done) { const ww = Math.min(150, g.bw * .2), hh = ww * wh.height / wh.width; mcx.save(); mcx.translate(wx, wy); mcx.rotate(Math.PI - .3 + (wx - g.cx) / g.rx * .35); mcx.drawImage(wh, -ww / 2, -hh * .08, ww, hh); mcx.restore(); }
     if (st.idle > 1.2 && !st.done) { const t = performance.now() / 420, hx = g.cx + Math.cos(t + .5) * g.rx * .5, hy = g.cy + Math.sin(t + .5) * g.ry * .5; mcx.fillStyle = 'rgba(255,255,255,.95)'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 5; mcx.beginPath(); mcx.arc(hx, hy, 22, 0, 7); mcx.fill(); mcx.stroke(); mcx.fillStyle = '#ff8fc4'; mcx.beginPath(); mcx.arc(hx, hy, 9, 0, 7); mcx.fill(); }
     // Avance: barra con tres estrellitas
     const bw2 = Math.min(W * .7, 420), bx2 = (W - bw2) / 2, by2 = Math.min(H - 46, g.by + g.bh + 14), p = prog;
@@ -1401,6 +1401,11 @@ function drawMixScene(st, dt, prog) {
     mcx.fillStyle = 'rgba(255,255,255,.55)'; if (p > .06) rr(bx2 + 8, by2 + 4, bw2 * p - 16, 6, 3);
     for (let k = 1; k <= 3; k++) { const sx = bx2 + bw2 * k / 3 - (k === 3 ? 4 : 0), on = p >= k / 3 - .001; mcx.save(); mcx.translate(sx, by2 + 12); mcx.fillStyle = on ? '#ffd23a' : '#e8d8e0'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 3; mcx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i / 10 * Math.PI * 2, rr2 = i % 2 ? 7 : 16; mcx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); } mcx.closePath(); mcx.fill(); mcx.stroke(); mcx.restore(); }
   }
+  // Qué postre estás haciendo (tarjetita arriba a la izquierda)
+  const di = IMG['des-' + st.rid];
+  if (di && di.width && !st.done) { const cs = Math.min(84, W * .16), x0 = 14, y0 = Math.min(90, H * .16) + 6; mcx.fillStyle = 'rgba(255,255,255,.92)'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 4; mcx.beginPath(); mcx.roundRect ? mcx.roundRect(x0, y0, cs, cs, 18) : mcx.rect(x0, y0, cs, cs); mcx.fill(); mcx.stroke(); const k = cs * .78 / Math.max(di.width, di.height); mcx.drawImage(di, x0 + (cs - di.width * k) / 2, y0 + (cs - di.height * k) / 2, di.width * k, di.height * k); }
+  // ¡Listo! El postre brinca del tazón
+  if (st.done && di && di.width) { const t = Math.min(1, st.flash / .5), b = 1 + Math.sin(Math.min(1, st.flash / .7) * Math.PI) * .18, sz = Math.min(g.bw * .5, 260) * (.4 + .6 * t) * b, px2 = g.cx, py2 = Math.max(sz * di.height / di.width / 2 + 12, g.cy - g.ry * .2 - t * g.bh * .32); mcx.fillStyle = 'rgba(255,240,160,.55)'; mcx.beginPath(); mcx.arc(px2, py2, sz * .62, 0, 7); mcx.fill(); mcx.drawImage(di, px2 - sz / 2, py2 - sz * di.height / di.width / 2, sz, sz * di.height / di.width); }
   if (st.done) { mcx.fillStyle = `rgba(255,255,255,${Math.max(0, .5 - st.flash)})`; mcx.fillRect(0, 0, W, H); }
 }
 function rr(x, y, w, h, r) { mcx.beginPath(); mcx.moveTo(x + r, y); mcx.arcTo(x + w, y, x + w, y + h, r); mcx.arcTo(x + w, y + h, x, y + h, r); mcx.arcTo(x, y + h, x, y, r); mcx.arcTo(x, y, x + w, y, r); mcx.fill(); }
@@ -1983,6 +1988,7 @@ paintMute();
     sv('pointerdown', mcx0 + mrx, mcy0); for (let i = 1; i <= 72; i++) { const a = i / 24 * Math.PI * 2; sv('pointermove', mcx0 + Math.cos(a) * mrx, mcy0 + Math.sin(a) * mry); mix.__st.tick(1 / 30); }
     await fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag: 'lucy-mix', img: mcv.toDataURL('image/png'), info: { errs, phase: mix.__st.phase, stir: mix.__st.stir, w: innerWidth, h: innerHeight } }) });
     for (let i = 1; i <= 240 && !mix.__st.done; i++) { const a = (72 + i) / 24 * Math.PI * 2; sv('pointermove', mcx0 + Math.cos(a) * mrx, mcy0 + Math.sin(a) * mry); mix.__st.tick(1 / 30); }
+    for (let i = 0; i < 12; i++) mix.__st.tick(1 / 30); await fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag: 'lucy-mixyay', img: mcv.toDataURL('image/png'), info: { errs } }) });
     sv('pointerup', 0, 0); const mixDone = mix.__st.done; await new Promise(r => setTimeout(r, 2500));
     post('lucy-mixdone', { mixDone, hidden: mix.hidden, oven: S.ovens[0] && S.ovens[0].r });
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
