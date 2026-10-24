@@ -544,7 +544,9 @@ const NEED = [
 ];
 // Dibujos corregidos con nombre nuevo (el service worker guarda los viejos para siempre)
 const FIXED = new Set(['d-flowerarch', 'd-bigbear', 'd-cupcaketower', 'd-tablefountain', 'des-cottoncandy', 'h-bathmat', 'h-bookshelf', 'h-catbowl', 'h-cattree', 'h-desk', 'h-dollhouse', 'h-duck', 'h-hamper', 'h-nightstand', 'h-princessbed', 'h-rug2', 'h-rug3']);
-const src = n => UP + n + (FIXED.has(n) ? '.v2' : '') + '.webp';
+// Hojas de caminar re-cortadas (cada cuadro alineado y mirando al lado correcto)
+const ALIGNED = new Set(['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pintora', 'lucy2-gatita', 'lucy2-princesa', 'leon', 'minisius', 'cit1', 'cit2', 'cit3', 'cit4', 'cit5', 'cit6', 'baker2', 'cashier2', 'helper2'].map(n => 'ch-' + n));
+const src = n => UP + n + (FIXED.has(n) ? '.v2' : ALIGNED.has(n) ? '.a' : '') + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
 
 /* ---------- Mapas ---------- */
