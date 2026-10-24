@@ -90,12 +90,17 @@ img{-webkit-user-drag:none;pointer-events:none}
 .tab.on{background:#fff;box-shadow:0 -3px 0 3px var(--ink)}
 .empty{padding:30px;text-align:center;font-family:system-ui,sans-serif;font-weight:700;color:#9a6a8a}
 /* Minijuego de mezclar y decorar */
-#mix{position:fixed;inset:0;z-index:45;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 45%,#fff8ee,#ffd6ea);touch-action:none}
-#mix h3{margin:0;font-weight:400;font-size:clamp(28px,6vw,48px);color:#fff;-webkit-text-stroke:.09em var(--ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--ink)}
-#mix canvas{width:min(92vw,66vh,560px);height:min(92vw,66vh,560px);touch-action:none;border-radius:32px;box-shadow:0 0 0 6px #fff,0 0 0 10px var(--ink),0 14px 0 10px rgba(74,42,74,.25)}
-#mix .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-#mix .row button{width:clamp(80px,14vmin,110px);height:clamp(80px,14vmin,110px);border:0;border-radius:22px;background:#fff;box-shadow:0 0 0 4px var(--ink),0 6px 0 4px rgba(74,42,74,.3);display:grid;place-items:center}
-#mix .row button img{width:70%;height:70%;object-fit:contain}
+#mix{position:fixed;inset:0;z-index:45;background:#f7c6d6;touch-action:none;overflow:hidden}
+#mix canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#mix h3{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 14px);margin:0 auto;width:max-content;max-width:92vw;text-align:center;font-weight:400;font-size:clamp(24px,5.2vw,44px);color:#fff;-webkit-text-stroke:.09em var(--ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--ink);background:rgba(255,143,196,.92);padding:6px 24px 8px;border-radius:99px;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--ink);pointer-events:none;animation:mixPop .35s ease-out}
+@keyframes mixPop{from{transform:scale(.6)}70%{transform:scale(1.08)}to{transform:scale(1)}}
+#mix .row{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:clamp(8px,2vw,16px);flex-wrap:wrap;justify-content:center;padding:0 12px}
+#mix .row button{position:relative;width:clamp(74px,13vmin,112px);height:clamp(74px,13vmin,112px);border:0;border-radius:24px;background:linear-gradient(#fff,#fff3f8);box-shadow:0 0 0 4px var(--ink),0 7px 0 4px rgba(74,42,74,.35);display:grid;place-items:center;animation:ingBob 1.6s ease-in-out infinite;transition:transform .15s,opacity .2s}
+#mix .row button:nth-child(2n){animation-delay:-.4s}#mix .row button:nth-child(3n){animation-delay:-.9s}
+#mix .row button:active{transform:scale(.9)}
+#mix .row button[disabled]{opacity:.2;animation:none;transform:scale(.85)}
+#mix .row button img{width:74%;height:74%;object-fit:contain;filter:drop-shadow(0 3px 0 rgba(74,42,74,.2))}
+@keyframes ingBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 /* Avisos que flotan */
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);z-index:60;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:#fff;border-radius:18px;padding:8px 16px;font-size:clamp(16px,2.6vw,22px);box-shadow:0 0 0 3px var(--ink),0 5px 0 3px rgba(74,42,74,.25);animation:toast 2.6s ease forwards;white-space:nowrap;pointer-events:none}
 .toast img{width:34px;height:34px;object-fit:contain}
@@ -135,7 +140,7 @@ img{-webkit-user-drag:none;pointer-events:none}
 </div>
 <div id="tray" hidden><div id="trayItems"></div><button class="big mint" id="doneBtn" aria-label="Listo">✓<br>LISTO</button></div>
 <div id="modal" class="modal" hidden><div class="win" id="win"></div></div>
-<div id="mix" hidden><h3 id="mixTitle">¡MEZCLA!</h3><canvas id="mixCv" width="520" height="520"></canvas><div class="row" id="mixRow"></div></div>
+<div id="mix" hidden><canvas id="mixCv"></canvas><h3 id="mixTitle">¡MEZCLA!</h3><div class="row" id="mixRow"></div></div>
 <div id="loading"><b>Pastelería de Lucy</b><span><i></i></span></div>
 
 <script>
@@ -378,6 +383,13 @@ const FURN = [
   { id: 'dining', n: 'Mesa de comedor', img: 'h-dining', cost: 160, fw: 2, fh: 2 },
   { id: 'fridge', n: 'Refrigerador', img: 'h-fridge', cost: 140, fw: 1, fh: 1 },
   { id: 'stove', n: 'Estufa', img: 'h-stove', cost: 130, fw: 1, fh: 1 },
+  // Cocina integral: van pegados a la pared del fondo (la alacena queda colgada arriba)
+  { id: 'kcounter', n: 'Barra con alacena', img: 'h-k-counter', cost: 110, fw: 1, fh: 1, wall: 1 },
+  { id: 'ksink', n: 'Fregadero', img: 'h-k-sink', cost: 120, fw: 1, fh: 1, wall: 1 },
+  { id: 'kstove', n: 'Estufa con campana', img: 'h-k-stove', cost: 150, fw: 1, fh: 1, wall: 1 },
+  { id: 'kfridge', n: 'Refri menta', img: 'h-k-fridge', cost: 160, fw: 1, fh: 1 },
+  { id: 'kisland', n: 'Isla con banquitos', img: 'h-k-island', cost: 230, fw: 2, fh: 2 },
+  { id: 'kdining', n: 'Comedor de mármol', img: 'h-k-dining', cost: 250, fw: 2, fh: 2, star: 2 },
   { id: 'floorlamp', n: 'Lámpara de pie', img: 'h-floorlamp', cost: 60, fw: 1, fh: 1 },
   { id: 'bigplant', n: 'Planta grande', img: 'h-bigplant', cost: 50, fw: 1, fh: 1 },
   { id: 'mirror', n: 'Espejo', img: 'h-mirror', cost: 70, fw: 1, fh: 1 },
@@ -432,10 +444,47 @@ const FLOORS = [{ n: 'Madera', c: ['#e8c49c', '#dcb488'], cost: 0, wood: 1 }, { 
 // Accesorios para los gatos (se dibujan con código sobre la cabeza)
 const ACCS = [{ id: 'bow', n: 'Moño', cost: 60, c: '#ff6fae' }, { id: 'flower', n: 'Flor', cost: 70, c: '#ffd23a' }, { id: 'party', n: 'Gorrito de fiesta', cost: 90, c: '#7ad0ff' }, { id: 'crown', n: 'Corona', cost: 200, c: '#ffc83a', star: 2 }];
 // Tamaños de la casa: cada uno tiene sus cuartos (muros interiores con su pasillo) y la puerta en la sala
+// Planos de la casa: # muro, | y - muros entre cuartos, F cerca del patio, D puerta, espacio = afuera.
+// Letras = piso de cada cuarto: s sala, r recámara, k cocina, b baño, g patio con pasto
+const ROOM_N = { s: 'Sala', r: 'Recámara', k: 'Cocina', b: 'Baño', g: 'Patio' };
 const HOME_SIZES = [
-  { w: 16, h: 10, cost: 0, rooms: [{ n: 'Sala', x0: 1, x1: 9 }, { n: 'Recámara', x0: 11, x1: 14 }], walls: [{ v: 10, y0: 3, y1: 8, gap: 6 }], door: 5 },
-  { w: 20, h: 11, cost: 450, n: 'Casa mediana', rooms: [{ n: 'Cocina', x0: 1, x1: 5, kind: 'kitchen' }, { n: 'Sala', x0: 7, x1: 13 }, { n: 'Recámara', x0: 15, x1: 18 }], walls: [{ v: 6, y0: 3, y1: 9, gap: 7 }, { v: 14, y0: 3, y1: 9, gap: 7 }], door: 10 },
-  { w: 22, h: 13, cost: 1400, n: 'Casa grande', rooms: [{ n: 'Cocina', x0: 1, x1: 5, kind: 'kitchen' }, { n: 'Sala', x0: 7, x1: 14 }, { n: 'Recámara', x0: 16, x1: 20, y1: 7 }, { n: 'Baño', x0: 16, x1: 20, y0: 9, kind: 'bath' }], walls: [{ v: 6, y0: 3, y1: 11, gap: 8 }, { v: 15, y0: 3, y1: 11, gap: 5 }, { h: 8, x0: 16, x1: 20, gap: 18 }], door: 10 },
+  { cost: 0, n: 'Casita', desc: 'Sala y recámara', plan: [
+    '################',
+    '################',
+    '################',
+    '#sssssssss######',
+    '#sssssssss|rrrr#',
+    '#ssssssssssrrrr#',
+    '#ssssssssssrrrr#',
+    '#sssssssss|rrrr#',
+    '#sssssssss|rrrr#',
+    '#####D##########'] },
+  { cost: 450, n: 'Casa mediana', desc: 'Cocina con todo, recibidor y recámara más grande', plan: [
+    '####################',
+    '####################',
+    '####################',
+    '#kkkkk|sssssss|rrrr#',
+    '#kkkkk|sssssss|rrrr#',
+    '#kkkkksssssssssrrrr#',
+    '#kkkkksssssssssrrrr#',
+    '#kkkkk|sssssss|rrrr#',
+    '#######sssssss######',
+    '      #sssssss#     ',
+    '      ####D####     '] },
+  { cost: 1400, n: 'Casa grande', desc: 'Baño, patio con pasto para los gatitos y sala enorme', plan: [
+    '######################',
+    '######################',
+    '######################',
+    '#kkkkk|ssssssss|rrrrr#',
+    '#kkkkk|ssssssss|rrrrr#',
+    '#kkkkkssssssssssrrrrr#',
+    '#kkkkkssssssssssrrrrr#',
+    '#kkkkk|ssssssss|rrrrr#',
+    '######|ssssssss|--bb-#',
+    'Fggggg|ssssssss|bbbbb#',
+    'Fgggggsssssssss|bbbbb#',
+    'Fggggg|ssssssss|bbbbb#',
+    'FFFFFF####D###########'] },
 ];
 
 /* ---------- Guardado ---------- */
@@ -448,7 +497,7 @@ if (!S.album) S.album = [];
 if (!S.accs) { S.accs = []; S.catAcc = {}; }
 if (S.bowl == null) { S.bowl = 1; S.bowlT = now(); S.mail = 0; }
 if (!S.outfits) { S.outfits = ['lucy']; S.outfit = 'lucy'; }
-if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 12, y: 3 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 2, y: 7 }], store: [] };
+if (!S.home) S.home = { lvl: 0, wall: 0, floor: 0, walls: [0], floors: [0], items: [{ id: 'rug1', x: 4, y: 5 }, { id: 'bed', x: 12, y: 4 }, { id: 'catbed', x: 8, y: 3 }, { id: 'catbowl', x: 2, y: 7 }], store: [] };
 const persist = () => { try { localStorage.setItem('lucyBakery', JSON.stringify(S)); } catch (e) {} };
 setInterval(() => { S.seen = now(); persist(); }, 4000); addEventListener('pagehide', persist); document.addEventListener('visibilitychange', () => document.hidden && persist());
 muted = !!S.muted;
@@ -465,10 +514,12 @@ const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
   'b-home', 'b-furniture', 'b-boutique', 'p-van', 'p-judgetable', 'i-skates', 'cat-aceituna', 'cat-coco', 'cat-aceituna-icon', 'cat-coco-icon', ...FURN.map(f => f.img),
-  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mix-bg', 'mix-bowl', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
+  'f-oven1', 'f-oven2', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'p-berry-empty', 'p-berry-grow', 'p-appletree-empty', 'p-hen-nest', 'mixtable-wide', 'mixtable-tall', 'mix-bowl2', 'mix-whisk', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-flowerarch', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign',
   ...Object.keys(ING).map(k => 'ing-' + k), ...REC.map(r => 'des-' + r.id), 'coin', 'heart', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle', 'ing-catfood',
 ];
-const src = n => UP + n + '.webp';
+// Dibujos corregidos con nombre nuevo (el service worker guarda los viejos para siempre)
+const FIXED = new Set(['d-bigbear', 'd-cupcaketower', 'd-tablefountain', 'des-cottoncandy', 'h-bathmat', 'h-bookshelf', 'h-catbowl', 'h-cattree', 'h-desk', 'h-dollhouse', 'h-duck', 'h-hamper', 'h-nightstand', 'h-princessbed', 'h-rug2', 'h-rug3']);
+const src = n => UP + n + (FIXED.has(n) ? '.v2' : '') + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
 
 /* ---------- Mapas ---------- */
@@ -581,31 +632,53 @@ function furnishBakery() {
 }
 // La casa: el tamaño depende de la ampliación; los muebles se ponen donde Lucy quiera
 function buildHome() {
-  const sz = HOME_SIZES[S.home.lvl], m = makeMap(sz.w, sz.h), W = m.w;
-  setRect(m, 0, 0, W - 1, m.h - 1, i => (m.ground[i] = G_FLOOR));
-  setRect(m, 0, 0, W - 1, 2, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
-  setRect(m, 0, 0, 0, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; }); setRect(m, W - 1, 0, W - 1, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
-  setRect(m, 0, m.h - 1, W - 1, m.h - 1, i => { m.ground[i] = G_WALL; m.solid[i] = 1; });
-  // Muros entre cuartos (con su pasillo para pasar)
-  m.wallT = new Uint8Array(W * m.h);
-  for (const w of sz.walls) {
-    if (w.v != null) for (let y = w.y0; y <= w.y1; y++) if (y !== w.gap && y !== w.gap + 1) { const i = w.v + y * W; m.ground[i] = G_IWALL; m.solid[i] = 1; m.wallT[i] = 1; }
-    if (w.h != null) for (let x = w.x0; x <= w.x1; x++) if (x !== w.gap && x !== w.gap + 1) { const i = x + w.h * W; m.ground[i] = G_IWALL; m.solid[i] = 1; m.wallT[i] = 1; }
+  const plan = HOME_SIZES[S.home.lvl].plan, H = plan.length, W = plan[0].length, m = makeMap(W, H);
+  m.plan = plan; m.cell = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? ' ' : plan[y][x]);
+  m.wallT = new Uint8Array(W * H); m.floorT = new Uint8Array(W * H); m.home = true;
+  const rooms = {};
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const c = plan[y][x], i = x + y * W;
+    if (ROOM_N[c]) { m.ground[i] = G_FLOOR; m.floorT[i] = 1; const r = rooms[c] || (rooms[c] = { k: c, n: ROOM_N[c], x0: x, x1: x, y0: y, y1: y }); r.x0 = Math.min(r.x0, x); r.x1 = Math.max(r.x1, x); r.y0 = Math.min(r.y0, y); r.y1 = Math.max(r.y1, y); }
+    else if (c === 'D') { m.ground[i] = G_FLOOR; m.doors[i] = 'town'; m.door = { x, y }; }
+    else { m.ground[i] = c === '#' ? G_WALL : G_IWALL; m.solid[i] = 1; if (c === '|' || c === '-' || c === 'F') m.wallT[i] = 1; }
   }
-  // Piso de cada cuarto: la cocina de cuadros y el baño de azulejo
-  m.roomKind = new Uint8Array(W * m.h);
-  for (const r of sz.rooms) if (r.kind) setRect(m, r.x0, r.y0 || 3, r.x1, r.y1 || m.h - 2, i => { if (!m.wallT[i]) m.roomKind[i] = r.kind === 'kitchen' ? 1 : 2; });
-  m.rooms = sz.rooms;
-  const dx = sz.door, door = dx + (m.h - 1) * W; m.solid[door] = 0; m.ground[door] = G_FLOOR; m.doors[door] = 'town'; m.door = { x: dx, y: m.h - 1 };
-  m.spawn = { x: dx, y: m.h - 2 }; m.home = true;
-  m.wall = sz.rooms.filter(r => !r.y0).map(r => ({ img: 'd-window', x: (r.x0 + r.x1) / 2 - .25, w: 1.5, y: 1.35 }));
-  // Muebles que ya no caben (por los muros nuevos) regresan a la bandeja
-  S.home.items = S.home.items.filter(it => { const f = FURNI[it.id]; if (f && fits(m, f, it.x, it.y, it)) return true; if (f) S.home.store.push(it.id); return false; });
+  // Los cuartos: su nombre, de dónde a dónde van (renglón de arriba de cada columna) y su ventana en la pared del fondo
+  m.rooms = Object.values(rooms).map(r => { let y0 = r.y1; for (let x = r.x0; x <= r.x1; x++) for (let y = r.y0; y <= r.y1; y++) if (plan[y][x] === r.k) { y0 = Math.min(y0, y); break; } return Object.assign(r, { y0 }); });
+  m.spawn = { x: m.door.x, y: m.door.y - 1 };
+  m.wall = [];
+  for (const r of m.rooms) {
+    if (r.k === 'g') continue;
+    // Ventana centrada sobre la parte de la pared del fondo que da a ese cuarto
+    let best = null; for (let x = r.x0; x <= r.x1; x++) { const y = r.y0; if (plan[y][x] === r.k && m.cell(x, y - 1) === '#' && m.cell(x, y - 2) === '#') { if (!best || best.y !== y) best = { y, a: x, b: x }; else best.b = x; } }
+    if (!best) continue;
+    const w = r.k === 'b' ? 1.1 : 1.5; m.wall.push({ img: 'd-window', x: (best.a + best.b + 1) / 2 - w / 2, w, y: best.y - 1.65 });
+  }
+  // Muebles que ya no caben se mueven al lugar libre más cercano; si no hay, regresan a la bandeja
+  const keep = [];
+  for (const it of S.home.items) {
+    const f = FURNI[it.id]; if (!f) continue;
+    const others = S.home.items; S.home.items = keep;
+    let ok = fits(m, f, it.x, it.y, it);
+    if (!ok) { let best = null; for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) if (fits(m, f, x, y, it)) { const d = Math.hypot(x - it.x, y - it.y); if (!best || d < best.d) best = { x, y, d }; } if (best) { it.x = best.x; it.y = best.y; ok = true; } }
+    S.home.items = others; if (ok) keep.push(it); else S.home.store.push(it.id);
+  }
+  S.home.items = keep;
+  // Al estrenar cocina viene equipada: refri, barras, fregadero y estufa pegados a la pared
+  const kr = rooms.k;
+  if (kr && !S.home.kit) {
+    S.home.kit = 1;
+    if (S.home.items.concat(S.home.store.map(id => ({ id }))).some(it => /^k[a-z]/.test(it.id) && FURNI[it.id] && FURNI[it.id].img.startsWith('h-k-'))) { placeFurniture(m); return m; }
+    for (const id of ['kfridge', 'kcounter', 'ksink', 'kstove', 'kcounter']) {
+      const f = FURNI[id]; let spot = null;
+      for (let y = kr.y0; y <= kr.y1 && !spot; y++) for (let x = kr.x0; x <= kr.x1 && !spot; x++) if (fits(m, f, x, y)) spot = { x, y };
+      if (spot) S.home.items.push({ id, x: spot.x, y: spot.y }); else S.home.store.push(id);
+    }
+  }
   placeFurniture(m); return m;
 }
 function placeFurniture(m) {
   m.objs = []; m.rugs = [];
-  const W = m.w; for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < W - 1; x++) if (!m.wallT || !m.wallT[x + y * W]) m.solid[x + y * W] = 0;
+  const W = m.w; if (m.floorT) for (let i = 0; i < W * m.h; i++) m.solid[i] = m.floorT[i] || m.doors[i] ? 0 : 1;
   for (const it of S.home.items) {
     const f = FURNI[it.id]; if (!f) continue;
     if (f.flat) { m.rugs.push({ it, f }); continue; }
@@ -614,9 +687,11 @@ function placeFurniture(m) {
 }
 // ¿Cabe un mueble ahí? (dentro del piso, sin encimarse y sin tapar la puerta)
 function fits(m, f, x, y, self) {
-  if (x < 1 || y < 3 || x + f.fw > m.w - 1 || y + f.fh > m.h - 1) return false;
-  if (x <= m.door.x && x + f.fw > m.door.x && y + f.fh >= m.h - 1) return false;
-  if (m.wallT) for (let yy = y; yy < y + f.fh; yy++) for (let xx = x; xx < x + f.fw; xx++) { if (m.wallT[xx + yy * m.w]) return false; }
+  if (x < 1 || y < 1 || x + f.fw > m.w - 1 || y + f.fh > m.h - 1) return false;
+  for (let yy = y; yy < y + f.fh; yy++) for (let xx = x; xx < x + f.fw; xx++) if (!m.floorT[xx + yy * m.w]) return false;
+  if (f.wall) for (let xx = x; xx < x + f.fw; xx++) if (m.cell(xx, y - 1) !== '#') return false;
+  // No tapar la entrada
+  if (!f.flat && x <= m.door.x && x + f.fw > m.door.x && y + f.fh >= m.door.y) return false;
   // No tapar los pasillos entre cuartos
   if (m.wallT && !f.flat) for (let yy = y - 1; yy <= y + f.fh; yy++) for (let xx = x - 1; xx <= x + f.fw; xx++) { const i = xx + yy * m.w; if (xx >= 0 && yy >= 0 && xx < m.w && yy < m.h && !m.wallT[i] && ((m.wallT[i - 1] && m.wallT[i + 1]) || (m.wallT[i - m.w] && m.wallT[i + m.w]))) { if (xx >= x && xx < x + f.fw && yy >= y && yy < y + f.fh) return false; } }
   for (const it of S.home.items) { if (it === self) continue; const g = FURNI[it.id]; if (!g || !!g.flat !== !!f.flat) continue; if (x < it.x + g.fw && x + f.fw > it.x && y < it.y + g.fh && y + f.fh > it.y) return false; }
@@ -636,6 +711,11 @@ function homeTiles() {
   mkTile('h-crown', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#c98a5e', 0, 0, 16, 3); px(x, '#e8b48a', 0, 3, 16, 1); px(x, '#a8693e', 0, 4, 16, 1); });
   if (f.wood) { mkTile('h-floorA', x => { px(x, f.c[0], 0, 0, 16, 16); px(x, f.c[1], 0, 7, 16, 1); px(x, f.c[1], 0, 15, 16, 1); px(x, f.c[1], 9, 0, 1, 7); px(x, f.c[1], 3, 8, 1, 7); px(x, 'rgba(255,255,255,.18)', 0, 0, 16, 1); }); tileCv['h-floorB'] = tileCv['h-floorA']; }
   else { mkTile('h-floorA', x => { px(x, f.c[0], 0, 0, 16, 16); px(x, 'rgba(0,0,0,.06)', 0, 15, 16, 1); px(x, 'rgba(0,0,0,.06)', 15, 0, 1, 16); }); mkTile('h-floorB', x => { px(x, f.c[1], 0, 0, 16, 16); px(x, 'rgba(0,0,0,.06)', 0, 15, 16, 1); px(x, 'rgba(0,0,0,.06)', 15, 0, 1, 16); }); }
+  // Recámara: alfombra suavecita del color del tapiz
+  mkTile('h-carpet', x => { px(x, w[1], 0, 0, 16, 16); px(x, 'rgba(255,255,255,.28)', 0, 0, 16, 16); const r = seeded(3); for (let i = 0; i < 14; i++) px(x, 'rgba(255,255,255,.35)', r() * 16 | 0, r() * 16 | 0, 1, 1); px(x, 'rgba(120,60,100,.08)', 0, 15, 16, 1); });
+  // Pared de cada cuarto vista de frente: moldura arriba, tapiz y zoclo
+  mkTile('h-wallC', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#c98a5e', 0, 0, 16, 3); px(x, '#e8b48a', 0, 3, 16, 1); px(x, '#a8693e', 0, 4, 16, 1); });
+  mkTile('h-wallB', x => { x.drawImage(tileCv['h-paper'], 0, 0); px(x, '#fff8ee', 0, 9, 16, 1); px(x, '#f0dcc8', 0, 10, 16, 4); px(x, '#c98a5e', 0, 13, 16, 3); px(x, '#e8b48a', 0, 13, 16, 1); px(x, '#8a5430', 0, 15, 16, 1); });
 }
 for (let v = 0; v < 4; v++) mkTile('grass' + v, x => { px(x, '#8fd45a', 0, 0, 16, 16); const r = seeded(v + 1); for (let i = 0; i < 9; i++) { const a = r() * 15 | 0, b = r() * 15 | 0; px(x, '#76c048', a, b, 1, 2); px(x, '#a8e070', a + 1, b, 1, 1); } });
 mkTile('flower', x => { x.drawImage(tileCv.grass0, 0, 0); const cols = ['#ff8fc4', '#fff', '#ffd23a']; [[3, 4], [10, 9], [6, 12]].forEach(([a, b], k) => { px(x, cols[k], a, b, 2, 2); px(x, '#fff7b0', a, b, 1, 1); }); });
@@ -656,6 +736,23 @@ mkTile('kitA', x => { px(x, '#ffffff', 0, 0, 16, 16); px(x, '#e8e0ea', 0, 15, 16
 mkTile('kitB', x => { px(x, '#ff9ab8', 0, 0, 16, 16); px(x, '#e888a6', 0, 15, 16, 1); px(x, '#e888a6', 15, 0, 1, 16); });
 mkTile('bathT', x => { px(x, '#e4f6ff', 0, 0, 16, 16); px(x, '#b8e0f4', 0, 7, 16, 1); px(x, '#b8e0f4', 7, 0, 1, 16); px(x, '#b8e0f4', 0, 15, 16, 1); px(x, '#b8e0f4', 15, 0, 1, 16); px(x, '#ffffff', 2, 2, 3, 1); px(x, '#ffffff', 10, 10, 3, 1); });
 homeTiles();
+// Cocina: azulejo de metro en la pared y piso de mosaico menta y crema
+mkTile('k-paper', x => { px(x, '#fdfaf4', 0, 0, 16, 16); for (let r = 0; r < 4; r++) { px(x, '#dfe9e4', 0, r * 4 + 3, 16, 1); const o = r % 2 ? 0 : 4; px(x, '#dfe9e4', o, r * 4, 1, 3); px(x, '#dfe9e4', o + 8, r * 4, 1, 3); } });
+mkTile('k-wallC', x => { x.drawImage(tileCv['k-paper'], 0, 0); px(x, '#8fd4bf', 0, 0, 16, 3); px(x, '#c4eee0', 0, 3, 16, 1); px(x, '#5fae98', 0, 4, 16, 1); });
+mkTile('k-wallB', x => { x.drawImage(tileCv['k-paper'], 0, 0); px(x, '#8fd4bf', 0, 12, 16, 4); px(x, '#c4eee0', 0, 12, 16, 1); px(x, '#5fae98', 0, 15, 16, 1); });
+mkTile('k-floor', x => { px(x, '#fff6e6', 0, 0, 16, 16); px(x, '#bfe8da', 0, 0, 8, 8); px(x, '#bfe8da', 8, 8, 8, 8); px(x, '#e8dccb', 0, 7, 16, 1); px(x, '#e8dccb', 7, 0, 1, 16); px(x, '#e8dccb', 0, 15, 16, 1); px(x, '#e8dccb', 15, 0, 1, 16); px(x, '#ffffff', 1, 9, 2, 1); px(x, '#d8f4ea', 1, 1, 2, 1); });
+// Baño: azulejo azul cielo
+mkTile('b-paper', x => { px(x, '#d8f0ff', 0, 0, 16, 16); px(x, '#b4dcf2', 0, 7, 16, 1); px(x, '#b4dcf2', 0, 15, 16, 1); px(x, '#b4dcf2', 7, 0, 1, 16); px(x, '#b4dcf2', 15, 0, 1, 16); px(x, '#ffffff', 2, 2, 2, 1); });
+mkTile('b-wallC', x => { x.drawImage(tileCv['b-paper'], 0, 0); px(x, '#7cc4ea', 0, 0, 16, 3); px(x, '#b8e4fa', 0, 3, 16, 1); px(x, '#4f9cc8', 0, 4, 16, 1); });
+mkTile('b-wallB', x => { x.drawImage(tileCv['b-paper'], 0, 0); px(x, '#7cc4ea', 0, 12, 16, 4); px(x, '#b8e4fa', 0, 12, 16, 1); px(x, '#4f9cc8', 0, 15, 16, 1); });
+// Patio: fachada de tablas color crema, pasto con florecitas y cerca blanca
+mkTile('g-paper', x => { px(x, '#fbe9d0', 0, 0, 16, 16); for (let r = 0; r < 4; r++) { px(x, '#e8cfae', 0, r * 4 + 3, 16, 1); px(x, '#fff6e8', 0, r * 4, 16, 1); } });
+mkTile('g-wallC', x => { x.drawImage(tileCv['g-paper'], 0, 0); px(x, '#d0707e', 0, 0, 16, 5); for (let i = 0; i < 16; i += 4) px(x, '#e8909c', i, 1, 3, 3); px(x, '#a04c5c', 0, 5, 16, 1); });
+mkTile('g-wallB', x => { x.drawImage(tileCv['g-paper'], 0, 0); px(x, '#c8b49a', 0, 13, 16, 3); px(x, '#a89478', 0, 15, 16, 1); });
+mkTile('g-floor', x => { x.drawImage(tileCv.grass1, 0, 0); });
+mkTile('g-floor2', x => { x.drawImage(tileCv.grass2, 0, 0); px(x, '#ffffff', 4, 5, 2, 2); px(x, '#ffd23a', 4, 5, 1, 1); px(x, '#ff8fc4', 11, 10, 2, 2); px(x, '#fff7b0', 11, 10, 1, 1); });
+// Cima de los muros (lo que se ve desde arriba)
+mkTile('h-top', x => { px(x, '#8a5272', 0, 0, 16, 16); px(x, '#a4688a', 1, 1, 14, 14); px(x, '#b47c9c', 1, 1, 14, 2); });
 mkTile('wainscot', x => { px(x, '#fff8ee', 0, 0, 16, 16); px(x, '#e8d4c0', 0, 0, 16, 2); for (let i = 2; i < 16; i += 5) px(x, '#f0e2d4', i, 3, 1, 13); });
 
 /* ---------- Personajes ---------- */
@@ -778,6 +875,65 @@ function drawChar(c, scale = 1) {
   cx.drawImage(im, fr * cw, c.dir * ch, cw, ch, sx, sy, w, h);
   return { sx, sy, w, h };
 }
+// Casa: cada cuadro se pinta según el plano (piso de su cuarto, pared de frente, muros delgados entre cuartos, cerca)
+const FLOOR_OF = { s: null, r: 'h-carpet', k: 'k-floor', b: 'bathT', g: 'g-floor' };
+function homeFloor(m, x, y) { const c = m.cell(x, y); if (c === 'g') return (x * 7 + y * 3) % 5 ? 'g-floor' : 'g-floor2'; return FLOOR_OF[c] || ((x + y) % 2 ? 'h-floorB' : 'h-floorA'); }
+function roomBelow(m, x, y) { for (let k = 1; k < 5; k++) { const c = m.cell(x, y + k); if (ROOM_N[c]) return c; if (c !== '#') return null; } return null; }
+function drawHomeTiles(m, x0, y0, x1, y1, ts) {
+  const S1 = T * SCALE, isF = c => !!ROOM_N[c] || c === 'D';
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const c = m.cell(x, y), X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
+    if (c === ' ') continue;
+    if (ROOM_N[c] || c === 'D') { cx.drawImage(tileCv[c === 'D' ? 'h-floorA' : homeFloor(m, x, y)], X, Y, ts, ts); continue; }
+    if (c === '#') {
+      // Pared de frente si abajo (a 1, 2 o 3 cuadros) hay piso; si no, se ve la cima del muro
+      const rb = roomBelow(m, x, y); let d = 0; while (d < 4 && m.cell(x, y + d + 1) === '#') d++;
+      const pre = rb === 'k' ? 'k-' : rb === 'b' ? 'b-' : rb === 'g' ? 'g-' : 'h-';
+      const t = !rb || d > 2 ? 'h-top' : d === 0 ? pre + 'wallB' : d === 1 ? pre + 'paper' : pre + 'wallC';
+      if (t !== 'h-top') { cx.drawImage(tileCv[t], X, Y, ts, ts); continue; }
+      // Cima del muro: una sola franja continua, con orilla clara donde termina
+      const nW = m.cell(x, y), solidC = c2 => c2 === '#' || c2 === '|' || c2 === '-';
+      cx.fillStyle = '#9a6086'; cx.fillRect(X, Y, ts, ts);
+      cx.fillStyle = '#b47c9c'; if (!solidC(m.cell(x, y - 1))) cx.fillRect(X, Y, ts, SCALE * 2);
+      cx.fillStyle = '#6e3c5a'; if (!solidC(m.cell(x, y + 1))) cx.fillRect(X, Y + S1 - SCALE * 2, ts, SCALE * 2); if (!solidC(m.cell(x - 1, y))) cx.fillRect(X, Y, SCALE * 2, ts); if (!solidC(m.cell(x + 1, y))) cx.fillRect(X + S1 - SCALE * 2, Y, SCALE * 2, ts);
+      void nW; continue;
+    }
+    // Muros delgados, cerca: debajo va el piso del cuarto vecino
+    const nb = [[x - 1, y], [x + 1, y], [x, y + 1], [x, y - 1]].find(([a, b]) => ROOM_N[m.cell(a, b)]);
+    if (nb) cx.drawImage(tileCv[homeFloor(m, nb[0], nb[1])], X, Y, ts, ts);
+    if (c === '|') {
+      if (ROOM_N[m.cell(x - 1, y)]) cx.drawImage(tileCv[homeFloor(m, x - 1, y)], X, Y, S1 / 2 + .5, ts);
+      if (ROOM_N[m.cell(x + 1, y)]) cx.drawImage(tileCv[homeFloor(m, x + 1, y)], 0, 0, T / 2, T, X + S1 / 2, Y, S1 / 2 + .5, ts);
+      const endB = isF(m.cell(x, y + 1)), endT = isF(m.cell(x, y - 1)), wx = X + S1 * .22, ww = S1 * .56;
+      cx.fillStyle = '#8a5272'; cx.fillRect(wx - SCALE, Y + (endT ? S1 * .1 : 0), ww + 2 * SCALE, S1 - (endT ? S1 * .1 : 0) - (endB ? S1 * .02 : 0));
+      cx.fillStyle = '#c48aa8'; cx.fillRect(wx, Y + (endT ? S1 * .1 + SCALE : 0), ww, S1 - (endT ? S1 * .1 + SCALE : 0) - (endB ? S1 * .45 : 0));
+      cx.fillStyle = '#dcaac4'; cx.fillRect(wx + SCALE, Y + (endT ? S1 * .1 + SCALE : 0), SCALE * 1.5, S1 - (endT ? S1 * .1 + SCALE : 0) - (endB ? S1 * .45 : 0));
+      if (endB) { const fy = Y + S1 * .55; cx.drawImage(tileCv['h-paper'], 0, 0, 8, 7, wx, fy, ww, S1 * .3); cx.fillStyle = '#c98a5e'; cx.fillRect(wx, fy + S1 * .3, ww, S1 * .13); cx.fillStyle = '#8a5430'; cx.fillRect(wx, fy + S1 * .41, ww, SCALE); }
+    } else if (c === '-') {
+      // Muro bajo visto de frente: cima, tapiz del cuarto de abajo y zoclo
+      const rb = m.cell(x, y + 1), pre = rb === 'k' ? 'k-' : rb === 'b' ? 'b-' : rb === 'g' ? 'g-' : 'h-';
+      cx.fillStyle = '#8a5272'; cx.fillRect(X, Y, ts, S1 * .34); cx.fillStyle = '#c48aa8'; cx.fillRect(X, Y + SCALE, ts, S1 * .34 - 2 * SCALE); cx.fillStyle = '#dcaac4'; cx.fillRect(X, Y + SCALE, ts, SCALE * 1.5);
+      cx.drawImage(tileCv[pre + 'wallB'], 0, 5, T, 11, X, Y + S1 * .34, ts, S1 * .66 + .5);
+    } else if (c === 'F') {
+      // Cerca blanca de madera
+      const hz = ROOM_N[m.cell(x + 1, y)] || ROOM_N[m.cell(x - 1, y)] || m.cell(x + 1, y) === 'F' || m.cell(x - 1, y) === 'F';
+      cx.fillStyle = '#7a5a5a'; const pw = S1 * .2;
+      for (let k = 0; k < 2; k++) { const ppx = X + S1 * (.15 + k * .5); cx.fillRect(ppx - SCALE, Y + S1 * .15 - SCALE, pw + 2 * SCALE, S1 * .8 + 2 * SCALE); }
+      cx.fillRect(X, Y + S1 * .32 - SCALE, ts, S1 * .14 + 2 * SCALE); cx.fillRect(X, Y + S1 * .66 - SCALE, ts, S1 * .14 + 2 * SCALE);
+      cx.fillStyle = '#ffffff'; for (let k = 0; k < 2; k++) cx.fillRect(X + S1 * (.15 + k * .5), Y + S1 * .15, pw, S1 * .8);
+      cx.fillRect(X, Y + S1 * .32, ts, S1 * .14); cx.fillRect(X, Y + S1 * .66, ts, S1 * .14);
+      cx.fillStyle = '#e4dce8'; for (let k = 0; k < 2; k++) cx.fillRect(X + S1 * (.15 + k * .5) + pw * .6, Y + S1 * .15, pw * .4, S1 * .8);
+      void hz;
+    }
+  }
+  // Sombrita suave al pie de cada pared del fondo
+  cx.imageSmoothingEnabled = true;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (!ROOM_N[m.cell(x, y)]) continue; const up = m.cell(x, y - 1); if (up !== '#' && up !== '-') continue;
+    const X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE, gr = cx.createLinearGradient(0, Y, 0, Y + S1 * .55); gr.addColorStop(0, 'rgba(110,50,80,.24)'); gr.addColorStop(1, 'rgba(110,50,80,0)'); cx.fillStyle = gr; cx.fillRect(X, Y, ts, S1 * .55);
+  }
+  cx.imageSmoothingEnabled = false;
+}
 function render() {
   const m = mapOf(); cx.imageSmoothingEnabled = false;
   const inside = game.map !== 'town';
@@ -788,7 +944,8 @@ function render() {
   else { const tx = (lucy.px + .5) * T - vwT / 2, ty = (lucy.py + .5) * T - vhT / 2; const k = 1 - Math.pow(.0005, Math.min(.1, (performance.now() - (render.last || performance.now())) / 1000)); render.last = performance.now(); if (render.snap) { render.snap = false; cam.x = clamp(tx, 0, m.w * T - vwT); cam.y = clamp(ty, 0, m.h * T - vhT); } cam.x += (clamp(tx, 0, m.w * T - vwT) - cam.x) * k; cam.y += (clamp(ty, 0, m.h * T - vhT) - cam.y) * k; }
   render.lastMap = game.map;
   const x0 = Math.max(0, Math.floor(cam.x / T)), y0 = Math.max(0, Math.floor(cam.y / T)), x1 = Math.min(m.w - 1, Math.ceil((cam.x + vwT) / T)), y1 = Math.min(m.h - 1, Math.ceil((cam.y + vhT) / T)), ts = T * SCALE + .5;
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+  if (m.plan) drawHomeTiles(m, x0, y0, x1, y1, ts);
+  else for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const g = m.ground[x + y * m.w], X = (x * T - cam.x) * SCALE, Y = (y * T - cam.y) * SCALE;
     const hp = m.home ? 'h-' : '';
     const rk = m.roomKind ? m.roomKind[x + y * m.w] : 0;
@@ -797,7 +954,7 @@ function render() {
   }
   cx.imageSmoothingEnabled = true;
   if (inside) {
-    { const y3 = (3 * T - cam.y) * SCALE, gr = cx.createLinearGradient(0, y3, 0, y3 + T * SCALE * .6); gr.addColorStop(0, 'rgba(120,60,80,.22)'); gr.addColorStop(1, 'rgba(120,60,80,0)'); cx.fillStyle = gr; cx.fillRect((1 * T - cam.x) * SCALE, y3, (m.w - 2) * T * SCALE, T * SCALE * .6); }
+    if (!m.plan) { const y3 = (3 * T - cam.y) * SCALE, gr = cx.createLinearGradient(0, y3, 0, y3 + T * SCALE * .6); gr.addColorStop(0, 'rgba(120,60,80,.22)'); gr.addColorStop(1, 'rgba(120,60,80,0)'); cx.fillStyle = gr; cx.fillRect((1 * T - cam.x) * SCALE, y3, (m.w - 2) * T * SCALE, T * SCALE * .6); }
     for (const w of m.wall) { const im = IMG[w.img]; if (im && im.width) { const ww = w.w * T * SCALE, hh = ww * im.height / im.width; cx.drawImage(im, (w.x * T - cam.x) * SCALE, ((w.y || 1.25) * T - cam.y) * SCALE - hh / 2, ww, hh); } }
     if (m.rugs) for (const r of m.rugs) drawFurn(r.f, r.it, m);
     if (m.rugs2) { const im = IMG['d-rug']; if (im && im.width) { const ww = m.rugs2.w * T * SCALE, hh = ww * im.height / im.width; cx.drawImage(im, (m.rugs2.x * T - cam.x) * SCALE, (m.rugs2.y * T - cam.y) * SCALE - hh / 2, ww, hh); } }
@@ -1046,58 +1203,120 @@ function openUpgrades() {
 
 /* ---------- Minijuego: echar ingredientes, batir con el dedo y luego decorar ---------- */
 const mix = $('#mix'), mcv = $('#mixCv'), mcx = mcv.getContext('2d');
+// Colores de cada ingrediente dentro de la mezcla
+const ING_COL = { egg: '#ffcf3a', flour: '#fffaf0', sugar: '#ffffff', choco: '#6b3a22', strawberry: '#ff5f8f', milk: '#fffdf6', butter: '#ffe27a', lemon: '#fff06a', apple: '#e9c46a', vanilla: '#f1d9a6', cream: '#fff4ea', sprinkles: '#ff8fc4', honey: '#f5b830', nuts: '#b07a4a', banana: '#ffe680', coconut: '#fffaf5', caramel: '#d08a3a', cinnamon: '#a0602e' };
+function mixLerp(a, b, t) { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
 function startMix(r, slot) {
-  game.paused = true; mix.hidden = false; $('#mixTitle').textContent = '¡ECHA LOS INGREDIENTES!';
+  game.paused = true; mix.hidden = false; const title = $('#mixTitle');
+  const say = t => { title.textContent = t; title.style.animation = 'none'; void title.offsetWidth; title.style.animation = ''; };
+  say('¡ECHA LOS INGREDIENTES!');
   const items = Object.entries(r.need).flatMap(([k, n]) => Array(n).fill(k));
-  let dropped = [], stir = 0, phase = 'drop', last = null, ang = 0, done = false, t0 = performance.now();
+  const st = { dropped: 0, total: items.length, fly: [], blobs: [], parts: [], rip: [], stir: 0, phase: 'drop', ang: 0, wh: null, idle: 0, done: false, flash: 0, col: r.need.choco ? '#8a5030' : r.need.strawberry ? '#ffb0c8' : r.need.lemon ? '#fff09a' : r.need.apple ? '#f2d098' : '#fbe3b0' };
   const row = $('#mixRow'); row.innerHTML = '';
-  items.forEach((k, i) => { const b = document.createElement('button'); b.innerHTML = `<img alt="" src="${src('ing-' + k)}">`; b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; b.style.opacity = .25; dropped.push({ k, t: 0, x: rand(-60, 60) }); sfx.pick(); if (dropped.length === items.length) setTimeout(() => { phase = 'stir'; $('#mixTitle').textContent = '¡BATE EN CÍRCULOS!'; row.innerHTML = ''; }, 500); }); row.appendChild(b); });
+  const fit = () => { const d = Math.min(2, window.devicePixelRatio || 1); mcv.width = innerWidth * d; mcv.height = innerHeight * d; mcx.setTransform(d, 0, 0, d, 0, 0); };
+  fit(); window.addEventListener('resize', fit);
+  items.forEach(k => { const b = document.createElement('button'); b.setAttribute('aria-label', ING[k] ? ING[k].n : k); b.innerHTML = `<img alt="" src="${src('ing-' + k)}">`;
+    b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; const rc = b.getBoundingClientRect(); st.fly.push({ k, t: 0, x0: rc.left + rc.width / 2, y0: rc.top + rc.height / 2, spin: rand(-6, 6), ox: rand(-.35, .35), oy: rand(-.3, .3) }); sfx.pick(); });
+    row.appendChild(b); });
   const need = S.ups.mixer ? 5 : 9;   // vueltas de batido
-  const pt = e => { const r2 = mcv.getBoundingClientRect(); return { x: (e.clientX - r2.left) / r2.width * 520 - 260, y: (e.clientY - r2.top) / r2.height * 520 - 280 }; };
-  mcv.onpointerdown = e => { last = pt(e); try { mcv.setPointerCapture(e.pointerId); } catch (er) {} };
-  mcv.onpointermove = e => { if (!last || phase !== 'stir') return; const p = pt(e), a0 = Math.atan2(last.y, last.x), a1 = Math.atan2(p.y, p.x); let d = a1 - a0; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; if (Math.hypot(p.x, p.y) > 30) { stir += Math.abs(d) / (Math.PI * 2); ang += d; if (Math.random() < .2) sfx.stir(); } last = p;
-    if (stir >= need && !done) { done = true; sfx.ding(); toOven(r, slot); } };
-  mcv.onpointerup = () => (last = null);
-  const col = r.need.choco ? '#8a5030' : r.need.strawberry ? '#ffb8d0' : r.need.lemon ? '#fff09a' : r.need.apple ? '#f8d8a0' : '#fbe6b8';
-  (function frame() {
-    if (done) return;
-    drawMixScene(dropped, items.length, phase, stir / need, ang, col);
-    if (phase === 'stir' && stir >= need) { done = true; sfx.ding(); toOven(r, slot); return; }
-    requestAnimationFrame(frame);
+  const geo = () => { const W = innerWidth, H = innerHeight, im = IMG['mix-bowl2'], ar = im && im.width ? im.height / im.width : .75, bw = Math.min(W * .86, (H - 230) / ar * .95, 720), bh = bw * ar, bx = (W - bw) / 2, by = Math.max(80, (H - bh) / 2 - 10); return { W, H, bw, bh, bx, by, cx: bx + bw * .5, cy: by + bh * .364, rx: bw * .455, ry: bh * .307 }; };
+  let last = null;
+  const toBowl = (e, g) => ({ x: (e.clientX - g.cx) / g.rx, y: (e.clientY - g.cy) / g.ry });
+  mcv.onpointerdown = e => { last = toBowl(e, geo()); st.wh = { x: e.clientX, y: e.clientY }; try { mcv.setPointerCapture(e.pointerId); } catch (er) {} };
+  mcv.onpointermove = e => {
+    if (!last || st.phase !== 'stir') return; const g = geo(), p = toBowl(e, g); st.wh = { x: e.clientX, y: e.clientY }; st.idle = 0;
+    let d = Math.atan2(p.y, p.x) - Math.atan2(last.y, last.x); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2;
+    if (Math.hypot(p.x, p.y) > .18) { st.stir += Math.abs(d) / (Math.PI * 2); st.ang += d; for (const b of st.blobs) { b.a += d * (1.3 - b.r * .6); b.sm = Math.min(5.5, b.sm + Math.abs(d) * .9); } if (Math.random() < .2) sfx.stir(); if (Math.random() < .25) st.parts.push({ bub: 1, x: rand(-.6, .6), y: rand(-.5, .5), t: 0 }); }
+    last = p;
+  };
+  mcv.onpointerup = mcv.onpointercancel = () => (last = null);
+  let prev = performance.now();
+  st.tick = dt => {
+    if (st.phase === 'drop' && st.dropped === st.total && !st.fly.length) { st.phase = 'stir'; say('¡BATE EN CÍRCULOS!'); row.innerHTML = ''; }
+    if (st.phase === 'stir' && st.stir >= need && !st.done) { st.done = true; sfx.ding(); say('¡PERFECTO!'); for (let i = 0; i < 26; i++) st.parts.push({ star: 1, x: 0, y: 0, vx: rand(-1, 1) * 2.4, vy: rand(-2.6, -.6), t: 0 }); setTimeout(() => { window.removeEventListener('resize', fit); toOven(r, slot); }, 700); }
+    st.idle += dt; if (st.done) st.flash += dt;
+    drawMixScene(st, dt, Math.min(1, st.stir / need));
+  };
+  (function frame(now) {
+    if (st.done && st.flash > 1.6) return;
+    const dt = Math.min(.05, ((now || performance.now()) - prev) / 1000); prev = now || performance.now();
+    st.tick(dt); requestAnimationFrame(frame);
   })();
+  mix.__st = st;
 }
-// Escena de batir: mesa de la cocina, tazón grande, la mezcla del color de la receta y el batidor que sigue al dedo
-function drawMixScene(dropped, total, phase, prog, ang, col) {
-  const W = 520, bg = IMG['mix-bg'], bowl = IMG['mix-bowl'], wh = IMG['mix-whisk'];
-  mcx.clearRect(0, 0, W, W);
-  if (bg && bg.width) { const k = Math.max(W / bg.width, W / bg.height); mcx.drawImage(bg, (W - bg.width * k) / 2, (W - bg.height * k) / 2, bg.width * k, bg.height * k); }
-  mcx.fillStyle = 'rgba(80,40,60,.18)'; mcx.beginPath(); mcx.ellipse(260, 430, 200, 34, 0, 0, 7); mcx.fill();
-  const bw = 400, bh = bowl && bowl.width ? bw * bowl.height / bowl.width : 260, bx = 60, by = 440 - bh;
-  // Boca del tazón (donde se ve la mezcla)
-  const rx = bw * .4, ry = bw * .11, cxm = 260, cym = by + bh * .2;
-  if (bowl && bowl.width) mcx.drawImage(bowl, bx, by, bw, bh); else { mcx.fillStyle = '#c8e8ff'; mcx.beginPath(); mcx.ellipse(260, 300, 200, 140, 0, 0, Math.PI); mcx.fill(); }
-  const fill = Math.min(1, dropped.length / total);
-  if (fill > 0) {
-    // La mezcla se ve adentro: la boca del tazón recorta y el líquido queda más abajo que la orilla, con la pared de adentro sombreada arriba
-    mcx.save(); mcx.beginPath(); mcx.ellipse(cxm, cym + 2, rx * .9, ry * .82, 0, 0, 7); mcx.clip();
-    mcx.fillStyle = 'rgba(40,90,150,.25)'; mcx.fillRect(cxm - rx, cym - ry, rx * 2, ry * 2);
-    const lv = ry * (1.05 - .55 * fill); mcx.fillStyle = phase === 'stir' ? col : '#fbe6b8'; mcx.beginPath(); mcx.ellipse(cxm, cym + lv, rx * .86, ry * .8, 0, 0, 7); mcx.fill();
-    mcx.fillStyle = 'rgba(255,255,255,.35)'; mcx.beginPath(); mcx.ellipse(cxm - rx * .25, cym + lv - ry * .3, rx * .3, ry * .14, 0, 0, 7); mcx.fill();
-    if (phase === 'stir') { mcx.strokeStyle = 'rgba(255,255,255,.55)'; mcx.lineWidth = 7; for (let k = 0; k < 3; k++) { mcx.beginPath(); mcx.ellipse(cxm, cym + 4, rx * (.25 + k * .22), ry * (.25 + k * .22), 0, ang + k, ang + k + 2.4); mcx.stroke(); } }
+// Escena de batir: barra de la cocina vista desde arriba, tazón grande y la mezcla que se va revolviendo con los colores de cada ingrediente
+function drawMixScene(st, dt, prog) {
+  const W = innerWidth, H = innerHeight, g = (() => { const im = IMG['mix-bowl2'], ar = im && im.width ? im.height / im.width : .75, bw = Math.min(W * .86, (H - 230) / ar * .95, 720), bh = bw * ar, bx = (W - bw) / 2, by = Math.max(80, (H - bh) / 2 - 10); return { bw, bh, bx, by, cx: bx + bw * .5, cy: by + bh * .364, rx: bw * .455, ry: bh * .307 }; })();
+  const bg = IMG[W > H ? 'mixtable-wide' : 'mixtable-tall'], bowl = IMG['mix-bowl2'], wh = IMG['mix-whisk'];
+  mcx.clearRect(0, 0, W, H);
+  if (bg && bg.width) { const k = Math.max(W / bg.width, H / bg.height); mcx.drawImage(bg, (W - bg.width * k) / 2, (H - bg.height * k) / 2, bg.width * k, bg.height * k); }
+  // Sombra del tazón sobre el mantel
+  mcx.fillStyle = 'rgba(90,30,60,.22)'; mcx.beginPath(); mcx.ellipse(g.cx, g.by + g.bh * .96, g.bw * .42, g.bh * .07, 0, 0, 7); mcx.fill();
+  if (bowl && bowl.width) mcx.drawImage(bowl, g.bx, g.by, g.bw, g.bh);
+  // La mezcla: sube con cada ingrediente; al batir, los colores se jalan en remolino y se vuelven uno solo
+  const fill = Math.min(1, (st.dropped + st.fly.reduce((a, f) => a + Math.max(0, f.t - .8) * 5, 0) * 0) / st.total);
+  if (st.dropped > 0) {
+    const lv = g.ry * (.78 - .4 * fill), sr = 1 - (.78 - .4 * fill) * .5, ex = g.rx * .97 * sr, ey = g.ry * .97 * sr, my = g.cy + lv;
+    mcx.save(); mcx.beginPath(); mcx.ellipse(g.cx, g.cy, g.rx * .985, g.ry * .975, 0, 0, 7); mcx.clip();
+    const base = mixLerp('#f3d394', st.col === '#fbe3b0' ? '#f6d48e' : st.col, Math.min(1, prog * 1.15));
+    mcx.fillStyle = base; mcx.beginPath(); mcx.ellipse(g.cx, my, ex, ey, 0, 0, 7); mcx.fill();
+    mcx.save(); mcx.beginPath(); mcx.ellipse(g.cx, my, ex, ey, 0, 0, 7); mcx.clip();
+    const fade = Math.max(0, 1 - prog * 1.1);
+    for (const b of st.blobs) {
+      const a = Math.min(1, b.t += dt * 3) * fade; if (a <= 0) continue;
+      mcx.globalAlpha = a; mcx.strokeStyle = b.c; mcx.lineCap = 'round'; mcx.lineWidth = ey * (.5 - b.r * .16) * (1 - b.sm / 11);
+      mcx.beginPath(); for (let k = 0; k <= 14; k++) { const q = b.a - b.sm * k / 14, rr2 = b.r * (1 - k / 14 * .25); mcx.lineTo(g.cx + Math.cos(q) * ex * rr2, my + Math.sin(q) * ey * rr2); } mcx.stroke();
+      if (b.k === 'sprinkles') for (let k = 0; k < 8; k++) { const q = b.a - k * .5, rr2 = b.r * (.7 + (k % 3) * .15); mcx.fillStyle = ['#ff6fae', '#7ad7ff', '#ffe066', '#9be36a'][k % 4]; mcx.fillRect(g.cx + Math.cos(q) * ex * rr2, my + Math.sin(q) * ey * rr2, 6, 3); }
+    }
+    mcx.globalAlpha = 1;
+    // Brillo y vetas de batido
+    if (st.phase === 'stir') { mcx.strokeStyle = 'rgba(255,255,255,.45)'; mcx.lineWidth = 4; for (let k = 0; k < 3; k++) { mcx.beginPath(); mcx.ellipse(g.cx, my, ex * (.3 + k * .22), ey * (.3 + k * .22), 0, st.ang * 1.2 + k * 2, st.ang * 1.2 + k * 2 + 1.6); mcx.stroke(); } }
+    mcx.fillStyle = 'rgba(255,255,255,.4)'; mcx.beginPath(); mcx.ellipse(g.cx - ex * .35, my - ey * .45, ex * .22, ey * .1, -.15, 0, 7); mcx.fill();
+    mcx.restore();
+    mcx.strokeStyle = 'rgba(150,90,50,.35)'; mcx.lineWidth = 3; mcx.beginPath(); mcx.ellipse(g.cx, my, ex, ey, 0, 0, 7); mcx.stroke();
+    // Sombra de la pared de adentro sobre la mezcla
+    const sh = mcx.createLinearGradient(0, g.cy - g.ry, 0, my); sh.addColorStop(0, 'rgba(120,70,40,.0)'); sh.addColorStop(1, 'rgba(120,70,40,.12)'); mcx.fillStyle = sh; mcx.beginPath(); mcx.ellipse(g.cx, my, ex, ey, 0, Math.PI, 0); mcx.fill();
+    // Ondas donde cayó cada ingrediente
+    for (const w of st.rip) { w.t += dt * 1.6; if (w.t > 1) continue; mcx.strokeStyle = `rgba(255,255,255,${.7 * (1 - w.t)})`; mcx.lineWidth = 3; mcx.beginPath(); mcx.ellipse(g.cx + w.x * ex, my + w.y * ey, ex * .1 + w.t * ex * .3, ey * .1 + w.t * ey * .3, 0, 0, 7); mcx.stroke(); }
+    st.rip = st.rip.filter(w => w.t <= 1);
     mcx.restore();
   }
-  // Ingredientes cayendo al tazón
-  for (const d of dropped) { d.t = Math.min(1, d.t + .045); if (d.t < 1) { const im = IMG['ing-' + d.k]; if (im) mcx.drawImage(im, cxm + d.x - 50, 20 + d.t * (cym - 60), 100, 100); } }
-  if (phase === 'stir') {
-    // El batidor gira dentro del tazón
-    const wx = cxm + Math.cos(ang) * rx * .5, wy = cym + Math.sin(ang) * ry * .5;
-    if (wh && wh.width) { const ww = 120, hh = ww * wh.height / wh.width; mcx.save(); mcx.translate(wx, wy); mcx.rotate(Math.PI - .35 + Math.sin(ang) * .15); mcx.drawImage(wh, -ww / 2, -hh * .12, ww, hh); mcx.restore(); }
-    // Avance: barra redondita con brillo
-    const p = Math.min(1, prog), bx2 = 110, bw2 = 300, by2 = 470;
-    mcx.fillStyle = '#4a2a4a'; rr(bx2 - 5, by2 - 5, bw2 + 10, 30, 15); mcx.fillStyle = '#fff'; rr(bx2, by2, bw2, 20, 10);
-    mcx.fillStyle = '#ff8fc4'; if (p > .02) rr(bx2, by2, bw2 * p, 20, 10); mcx.fillStyle = 'rgba(255,255,255,.6)'; if (p > .05) rr(bx2 + 6, by2 + 3, bw2 * p - 12, 5, 3);
-    if (p < .08) { const t = performance.now() / 350, hx = cxm + Math.cos(t) * rx * .55, hy = cym + Math.sin(t) * ry * .55; mcx.fillStyle = 'rgba(255,255,255,.9)'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 5; mcx.beginPath(); mcx.arc(hx, hy, 20, 0, 7); mcx.fill(); mcx.stroke(); }
+  // Ingredientes volando en arco desde su botón hasta el tazón
+  for (const f of st.fly) {
+    f.t = Math.min(1, f.t + dt * 1.9); const e = f.t, tx = g.cx + f.ox * g.rx * .5, ty = g.cy + g.ry * .2 + f.oy * g.ry * .3;
+    const x = f.x0 + (tx - f.x0) * e, y = f.y0 + (ty - f.y0) * e - Math.sin(e * Math.PI) * Math.min(260, g.bh * .8), sz = Math.min(130, g.bw * .2) * (1 - e * .45), im = IMG['ing-' + f.k];
+    if (im && im.width) { mcx.save(); if (e > .72) { mcx.beginPath(); mcx.ellipse(g.cx, g.cy, g.rx * .98, g.ry * .97, 0, 0, 7); mcx.rect(0, 0, W, g.cy - g.ry * .2); mcx.clip(); mcx.globalAlpha = Math.min(1, (1 - e) * 6); } mcx.translate(x, y); mcx.rotate(f.spin * e); mcx.drawImage(im, -sz / 2, -sz / 2, sz, sz * im.height / im.width); mcx.restore(); }
+    if (f.t >= 1 && !f.land) {
+      f.land = true; st.dropped++; sfx.drop(); const c = ING_COL[f.k] || '#f3dcb0';
+      st.blobs.push({ k: f.k, c, a: Math.atan2(f.oy, f.ox) + rand(-.5, .5), r: rand(.25, .7), sm: .5, t: 0 });
+      st.rip.push({ x: f.ox * .5, y: f.oy * .3, t: 0 });
+      for (let i = 0; i < 12; i++) st.parts.push({ drop: 1, c, x: f.ox * .5, y: f.oy * .3, vx: rand(-1.2, 1.2), vy: rand(-2.4, -1), t: 0 });
+    }
   }
+  st.fly = st.fly.filter(f => !f.land);
+  // Gotitas, burbujas y estrellitas
+  for (const q of st.parts) {
+    q.t += dt; const X = g.cx + q.x * g.rx, Y = g.cy + q.y * g.ry;
+    if (q.drop) { q.x += q.vx * dt * .5; q.y += q.vy * dt; q.vy += 6 * dt; mcx.fillStyle = q.c; mcx.strokeStyle = 'rgba(74,42,74,.5)'; mcx.lineWidth = 1.5; mcx.beginPath(); mcx.arc(X, Y, Math.max(.5, 7 * (1 - q.t)), 0, 7); mcx.fill(); mcx.stroke(); }
+    else if (q.bub) { const rr2 = 3 + q.t * 9; mcx.strokeStyle = `rgba(255,255,255,${.9 * (1 - q.t)})`; mcx.lineWidth = 2; mcx.beginPath(); mcx.arc(X, Y + g.ry * .25, rr2, 0, 7); mcx.stroke(); }
+    else if (q.star) { q.x += q.vx * dt * .4; q.y += q.vy * dt * .5; q.vy += 2.5 * dt; mcx.fillStyle = q.t % .3 < .15 ? '#fff8a0' : '#ffd23a'; mcx.save(); mcx.translate(X, Y); mcx.rotate(q.t * 4); mcx.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, rr2 = i % 2 ? 5 : 13; mcx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); } mcx.fill(); mcx.restore(); }
+  }
+  st.parts = st.parts.filter(q => q.t < (q.star ? 1.6 : 1));
+  if (st.phase === 'stir') {
+    // El batidor va donde está el dedo (adentro del tazón); si no lo tocas, da vueltas solito para enseñarte
+    let wx, wy;
+    if (st.wh && st.idle < 1.2) { const dx = (st.wh.x - g.cx) / g.rx, dy = (st.wh.y - g.cy) / g.ry, d = Math.hypot(dx, dy), k = d > .8 ? .8 / d : 1; wx = g.cx + dx * k * g.rx; wy = g.cy + dy * k * g.ry; }
+    else { const t = performance.now() / 420; wx = g.cx + Math.cos(t) * g.rx * .5; wy = g.cy + Math.sin(t) * g.ry * .5; }
+    if (wh && wh.width) { const ww = Math.min(150, g.bw * .2), hh = ww * wh.height / wh.width; mcx.save(); mcx.translate(wx, wy); mcx.rotate(Math.PI - .3 + (wx - g.cx) / g.rx * .35); mcx.drawImage(wh, -ww / 2, -hh * .08, ww, hh); mcx.restore(); }
+    if (st.idle > 1.2 && !st.done) { const t = performance.now() / 420, hx = g.cx + Math.cos(t + .5) * g.rx * .5, hy = g.cy + Math.sin(t + .5) * g.ry * .5; mcx.fillStyle = 'rgba(255,255,255,.95)'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 5; mcx.beginPath(); mcx.arc(hx, hy, 22, 0, 7); mcx.fill(); mcx.stroke(); mcx.fillStyle = '#ff8fc4'; mcx.beginPath(); mcx.arc(hx, hy, 9, 0, 7); mcx.fill(); }
+    // Avance: barra con tres estrellitas
+    const bw2 = Math.min(W * .7, 420), bx2 = (W - bw2) / 2, by2 = Math.min(H - 70, g.by + g.bh + 26), p = prog;
+    mcx.fillStyle = '#4a2a4a'; rr(bx2 - 6, by2 - 6, bw2 + 12, 36, 18); mcx.fillStyle = '#fff'; rr(bx2, by2, bw2, 24, 12);
+    const gr = mcx.createLinearGradient(bx2, 0, bx2 + bw2, 0); gr.addColorStop(0, '#ffb3d6'); gr.addColorStop(1, '#ff6fae'); mcx.fillStyle = gr; if (p > .02) rr(bx2, by2, Math.max(24, bw2 * p), 24, 12);
+    mcx.fillStyle = 'rgba(255,255,255,.55)'; if (p > .06) rr(bx2 + 8, by2 + 4, bw2 * p - 16, 6, 3);
+    for (let k = 1; k <= 3; k++) { const sx = bx2 + bw2 * k / 3 - (k === 3 ? 4 : 0), on = p >= k / 3 - .001; mcx.save(); mcx.translate(sx, by2 + 12); mcx.fillStyle = on ? '#ffd23a' : '#e8d8e0'; mcx.strokeStyle = '#4a2a4a'; mcx.lineWidth = 3; mcx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i / 10 * Math.PI * 2, rr2 = i % 2 ? 7 : 16; mcx.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2); } mcx.closePath(); mcx.fill(); mcx.stroke(); mcx.restore(); }
+  }
+  if (st.done) { mcx.fillStyle = `rgba(255,255,255,${Math.max(0, .5 - st.flash)})`; mcx.fillRect(0, 0, W, H); }
 }
 function rr(x, y, w, h, r) { mcx.beginPath(); mcx.moveTo(x + r, y); mcx.arcTo(x + w, y, x + w, y + h, r); mcx.arcTo(x + w, y + h, x, y + h, r); mcx.arcTo(x, y + h, x, y, r); mcx.arcTo(x, y, x + w, y, r); mcx.fill(); }
 function toOven(r, slot, quick) {
@@ -1290,7 +1509,7 @@ function spawnCats() {
   const m = maps.home; cats = [{ id: 'aceituna', name: 'Aceituna' }, { id: 'coco', name: 'Coco' }].map((c, i) => { const p = freeTile(m) || { x: 3 + i, y: 5 }; return Object.assign(mkChar('lucy', p.x, p.y), c, { speed: 2.3, face: i ? -1 : 1, state: 'sit', timer: rand(1, 4) }); });
 }
 function freeTile(m, near) {
-  const opts = []; for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (!m.solid[x + y * m.w]) opts.push({ x, y });
+  const opts = []; for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (!m.solid[x + y * m.w]) opts.push({ x, y });
   if (near) opts.sort((a, b) => Math.hypot(a.x - near.x, a.y - near.y) - Math.hypot(b.x - near.x, b.y - near.y));
   return near ? opts[0] : pick(opts);
 }
@@ -1389,7 +1608,7 @@ function paintTray() {
 function placeFromStore(id) {
   const m = maps.home, f = FURNI[id], c = { x: Math.floor(m.w / 2), y: Math.floor(m.h / 2) }; let best = null;
   // Los tapetes van al centro; los muebles, primero contra la pared del fondo
-  for (let y = 3; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (fits(m, f, x, y)) { const d = f.flat ? Math.hypot(x + f.fw / 2 - c.x, y + f.fh / 2 - c.y) : (y - 3) * 2.2 + Math.abs(x + f.fw / 2 - c.x) * .45; if (!best || d < best.d) best = { x, y, d }; }
+  for (let y = 1; y < m.h - 1; y++) for (let x = 1; x < m.w - 1; x++) if (fits(m, f, x, y)) { const d = f.flat ? Math.hypot(x + f.fw / 2 - c.x, y + f.fh / 2 - c.y) : (m.floorT[x + (y - 1) * m.w] ? 6 : 0) + y * .3 + Math.abs(x + f.fw / 2 - c.x) * .45; if (!best || d < best.d) best = { x, y, d }; }
   if (!best) { sfx.no(); toast('Ya no cabe: ¡amplía tu casa en la mueblería!', 'b-home'); return; }
   S.home.store.splice(S.home.store.indexOf(id), 1); S.home.items.push({ id, x: best.x, y: best.y }); placeFurniture(m); paintTray(); sfx.pick(); event('place'); checkComfort();
 }
@@ -1455,7 +1674,7 @@ function openFurnShop() {
     else if (tab === 'gatitos') body = '<p style="font-family:system-ui;font-weight:700;color:#9a6a8a;margin:4px">Para ponérselos, toca la camita de los gatos en tu casa.</p><div class="grid">' + ACCS.map(a => { const own = S.accs.includes(a.id), lock = (a.star || 1) > st && !own; return `<button class="card${own ? '' : lock ? ' lock off' : S.coins < a.cost ? ' off' : ''}" data-acc="${a.id}">${own ? '<span class="own">¡Tuyo!</span>' : lock ? `<span class="own">${'★'.repeat(a.star)}</span>` : ''}<canvas class="pic" width="70" height="70" data-preview="${a.id}"></canvas><span class="name">${a.n}</span>${own ? '' : priceTag(a.cost)}</button>`; }).join('') + '</div>';
     else {
       const nx = HOME_SIZES[S.home.lvl + 1];
-      body = `<h3 style="font-weight:400;margin:4px 4px 8px">Ampliar la casa</h3><div class="grid">` + (nx ? `<button class="card${S.coins < nx.cost ? ' off' : ''}" data-grow="1"><img class="pic" alt="" src="${src('b-home')}"><span class="name">${nx.n}</span><span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">Más espacio para tus muebles</span>${priceTag(nx.cost)}</button>` : '<div class="card"><img class="pic" alt="" src="' + src('b-home') + '"><span class="name">¡Tu casa ya es la más grande!</span></div>') + '</div>' +
+      body = `<h3 style="font-weight:400;margin:4px 4px 8px">Ampliar la casa</h3><div class="grid">` + (nx ? `<button class="card${S.coins < nx.cost ? ' off' : ''}" data-grow="1"><img class="pic" alt="" src="${src('b-home')}"><span class="name">${nx.n}</span><span style="font-family:system-ui;font-weight:700;font-size:12px;color:#9a6a8a">${nx.desc}</span>${priceTag(nx.cost)}</button>` : '<div class="card"><img class="pic" alt="" src="' + src('b-home') + '"><span class="name">¡Tu casa ya es la más grande!</span></div>') + '</div>' +
         `<h3 style="font-weight:400;margin:16px 4px 8px">Paredes</h3><div class="grid">` + WALLS.map((w, i) => { const own = S.home.walls.includes(i); return `<button class="card${S.home.wall === i ? '' : !own && S.coins < w.cost ? ' off' : ''}" data-wall="${i}">${S.home.wall === i ? '<span class="own">¡Puesta!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:repeating-linear-gradient(90deg,${w.c[0]} 0 12px,${w.c[1]} 12px 20px);box-shadow:inset 0 0 0 3px rgba(0,0,0,.06)"></span><span class="name">${w.n}</span>${own ? '' : priceTag(w.cost)}</button>`; }).join('') + '</div>' +
         `<h3 style="font-weight:400;margin:16px 4px 8px">Pisos</h3><div class="grid">` + FLOORS.map((f, i) => { const own = S.home.floors.includes(i); return `<button class="card${S.home.floor === i ? '' : !own && S.coins < f.cost ? ' off' : ''}" data-floor="${i}">${S.home.floor === i ? '<span class="own">¡Puesto!</span>' : ''}<span class="pic" style="display:block;border-radius:12px;background:${f.wood ? `repeating-linear-gradient(0deg,${f.c[0]} 0 14px,${f.c[1]} 14px 16px)` : `conic-gradient(${f.c[0]} 25%,${f.c[1]} 0 50%,${f.c[0]} 0 75%,${f.c[1]} 0) 0 0/28px 28px`}"></span><span class="name">${f.n}</span>${own ? '' : priceTag(f.cost)}</button>`; }).join('') + '</div>';
     }
@@ -1656,12 +1875,25 @@ paintMute();
     const shopRes = { open: !modal.hidden, title: winEl.querySelector('h2') && winEl.querySelector('h2').textContent, lucy: [lucy.x, lucy.y], map: game.map }; closeWin(); post('lucy-shopstop', shopRes);
     const caps = []; for (const ups of [[], ['table1'], ['table1', 'table2'], ['table1', 'table2', 'bigbakery']]) { ['table1', 'table2', 'bigbakery'].forEach(k => delete S.ups[k]); ups.forEach(k => (S.ups[k] = 1)); maps.bakery = buildBakery(); furnishBakery(); customers.length = 0; for (let i = 0; i < 6; i++) { spawnCustomer(); step(20); } step(150); caps.push(customers.length + '/' + custCap()); }
     post('lucy-caps', { caps }); customers.length = 0;
+    // Casa grande con cuartos de formas distintas y cocina equipada; los gatos nunca quedan fuera del piso
+    S.home.lvl = 2; S.home.kit = 0; maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
+    let offFloor = 0; for (let i = 0; i < 400; i++) { update(1 / 10); for (const k of cats) if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; } render();
+    post('lucy-house', { kit: S.home.items.filter(i => i.id[0] === 'k').map(i => i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
+    // Batir: ingredientes al tazón, remolino de colores y al horno
+    Object.assign(S.inv, { egg: 5, flour: 5, strawberry: 5, choco: 5 }); const mr = { id: 'cupcake', n: 'Cupcake', need: { egg: 1, flour: 1, strawberry: 1, choco: 1 }, bake: 5 };
+    game.map = 'bakery'; resize(); startMix(mr, 0); for (const b of [...document.querySelectorAll('#mixRow button')]) { b.click(); mix.__st.tick(.2); } for (let i = 0; i < 20; i++) mix.__st.tick(1 / 30);
+    const sv = (t, x, y) => mcv.dispatchEvent(new PointerEvent(t, { clientX: x, clientY: y, pointerId: 1, bubbles: true })), mcx0 = innerWidth / 2, mcy0 = innerHeight * .42;
+    sv('pointerdown', mcx0 + 80, mcy0); for (let i = 1; i <= 72; i++) { const a = i / 24 * Math.PI * 2; sv('pointermove', mcx0 + Math.cos(a) * 80, mcy0 + Math.sin(a) * 40); mix.__st.tick(1 / 30); }
+    await fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag: 'lucy-mix', img: mcv.toDataURL('image/png'), info: { errs, phase: mix.__st.phase, stir: mix.__st.stir, w: innerWidth, h: innerHeight } }) });
+    for (let i = 1; i <= 240 && !mix.__st.done; i++) { const a = (72 + i) / 24 * Math.PI * 2; sv('pointermove', mcx0 + Math.cos(a) * 80, mcy0 + Math.sin(a) * 40); mix.__st.tick(1 / 30); }
+    sv('pointerup', 0, 0); const mixDone = mix.__st.done; await new Promise(r => setTimeout(r, 2500));
+    post('lucy-mixdone', { mixDone, hidden: mix.hidden, oven: S.ovens[0] && S.ovens[0].r });
     post('lucy-new', { harvest: (S.inv.strawberry || 0) - st0, bowl: bowlLevel(), ordered: S.coins - c0, order: S.order });
     S.recipes = []; S.fame = Math.max(S.fame, 80); openUpgrades(); winEl.querySelector('.tab[data-t=recetas]').click(); winEl.querySelector('[data-u="rec:concha"]').click(); closeWin(); post('lucy-recipe', { recipes: S.recipes, menuHas: REC.filter(unlocked).some(r => r.id === 'concha') });
   })();
   if (!S.welcomed) { S.welcomed = 1; setTimeout(() => toast('¡Bienvenida a tu pastelería, Lucy!', 'des-cupcake'), 600); }
   window.LEON_READY = true;
 })();
-window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
+window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, mixTick: (n, dt = 1 / 30) => { for (let i = 0; i < n && mix.__st; i++) mix.__st.tick(dt); }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
 })();
 </script>
