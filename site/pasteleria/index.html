@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023185302';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261024060039';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1195,7 +1195,25 @@ function bubble(x, y, s, img, ready) {
   drawSprite(img, x - s * .5, y - s * .5, s, s);
   if (ready) { cx.fillStyle = '#ffc83a'; cx.beginPath(); cx.arc(x + s * .6, y - s * .6, s * .2, 0, 7); cx.fill(); cx.stroke(); }
 }
+// Los clientes hablan: globito con texto, voz de sílabas (como Animal Crossing) y aviso si están fuera de la pantalla
+function custTalk(c, txt, arrive) {
+  c.say = { txt, t: game.t };
+  if (game.map !== 'bakery') return;
+  const n = Math.min(6, 2 + (txt.length / 6 | 0)), base = { 'npc-a': 520, 'npc-b': 300, 'npc-c': 420, 'npc-d': 360 }[c.sheet] || 440;
+  for (let i = 0; i < n; i++) beep(base * (1 + Math.random() * .35), .05, 'square', .03, 0, i * .07);
+  if (arrive) { const sx = ((c.px + .5) * T - cam.x) * SCALE, sy = ((c.py + .5) * T - cam.y) * SCALE; if (sx < 0 || sx > VW || sy < 0 || sy > VH - 60) toast('Una clienta en el mostrador: ' + txt.replace(/^[^A-Za-zÁÉÍÓÚ¿¡]*/, ''), 'des-' + c.want); }
+}
+function drawSay(c, r) {
+  if (!c.say || game.t - c.say.t > 2.8) return;
+  const age = game.t - c.say.t, a = Math.min(1, age * 6, (2.8 - age) * 3), fs = Math.round(Math.max(13, T * SCALE * .38));
+  cx.save(); cx.globalAlpha = a; cx.font = `${fs}px Lilita One, sans-serif`;
+  const w = cx.measureText(c.say.txt).width + fs * 1.2, h = fs * 1.7, x = clamp(r.sx + r.w / 2 - w / 2, 6, VW - w - 6), y = r.sy - h - T * SCALE * (c.want && c.state !== 'leave' ? 1.15 : .2) - (1 - Math.min(1, age * 5)) * 8;
+  cx.fillStyle = '#fff'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 3; cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, w, h, h / 2) : cx.rect(x, y, w, h); cx.fill(); cx.stroke();
+  const tx = clamp(r.sx + r.w / 2, x + 12, x + w - 12); cx.beginPath(); cx.moveTo(tx - 7, y + h - 1); cx.lineTo(tx, y + h + 9); cx.lineTo(tx + 7, y + h - 1); cx.fill(); cx.stroke(); cx.fillRect(tx - 6, y + h - 3, 12, 4);
+  cx.fillStyle = '#4a2a4a'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(c.say.txt, x + w / 2, y + h / 2 + 1); cx.restore();
+}
 function drawBubble(c, r) {
+  drawSay(c, r);
   if (!c.want || c.state === 'leave') return; const s = T * SCALE * .9, x = r.sx + r.w / 2, y = r.sy - s * .5;
   bubble(x, y, s, 'des-' + c.want, false);
   // Paciencia: corazón que se va vaciando
@@ -1537,7 +1555,8 @@ function spawnCustomer() {
   const m = maps.bakery; if (customers.length >= custCap()) return;   // al principio uno a la vez; con mesitas y mejoras caben más
   const st = starsOf(S.fame), menu = REC.filter(unlocked), inShow = S.show.filter(r => menu.some(x => x.id === r));
   const want = inShow.length && Math.random() < .75 ? pick(inShow) : pick(menu).id;
-  const free = CUST_SHEETS.filter(sh => !customers.some(q => q.sheet === sh)), c = mkChar(pick(free.length ? free : CUST_SHEETS), m.door.x, m.door.y);   // nada de gemelos en la fila c.want = want; c.state = 'in'; c.since = game.t; c.patience = 70; c.speed = 3; c.dir = 3;
+  const free = CUST_SHEETS.filter(sh => !customers.some(q => q.sheet === sh)), c = mkChar(pick(free.length ? free : CUST_SHEETS), m.door.x, m.door.y);   // nada de gemelos en la fila
+  c.want = want; c.state = 'in'; c.since = game.t; c.patience = 70; c.speed = 3; c.dir = 3;
   customers.push(c); assignQueue(); if (game.map === 'bakery') sfx.bell();
   else if (!S.ups.cashier) toast('¡Llegó un cliente a tu pastelería!', 'des-' + want);
 }
@@ -1547,9 +1566,9 @@ function serve(c, byStaff = false) {
   const i = S.show.indexOf(c.want); if (i < 0) { if (!byStaff) { sfx.no(); toast(`Quiere ${RECI[c.want].n.toLowerCase()}: hornéalo primero`, 'des-' + c.want); } return false; }
   S.show.splice(i, 1); const r = RECI[c.want], pay = priceOf(r) + (S.ups.coffee ? 5 : 0); addCoins(pay); addFame(r.star); S.sold++; sfx.coin();
   floatText(c.px + .5, c.py - 1, '+' + pay, 'coin', '#ffe066'); event('sell');
-  leave(c); return true;
+  custTalk(c, pick(['¡Gracias, Lucy!', '¡Qué rico! 💕', '¡Delicioso!', '¡Vuelvo mañana!'])); leave(c); return true;
 }
-function leave(c, sad = false) { const m = maps.bakery; c.state = 'leave'; c.want = sad ? null : null; c.path = findPath(m, c.x, c.y, m.door.x, m.door.y) || []; c.sad = sad; assignQueue(); }
+function leave(c, sad = false) { const m = maps.bakery; if (sad) custTalk(c, 'Ya no esperé… 😢'); c.state = 'leave'; c.want = sad ? null : null; c.path = findPath(m, c.x, c.y, m.door.x, m.door.y) || []; c.sad = sad; assignQueue(); }
 
 /* ---------- Empleados ---------- */
 function spawnStaff() {
@@ -1941,7 +1960,8 @@ function updateBakery(dt) {
   const m = maps.bakery;
   for (const c of customers) {
     stepChar(c, dt, m);
-    if (c.state === 'in' && !c.moving && !c.path.length) { c.state = 'wait'; c.dir = 3; c.since = game.t; }
+    if (c.state === 'in' && !c.moving && !c.path.length) { c.state = 'wait'; c.dir = 3; c.since = game.t; custTalk(c, pick(['¡Hola, Lucy! Quiero ', '¿Me das ', 'Se me antoja ', '¡Hola! Vengo por ']) + RECI[c.want].n.toLowerCase(), true); }
+    if (c.state === 'wait' && !c.hurry && game.t - c.since > c.patience * .7) { c.hurry = true; custTalk(c, '¿Ya casi está? 🥺'); }
     if (c.state === 'wait' && game.t - c.since > c.patience) { leave(c, true); }
     if (c.state === 'leave' && !c.moving && !c.path.length) c.gone = true;
   }
@@ -2027,7 +2047,7 @@ paintMute();
     tapAt({ clientX: ((14 + .5) * T - cam.x) * SCALE, clientY: ((8 + .5) * T - cam.y) * SCALE }); for (let i = 0; i < 80 && modal.hidden; i++) step(5);
     post('lucy-shop', { shop: !modal.hidden }); closeWin();
     game.map = 'bakery'; resize(); S.inv.flour = 3; S.inv.egg = 3; S.inv.sugar = 3; S.ovens = [{ r: 'cookie', start: now() - 99, dur: 12 }];
-    spawnCustomer(); step(60); spawnCustomer(); step(120); post('lucy-bakery', { cust: customers.length });
+    spawnCustomer(); step(60); spawnCustomer(); step(120); if (customers.some(c => !c.want || !c.state)) errs.push('cliente sin pedido'); post('lucy-bakery', { cust: customers.length, says: customers.map(c => c.say && c.say.txt), st: customers.map(c => [c.state, c.want, c.x, c.y, c.moving, c.path.length]) });
     game.map = 'home'; resize(); render.snap = true; step(90); post('lucy-home', { cats: cats.map(k => k.state) });
     setEdit(true); step(5); { const p0 = Object.assign({}, game.pan), fl = maps.home; let ex = null; for (let y = 1; y < fl.h && !ex; y++) for (let x = 1; x < fl.w && !ex; x++) if (fl.floorT[x + y * fl.w] && !S.home.items.some(it => { const f = FURNI[it.id]; return x >= it.x && x < it.x + f.fw && y >= it.y && y < it.y + f.fh; })) { const q = toScreenXY(x, y); if (q.x > 40 && q.x < VW - 40 && q.y > 80 && q.y < VH - 160) ex = q; }
       if (ex) { cv.dispatchEvent(new PointerEvent('pointerdown', { clientX: ex.x, clientY: ex.y, pointerId: 3, bubbles: true })); dispatchEvent(new PointerEvent('pointermove', { clientX: ex.x - 120, clientY: ex.y - 60, pointerId: 3 })); dispatchEvent(new PointerEvent('pointerup', { pointerId: 3 })); }
