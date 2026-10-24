@@ -437,8 +437,9 @@ const FURN = [
 ];
 const FURNI = Object.fromEntries(FURN.map(f => [f.id, f]));
 // Ropa de Lucy (se compra en la boutique y se cambia en el ropero de su casa)
-const OUTFITS = [{ id: 'lucy', n: 'Delantal de chef', cost: 0 }, { id: 'pijama', n: 'Pijama de conejito', cost: 160 }, { id: 'sirena', n: 'Disfraz de sirena', cost: 350, star: 2 }, { id: 'fresa', n: 'Vestido de fresa', cost: 150 }, { id: 'pintora', n: 'Overol de pintora', cost: 180 }, { id: 'gatita', n: 'Disfraz de gatita', cost: 220 }, { id: 'princesa', n: 'Vestido de princesa', cost: 500, star: 3 }];
-const sheetOf = id => id === 'lucy' ? 'lucy' : 'lucy-' + id;
+const OUTFITS = [{ id: 'lucy', n: 'Sudadera y delantal', cost: 0 }, { id: 'pijama', n: 'Pijama de conejito', cost: 160 }, { id: 'sirena', n: 'Disfraz de sirena', cost: 350, star: 2 }, { id: 'fresa', n: 'Vestido de fresa', cost: 150 }, { id: 'pintora', n: 'Overol de pintora', cost: 180 }, { id: 'gatita', n: 'Disfraz de gatita', cost: 220 }, { id: 'princesa', n: 'Vestido de princesa', cost: 500, star: 3 }];
+// Lucy (nueva): pre-adolescente con sudadera lila y audífonos; cada atuendo es su propia hoja
+const sheetOf = id => id === 'lucy' ? 'lucy2' : 'lucy2-' + id;
 // Paredes [papel, raya, puntitos] y pisos [A, B] que se pueden comprar
 const WALLS = [{ n: 'Rosa', c: ['#ffe3ef', '#ffd0e4', '#ffffff'], cost: 0 }, { n: 'Menta', c: ['#dff7ee', '#c6efe0', '#ffffff'], cost: 80 }, { n: 'Lavanda', c: ['#ece4ff', '#ddd0ff', '#ffffff'], cost: 80 }, { n: 'Limón', c: ['#fff6d6', '#ffedb0', '#ffffff'], cost: 80 }, { n: 'Cielo', c: ['#e0f1ff', '#c8e6ff', '#ffffff'], cost: 120 }];
 const FLOORS = [{ n: 'Madera', c: ['#e8c49c', '#dcb488'], cost: 0, wood: 1 }, { n: 'Cuadros rosas', c: ['#fff3e4', '#ffd3e4'], cost: 90 }, { n: 'Cuadros menta', c: ['#f2fff9', '#c9efe0'], cost: 90 }, { n: 'Alfombra azul', c: ['#bcdcff', '#b0d4ff'], cost: 140 }, { n: 'Madera oscura', c: ['#b07a50', '#a06c44'], cost: 140, wood: 1 }];
@@ -530,7 +531,7 @@ const bakeMul = () => S.ups.fastoven ? .5 : 1;
 
 /* ---------- Imágenes ---------- */
 const IMG = {};
-const CHARS = ['lucy', 'lucy-pijama', 'lucy-sirena', 'lucy-fresa', 'lucy-pintora', 'lucy-gatita', 'lucy-princesa', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', 'helper'];
+const CHARS = ['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pintora', 'lucy2-gatita', 'lucy2-princesa', 'leon', 'minisius', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', 'helper'];
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
@@ -935,10 +936,12 @@ function drawAcc(id, x, y, s) {
   cx.restore();
 }
 function drawSparkle(wx, wy) { const sx = (wx - cam.x) * SCALE, sy = (wy - cam.y) * SCALE, s = SCALE * 3; cx.fillStyle = '#fff8a0'; cx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, r = i % 2 ? s * .35 : s; cx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } cx.fill(); }
+// Altura de cada personaje en cuadros (chiquitos como en Pokémon; los hermanitos más bajitos)
+const CH_SIZE = { leon: .72, minisius: .56 };
 function drawChar(c, scale = 1) {
   const im = IMG['ch-' + c.sheet]; if (!im || !im.width) return;
   const cw = im.width / 3, ch = im.height / 4, fr = c.moving || c.walking ? [0, 1, 2, 1][(c.anim * 2 | 0) % 4] : 1;
-  const w = T * SCALE * 1.5 * scale, h = w * ch / cw, sx = ((c.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((c.py + 1) * T - cam.y) * SCALE - h + T * SCALE * .1;
+  const h = T * SCALE * 1.4 * scale * (CH_SIZE[c.sheet] || 1), w = h * cw / ch, sx = ((c.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((c.py + 1) * T - cam.y) * SCALE - h + T * SCALE * .1;
   cx.fillStyle = 'rgba(40,20,40,.18)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h - T * SCALE * .12, w * .3, T * SCALE * .14, 0, 0, 7); cx.fill();
   cx.drawImage(im, fr * cw, c.dir * ch, cw, ch, sx, sy, w, h);
   return { sx, sy, w, h };
@@ -1045,7 +1048,7 @@ function render() {
   list.push({ y: lucy.py + .5, c: lucy });
   if (game.map === 'town' && S.ups.van && !(S.vanAway > now())) list.push({ y: 19.4, o: { img: 'p-van', x: 23.4, yb: 19, tw: 3.2, fx: 0, fw: 0, fh: 0 } });
   if (game.map === 'town') { for (const n of npcs) list.push({ y: n.py + .5, c: n }); for (const a of m.animals) list.push({ y: a.py + .5, a }); }
-  else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on || k.inF ? 1 : 0), cat: k }); for (const g of guests) list.push({ y: g.py + .5, c: g }); }
+  else if (m.home) { for (const k of cats) list.push({ y: k.py + .55 + (k.on || k.inF ? 1 : 0), cat: k }); for (const k of kids) list.push({ y: k.py + .5, c: k, kid: 1 }); for (const g of guests) list.push({ y: g.py + .5, c: g }); }
   else { for (const c of customers) list.push({ y: c.py + .5, c, cust: 1 }); for (const s of staffEls) list.push({ y: s.role === 'cashier' ? m.counter.yb + 1 : s.py + .5, c: s, clip: s.role === 'cashier' }); }
   list.sort((a, b) => a.y - b.y);
   for (const it of list) {
@@ -1054,7 +1057,7 @@ function render() {
     else if (it.cat) drawCat(it.cat);
     else if (it.a) drawAnimal(it.a);
     else if (it.clip) { const im = IMG[m.counter.img], top = ((m.counter.yb + 1) * T - cam.y) * SCALE - m.counter.tw * T * SCALE * im.height / im.width * .62; cx.save(); cx.beginPath(); cx.rect(0, 0, VW, top); cx.clip(); drawChar(it.c); cx.restore(); }
-    else { const r = drawChar(it.c); if (it.cust && r) drawBubble(it.c, r); }
+    else { const r = drawChar(it.c); if (it.cust && r) drawBubble(it.c, r); else if (it.kid && r) drawSay(it.c, r); }
   }
   if (game.map === 'bakery') drawBakeryOverlays(m);
   if (game.map === 'town') drawDaylight(m);
@@ -1590,6 +1593,7 @@ function findTarget(w, m) {
     // Tocar exactamente un mueble gana (así los platos se llenan aunque pase un gato)
     for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y && w.y < it.y + f.fh && !cats.some(k => k.x === w.x && k.y === w.y)) return { furn: f, it, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
     for (const k of cats) if (Math.abs(k.px - w.x) < 1 && w.y >= Math.round(k.py) - 1 - (k.on ? 1 : 0) && w.y <= Math.round(k.py)) return { cat: k, x: k.x, y: k.y };
+    for (const k of kids) if (Math.abs(k.px - w.x) < 1 && w.y >= Math.round(k.py) - 1 && w.y <= Math.round(k.py)) return { kid: k, x: k.x, y: k.y };
     for (const o of m.objs) { if (!o.furn) continue; const f = o.furn, it = o.it; if (w.x >= it.x && w.x < it.x + f.fw && w.y >= it.y - 1 && w.y < it.y + f.fh) return { furn: f, it, obj: null, x: it.x, y: it.y + f.fh - 1, fw: f.fw }; }
   } else {
     for (const c of customers) if (c.state === 'wait' && c.x === w.x && (c.y === w.y || c.y === w.y + 1)) return { cust: c, x: m.counter.fx + 1, y: m.counter.yb - 1, stand: true };
@@ -1606,6 +1610,7 @@ function arrive() {
   if (g.npc) { look(g.npc.x, g.npc.y); sfx.tap(); toast(pick(['¡Hola, Lucy!', '¡Me encantan tus pasteles!', '¡Qué rico huele tu pastelería!', 'Las fresas de aquí son las mejores', '¿Ya probaste hacer pay de manzana?']), null); return; }
   if (g.cust) { lucy.dir = 0; serve(g.cust); return; }
   if (g.cat) { look(g.cat.x, g.cat.y); pet(g.cat); return; }
+  if (g.kid) { look(g.kid.x, g.kid.y); hugKid(g.kid); return; }
   if (g.shop) { lucy.dir = 3; enter(g.shop); return; }
   if (g.judge) { lucy.dir = 3; openContest(); return; }
   if (g.mail) { look(g.mail.fx, g.mail.yb); const day = Math.floor(Date.now() / 864e5); if (S.mail === day) { toast('Hoy ya abriste tu correo. ¡Vuelve mañana!', 'p-mailbox'); return; } S.mail = day; const gifts = [['egg', 3], ['strawberry', 4], ['choco', 2], ['cream', 2], ['catfood', 2]], [k, n] = pick(gifts), c = 30 + starsOf(S.fame) * 15; addInv(k, n); addCoins(c); sfx.levelup(); toast(`¡Carta de los vecinos! +${c} y ${n} ${ING[k].n.toLowerCase()}`, 'ing-' + k); return; }
@@ -1628,6 +1633,28 @@ function fillBowl() {
   floatText(lucy.px + .5, lucy.py - 1, '¡A comer!', 'ing-catfood');
 }
 let cats = [];
+// Los hermanitos de Lucy: León (2 años, fan de los dinosaurios) y Minisius (1 año, apenas camina)
+let kids = [];
+const KID_SAY = { leon: ['¡Roooar! 🦖', '¡Lucy, juega conmigo!', '¡Un dino!', '¡Quiero pastel!', '¡Mira, un gatito!', '¡Corre, corre!'], minisius: ['¡Ba-ba!', '¡Tata!', 'jiji', '¡Lu-lu!', '¡Agú!', '¡Mimi!'] };
+function spawnKids() {
+  const m = maps.home; kids = [{ id: 'leon', name: 'León', speed: 2.6 }, { id: 'minisius', name: 'Minisius', speed: 1.4 }].map((k, i) => { const p = freeTile(m) || { x: 4 + i, y: 6 }; return Object.assign(mkChar(k.id, p.x, p.y), k, { timer: rand(1, 3) }); });
+}
+function updateKids(dt) {
+  const m = maps.home;
+  for (const k of kids) {
+    if (k.moving || k.path.length) { stepChar(k, dt, m, c => { if (!c.path.length && c.then) { const f = c.then; c.then = null; f(); } }); continue; }
+    if (m.solid[k.x + k.y * m.w]) { const p = freeTile(m, k); if (p) { k.x = k.px = p.x; k.y = k.py = p.y; } }
+    k.timer -= dt; if (k.timer > 0) continue;
+    const r = Math.random(), go = (tx, ty, then) => { const p = findPath(m, k.x, k.y, tx, ty, true); if (p && p.length) { k.path = p.slice(0, k.id === 'minisius' ? 6 : 14); k.then = then; return true; } return false; };
+    if (r < .25 && game.map === 'home' && m.floorT[lucy.x + lucy.y * m.w]) { if (!go(lucy.x, lucy.y, () => { k.dir = dirOf(lucy.x - k.x, lucy.y - k.y); if (Math.random() < .6) kidTalk(k); })) k.timer = 1; }
+    else if (r < .45 && cats.length) { const c = pick(cats); go(c.x, c.y, () => { if (Math.random() < .5) kidTalk(k, k.id === 'leon' ? '¡Gatito!' : '¡Mimi!'); }); }
+    else if (r < .85) { const t = freeTile(m); if (t && m.floorT[t.x + t.y * m.w]) go(t.x, t.y, null); }
+    else kidTalk(k);
+    k.timer = rand(1.5, k.id === 'minisius' ? 5 : 3.5);
+  }
+}
+function kidTalk(k, txt) { k.say = { txt: txt || pick(KID_SAY[k.id]), t: game.t }; if (game.map === 'home') { const b = k.id === 'leon' ? 700 : 900; for (let i = 0; i < 3; i++) beep(b * (1 + Math.random() * .3), .05, 'triangle', .035, 0, i * .08); } }
+function hugKid(k) { k.path = []; k.dir = dirOf(lucy.x - k.x, lucy.y - k.y); sfx.happy(); kidTalk(k, k.id === 'leon' ? pick(['¡Te quiero, Lucy!', '¡Abrazo de dino! 🦖', '¡Otra vez!']) : pick(['¡Lu-lu! 💕', 'jijiji', '¡Upa!'])); floatText(k.px + .5, k.py - .6, '💕', null, '#ff8fc4', 'home'); k.timer = 2; event('kids'); }
 function spawnCats() {
   const m = maps.home; cats = [{ id: 'aceituna', name: 'Aceituna' }, { id: 'coco', name: 'Coco' }].map((c, i) => { const p = freeTile(m) || { x: 3 + i, y: 5 }; return Object.assign(mkChar('lucy', p.x, p.y), c, { speed: 2.3, face: i ? -1 : 1, state: 'sit', timer: rand(1, 4) }); });
 }
@@ -1818,7 +1845,7 @@ function openFurnShop() {
     winEl.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { const f = FURNI[b.dataset.f]; if ((f.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${f.star} estrellas`, 'heart'); return; } if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.store.push(f.id); refreshHud(); sfx.buy(); toast(`¡${f.n}! Acomódalo en tu casa`, f.img); event('furn'); draw(); }));
     winEl.querySelectorAll('canvas[data-preview]').forEach(c => drawAccTo(c.getContext('2d'), c.dataset.preview, 35, 40, 34));
     winEl.querySelectorAll('[data-acc]').forEach(b => b.addEventListener('click', () => { const a = ACCS.find(q => q.id === b.dataset.acc); if (S.accs.includes(a.id)) return; if ((a.star || 1) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${a.star} estrellas`, 'heart'); return; } if (S.coins < a.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= a.cost; S.accs.push(a.id); refreshHud(); sfx.buy(); toast(`¡${a.n} para los gatitos! Toca su camita para ponérselo`, 'cat-coco-icon'); draw(); }));
-    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if ((nx.star || 0) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${nx.star} estrellas`, 'heart'); return; } if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); homeLook(); if (game.map === 'home') { const sp = maps.home.spawn; lucy.x = lucy.px = sp.x; lucy.y = lucy.py = sp.y; lucy.path = []; render.snap = render.snapY = true; } spawnCats(); refreshHud(); checkComfort(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
+    winEl.querySelectorAll('[data-grow]').forEach(b => b.addEventListener('click', () => { const nx = HOME_SIZES[S.home.lvl + 1]; if ((nx.star || 0) > starsOf(S.fame)) { sfx.no(); toast(`Se desbloquea con ${nx.star} estrellas`, 'heart'); return; } if (S.coins < nx.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= nx.cost; S.home.lvl++; maps.home = buildHome(); homeLook(); if (game.map === 'home') { const sp = maps.home.spawn; lucy.x = lucy.px = sp.x; lucy.y = lucy.py = sp.y; lucy.path = []; render.snap = render.snapY = true; } spawnCats(); spawnKids(); refreshHud(); checkComfort(); sfx.levelup(); toast(`¡Tu casa ahora es una ${nx.n.toLowerCase()}!`, 'b-home'); event('home:lvl'); draw(); }));
     winEl.querySelectorAll('[data-wall]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.wall, w = WALLS[i]; if (!S.home.walls.includes(i)) { if (S.coins < w.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= w.cost; S.home.walls.push(i); sfx.buy(); } S.home.wall = i; homeTiles(); refreshHud(); draw(); }));
     winEl.querySelectorAll('[data-floor]').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.floor, f = FLOORS[i]; if (!S.home.floors.includes(i)) { if (S.coins < f.cost) { sfx.no(); toast('Te faltan monedas', 'coin'); return; } S.coins -= f.cost; S.home.floors.push(i); sfx.buy(); } S.home.floor = i; homeTiles(); refreshHud(); draw(); }));
   };
@@ -1921,7 +1948,7 @@ function update(dt) {
         if (!c.path.length && c.goal) arrive();
       });
       if (lucy.moving && Math.random() < dt * 4) sfx.step();
-      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt); updateParty(dt); if (Math.random() < dt) paintParty();
+      updateTown(dt); updateBakery(dt); staffWork(dt); unloadOvens(); updateCats(dt); updateKids(dt); updateParty(dt); if (Math.random() < dt) paintParty();
       // Llegan clientes (más seguido con más estrellas y mesitas)
       // Camioneta: cada 2 minutos se lleva un postre de la vitrina y regresa con el dinero y propina
       if (S.ups.van && S.show.length && now() - (S.vanT || 0) > 120) { S.vanT = now(); S.vanAway = now() + 25; const r = RECI[S.show.shift()], pay = priceOf(r) + 8; addCoins(pay); addFame(r.star); S.sold++; event('sell'); if (game.map !== 'home') toast(`La camioneta entregó ${r.n.toLowerCase()} +${pay}`, 'p-van'); }
@@ -1951,7 +1978,7 @@ paintMute();
   await loadAll(p => { bar.style.width = Math.max(8, p * 100) + '%'; window.LEON_PROGRESS = p; });
   $('#loading').hidden = true;
   game = { map: ['bakery', 'home'].includes(S.map) ? S.map : 'town', t: 0, paused: false, custT: 8 };
-  furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); decorateTown(); updateDock();
+  furnishBakery(); spawnStaff(); spawnTownNpcs(); spawnCats(); spawnKids(); decorateTown(); updateDock();
   const sp = S.pos && game.map === 'town' ? S.pos : maps[game.map].spawn; lucy = mkChar(sheetOf(S.outfit || 'lucy'), sp.x, sp.y); if (S.skates) lucy.speed = 7.5;
   setInterval(() => { if (game) { S.map = game.map; S.pos = { x: lucy.x, y: lucy.y }; } }, 2000);
   resize(); render.snap = true; refreshHud(); paintTask(); paintOrder(); requestAnimationFrame(loop);
@@ -1995,7 +2022,7 @@ paintMute();
     game.map = 'bakery'; resize(); step(3); post('lucy-machines', { menuNew, vanPay }); game.map = 'town'; resize(); step(3);
     game.map = 'home'; resize(); updateDock(); step(2); const comfort = $('#comfort').textContent; game.map = 'town'; updateDock(); window.__hour = 21; lucy.x = lucy.px = 21; lucy.y = lucy.py = 15; resize(); render.snap = true; step(4); post('lucy-night', { comfort }); window.__hour = null;
     S.ups.bigbakery = 1; maps.bakery = buildBakery(); furnishBakery(); spawnStaff(); customers.length = 0; game.map = 'bakery'; lucy.x = lucy.px = maps.bakery.spawn.x; lucy.y = lucy.py = maps.bakery.spawn.y; resize(); spawnCustomer(); step(120); post('lucy-big', { w: maps.bakery.w, cust: customers.map(c => c.state) }); game.map = 'town'; resize(); step(2);
-    S.home.store.push('bird', 'lavalamp', 'rainbowrug'); S.outfits.push('sirena'); S.outfit = 'sirena'; lucy.sheet = 'lucy-sirena'; game.map = 'home'; lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; resize(); setEdit(true); ['bird', 'lavalamp', 'rainbowrug'].forEach(placeFromStore); setEdit(false); step(4); post('lucy-f4', { placed: S.home.items.filter(i => ['bird', 'lavalamp', 'rainbowrug'].includes(i.id)).length }); game.map = 'town'; resize(); step(2);
+    S.home.store.push('bird', 'lavalamp', 'rainbowrug'); S.outfits.push('sirena'); S.outfit = 'sirena'; lucy.sheet = sheetOf('sirena'); game.map = 'home'; lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; resize(); setEdit(true); ['bird', 'lavalamp', 'rainbowrug'].forEach(placeFromStore); setEdit(false); step(4); post('lucy-f4', { placed: S.home.items.filter(i => ['bird', 'lavalamp', 'rainbowrug'].includes(i.id)).length }); game.map = 'town'; resize(); step(2);
     S.partyT = 0; S.show = ['cupcake', 'donut', 'cookie']; game.map = 'home'; resize(); updateDock(); const cp0 = S.coins; const okC = comfortOf() >= 60; openParty(); step(150); post('lucy-party', { okC, guests: guests.length }); for (let i = 0; i < 800 && game.party; i++) update(1 / 30); post('lucy-party2', { gain: S.coins - cp0, done: !game.party }); game.map = 'town'; resize(); step(2);
     S.album = []; S.show = []; S.ovens = [{ r: 'cookie', start: 0, dur: 1 }]; const ca0 = S.coins; unloadOvens(); openRecipes(); $('#albumTab').click(); post('lucy-album', { album: S.album, gain: S.coins - ca0, open: !modal.hidden }); closeWin();
     for (const id of ['lights', 'cupcaketower', 'candyshelf', 'flowerarch', 'bigbear', 'chandelier', 'cupcakesign']) S.ups[id] = 1; furnishBakery(); game.map = 'bakery'; resize(); step(3); post('lucy-deco', { path: !!findPath(maps.bakery, maps.bakery.door.x, maps.bakery.door.y, 5, 6) }); game.map = 'town'; resize(); step(2);
@@ -2014,9 +2041,9 @@ paintMute();
     const caps = []; for (const ups of [[], ['table1'], ['table1', 'table2'], ['table1', 'table2', 'bigbakery']]) { ['table1', 'table2', 'bigbakery'].forEach(k => delete S.ups[k]); ups.forEach(k => (S.ups[k] = 1)); maps.bakery = buildBakery(); furnishBakery(); customers.length = 0; for (let i = 0; i < 6; i++) { spawnCustomer(); step(20); } step(150); caps.push(customers.length + '/' + custCap()); }
     const twins = customers.length - new Set(customers.map(q => q.sheet)).size; post('lucy-caps', { caps, twins }); customers.length = 0;
     // Casa grande con cuartos de formas distintas y cocina equipada; los gatos nunca quedan fuera del piso
-    S.home.lvl = 3; homeLook(); S.home.kit = 0; S.home.kits = {}; S.home.items = S.home.items.filter(i => !['flowerbed', 'berrypot', 'towels', 'bathmat'].includes(i.id) && !(FURNI[i.id] && FURNI[i.id].img.startsWith('h-k-'))); maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
-    let offFloor = 0, sunny = 0; for (let i = 0; i < 1200; i++) { update(1 / 10); for (const k of cats) { if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; if (k.state === 'sleep' && maps.home.cell(k.x, k.y) === 'g') sunny++; } } render();
-    post('lucy-house', { townImg: maps.town.homeObj.img, size: maps.home.w + 'x' + maps.home.h, kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor, sunny });
+    S.home.lvl = 3; homeLook(); S.home.kit = 0; S.home.kits = {}; S.home.items = S.home.items.filter(i => !['flowerbed', 'berrypot', 'towels', 'bathmat'].includes(i.id) && !(FURNI[i.id] && FURNI[i.id].img.startsWith('h-k-'))); maps.home = buildHome(); spawnCats(); spawnKids(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
+    let offFloor = 0, sunny = 0; for (let i = 0; i < 1200; i++) { update(1 / 10); for (const k of cats.concat(kids)) { if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; if (k.state === 'sleep' && maps.home.cell(k.x, k.y) === 'g') sunny++; } } render();
+    hugKid(kids[0]); render(); post('lucy-house', { kids: kids.map(k => k.id + ':' + (k.say && k.say.txt)).join(' | '), townImg: maps.town.homeObj.img, size: maps.home.w + 'x' + maps.home.h, kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor, sunny });
     { S.fridgeDay = 0; const tot = () => Object.values(S.inv).reduce((a, b) => a + b, 0), i0 = tot(); useFurn(FURNI.kfridge); const i1 = tot(); useFurn(FURNI.kfridge); const i2 = tot(); useFurn(FURNI.kstove); const walking = cats.filter(k => k.path.length).length; lucy.x = 3; lucy.y = 5; render(); lucy.x = 10; lucy.y = 10; render(); const signK = drawRoomSign.k, signOn = !!drawRoomSign.t; post('lucy-kitchenuse', { signK, signOn, fridgeGave: i1 - i0, secondTime: i2 - i1, catsComing: walking }); }
     // Ampliar desde la mueblería: la casa crece y la del pueblo cambia de dibujo
     S.home.lvl = 0; maps.home = buildHome(); homeLook(); S.coins += 2000; openFurnShop(); winEl.querySelector('.tab[data-t=casa]').click(); winEl.querySelector('[data-grow]').click(); const g1 = { lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w }; winEl.querySelector('[data-grow]').click(); closeWin();
