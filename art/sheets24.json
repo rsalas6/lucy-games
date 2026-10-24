@@ -1,0 +1,122 @@
+{
+"g-bak1": [
+"f-oven1",
+"f-oven2",
+"f-mixer",
+"f-vitrina",
+"f-counter",
+"f-table",
+"f-plant",
+"f-shelf"
+],
+"g-bak2": [
+"m-mixer",
+"m-decor",
+"m-coffee",
+"m-trays",
+"m-oven",
+"m-fridge",
+"m-icecream",
+"m-chocofountain"
+],
+"g-bak3": [
+"m-cotton",
+"d-rug",
+"d-painting",
+"d-clock",
+"d-lamp",
+"d-balloons",
+"d-window",
+"d-menuboard"
+],
+"g-bak4": [
+"d-vase",
+"d-lights",
+"d-cupcaketower",
+"d-candyshelf",
+"d-bigbear",
+"d-tablefountain",
+"d-chandelier",
+"d-cupcakesign"
+],
+"g-home1": [
+"h-bed",
+"h-catbed",
+"h-catbowl",
+"h-rug1",
+"h-wardrobe",
+"h-sofa",
+"h-tv",
+"h-bookshelf"
+],
+"g-home2": [
+"h-desk",
+"h-cattree",
+"h-fishtank",
+"h-piano",
+"h-toybox",
+"h-dining",
+"h-fridge",
+"h-stove"
+],
+"g-home3": [
+"h-k-counter",
+"h-k-sink",
+"h-k-stove",
+"h-k-fridge",
+"h-k-island",
+"h-k-dining",
+"h-floorlamp",
+"h-bigplant"
+],
+"g-home4": [
+"h-mirror",
+"h-pouf",
+"h-dollhouse",
+"h-vanity",
+"h-fireplace",
+"h-plushshelf",
+"h-princessbed",
+"h-rug2"
+],
+"g-home5": [
+"h-rug3",
+"h-cushion",
+"h-nightstand",
+"h-swing",
+"h-tipi",
+"h-console",
+"h-bunkbed",
+"h-armchair"
+],
+"g-home6": [
+"h-rocker",
+"h-turtle",
+"h-bird",
+"h-rockinghorse",
+"h-teaset",
+"h-chalkboard",
+"h-telescope",
+"h-globe"
+],
+"g-home7": [
+"h-lavalamp",
+"h-rainbowrug",
+"h-jukebox",
+"h-trophy",
+"h-ribbon",
+"h-bathtub",
+"h-sink",
+"h-towels"
+],
+"g-home8": [
+"h-duck",
+"h-bathmat",
+"h-hamper",
+"h-yarn",
+"h-mouse",
+"h-tunnel",
+"h-catcastle",
+"h-plant2"
+]
+}

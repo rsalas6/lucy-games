@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261024063238';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261024064647';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -618,7 +618,9 @@ const NEED = [
 const FIXED = new Set(['d-flowerarch', 'd-bigbear', 'd-cupcaketower', 'd-tablefountain', 'des-cottoncandy', 'h-bathmat', 'h-bookshelf', 'h-catbowl', 'h-cattree', 'h-desk', 'h-dollhouse', 'h-duck', 'h-hamper', 'h-nightstand', 'h-princessbed', 'h-rug2', 'h-rug3']);
 // Hojas de caminar re-cortadas (cada cuadro alineado y mirando al lado correcto)
 const ALIGNED = new Set(['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pintora', 'lucy2-gatita', 'lucy2-princesa', 'leon', 'minisius', 'cit1', 'cit2', 'cit3', 'cit4', 'cit5', 'cit6', 'baker2', 'cashier2', 'helper2'].map(n => 'ch-' + n));
-const src = n => UP + n + (FIXED.has(n) ? '.v2' : ALIGNED.has(n) ? '.a' : '') + '.webp';
+// Mundo redibujado en el mismo estilo que los personajes (Pokémon de GBA)
+const GBA = new Set(['b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'b-boutique', 'b-furniture', 'b-home', 'b-home2', 'b-home3', 'b-home4', 't-house-blue', 't-house-red', 't-house-green', 't-house-purple', 'p-tree', 'p-pine', 't-cherry', 't-cherry2', 't-orange', 't-hedge', 'p-flowers', 't-palm', 'p-hen', 'p-hen-nest', 'p-cow', 'p-berry', 'p-berry-empty', 'p-berry-grow', 'p-appletree', 'p-appletree-empty', 'p-fountain', 't-fount2', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-judgetable', 't-balloons', 'p-van', 't-flowerbed', 'f-oven1', 'f-oven2', 'f-mixer', 'f-vitrina', 'f-counter', 'f-table', 'f-plant', 'f-shelf', 'm-mixer', 'm-decor', 'm-coffee', 'm-trays', 'm-oven', 'm-fridge', 'm-icecream', 'm-chocofountain', 'm-cotton', 'd-rug', 'd-painting', 'd-clock', 'd-lamp', 'd-balloons', 'd-window', 'd-menuboard', 'd-vase', 'd-lights', 'd-cupcaketower', 'd-candyshelf', 'd-bigbear', 'd-tablefountain', 'd-chandelier', 'd-cupcakesign', 'h-bed', 'h-catbed', 'h-catbowl', 'h-rug1', 'h-wardrobe', 'h-sofa', 'h-tv', 'h-bookshelf', 'h-desk', 'h-cattree', 'h-fishtank', 'h-piano', 'h-toybox', 'h-dining', 'h-fridge', 'h-stove', 'h-k-counter', 'h-k-sink', 'h-k-stove', 'h-k-fridge', 'h-k-island', 'h-k-dining', 'h-floorlamp', 'h-bigplant', 'h-mirror', 'h-pouf', 'h-dollhouse', 'h-vanity', 'h-fireplace', 'h-plushshelf', 'h-princessbed', 'h-rug2', 'h-rug3', 'h-cushion', 'h-nightstand', 'h-swing', 'h-tipi', 'h-console', 'h-bunkbed', 'h-armchair', 'h-rocker', 'h-turtle', 'h-bird', 'h-rockinghorse', 'h-teaset', 'h-chalkboard', 'h-telescope', 'h-globe', 'h-lavalamp', 'h-rainbowrug', 'h-jukebox', 'h-trophy', 'h-ribbon', 'h-bathtub', 'h-sink', 'h-towels', 'h-duck', 'h-bathmat', 'h-hamper', 'h-yarn', 'h-mouse', 'h-tunnel', 'h-catcastle']);
+const src = n => UP + n + (GBA.has(n) ? '.g' : FIXED.has(n) ? '.v2' : ALIGNED.has(n) ? '.a' : '') + '.webp';
 function loadAll(onP) { let d = 0; return Promise.all(NEED.map(n => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => { IMG[n] = im; onP(++d / NEED.length); res(); }; im.src = src(n); }))); }
 
 /* ---------- Mapas ---------- */
@@ -662,7 +664,7 @@ function buildTown() {
   bld('b-furniture', 38, 31, 6, 3, 40, 'shop:furniture');
   // Plaza con fuente, bancas y faroles
   addObj(m, 'p-fountain', 27, 23, 3, 3, 2); addObj(m, 'p-bench', 25, 25, 2, 2, 1); addObj(m, 'p-bench', 30, 25, 2, 2, 1); addObj(m, 'p-lamp', 25, 21, 1, 1, 1); addObj(m, 'p-lamp', 31, 21, 1, 1, 1);
-  addObj(m, 'p-mailbox', 20, 13, 1, 1, 1, { mail: 1 });
+  addObj(m, 'p-mailbox', 20, 13, 1, 1, 1, { mail: 1, dw: .7, dx: .15 });
   addObj(m, 'p-judgetable', 28, 21, 2, 2, 1, { judge: 1 });
   // Cosas para recolectar gratis: fresas, manzanas, gallinas y la vaca
   [[37, 15], [39, 15], [41, 15], [37, 17], [39, 17]].forEach(([x, y], k) => addObj(m, 'p-berry', x, y, 2, 1, 1, { gather: 'strawberry', gid: 'b' + k }));
@@ -737,7 +739,7 @@ function furnishBakery() {
   if (S.ups.cupcaketower) m.objs.push({ img: 'd-cupcaketower', x: 4.15, yb: 6.5, tw: .9, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.12 });
   if (S.ups.bigbear) addObj(m, 'd-bigbear', 8, 9, 1, 1, 1, { dw: 1.2, dx: -.1 });
   if (S.ups.tablefountain) m.objs.push({ img: 'd-tablefountain', x: S.ups.vase ? 10.1 : 9.62, yb: 6.35, tw: .75, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.31 });
-  if (S.ups.cupcakesign) m.objs.push({ img: 'd-cupcakesign', x: 1.55, yb: 6.25, tw: .8, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 8.05 });
+  if (S.ups.cupcakesign) m.wall.push({ img: 'd-cupcakesign', x: 8.1, w: .95, y: 1.25 });   // letrero colgado en la pared
   if (S.ups.flowerarch) m.objs.push({ img: 'd-flowerarch', x: m.door.x - .45, yb: m.door.y, tw: 1.9, fx: 0, fw: 0, fh: 0, deco: 1, sortY: 99 });
   // Ala nueva de la pastelería ampliada: otro rincón con tapete, mesitas, planta y una ventana más
   if (S.ups.bigbakery) {
@@ -1042,7 +1044,7 @@ const CH_SIZE = { leon: .72, minisius: .56 };
 function drawChar(c, scale = 1) {
   const im = sheetImg(c.sheet); if (!im || !im.width) return;
   const cw = im.width / 3, ch = im.height / 4, fr = c.moving || c.walking ? [0, 1, 2, 1][(c.anim * 2 | 0) % 4] : 1;
-  const h = T * SCALE * 1.4 * scale * (CH_SIZE[c.sheet] || 1), w = h * cw / ch, sx = ((c.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((c.py + 1) * T - cam.y) * SCALE - h + T * SCALE * .1;
+  const h = T * SCALE * 1.6 * scale * (CH_SIZE[c.sheet] || 1), w = h * cw / ch, sx = ((c.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((c.py + 1) * T - cam.y) * SCALE - h + T * SCALE * .1;
   cx.fillStyle = 'rgba(40,20,40,.18)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h - T * SCALE * .12, w * .3, T * SCALE * .14, 0, 0, 7); cx.fill();
   cx.drawImage(im, fr * cw, c.dir * ch, cw, ch, sx, sy, w, h);
   return { sx, sy, w, h };
@@ -1197,7 +1199,7 @@ function drawDaylight(m) {
   cx.globalCompositeOperation = 'source-over';
 }
 function drawAnimal(a) {
-  const nest = a.gather === 'egg' && gatherReady(a) && IMG['p-hen-nest'] && IMG['p-hen-nest'].width, im = nest ? IMG['p-hen-nest'] : IMG[a.img]; if (!im || !im.width) return; const w = T * SCALE * (a.big ? 2.2 : nest ? 1.35 : 1.2), h = w * im.height / im.width;
+  const nest = a.gather === 'egg' && gatherReady(a) && IMG['p-hen-nest'] && IMG['p-hen-nest'].width, im = nest ? IMG['p-hen-nest'] : IMG[a.img]; if (!im || !im.width) return; const w = T * SCALE * (a.big ? 1.6 : nest ? 1.05 : .9), h = w * im.height / im.width;   // a escala con Lucy: la vaca un poco más grande que ella, la gallina a media pierna
   const sx = ((a.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((a.py + 1) * T - cam.y) * SCALE - h;
   cx.save(); if (a.face < 0) { cx.translate(sx + w, sy); cx.scale(-1, 1); cx.drawImage(im, 0, 0, w, h); } else cx.drawImage(im, sx, sy, w, h); cx.restore();
   if (gatherReady(a) && game.t % 2 < 1.2) drawSparkle((a.px + .5) * T, (a.py + .2) * T - h / SCALE * .6);
@@ -1216,8 +1218,8 @@ function drawBakeryOverlays(m) {
   const v = m.vitrina, cap = showCap(), vx = (v.x * T - cam.x) * SCALE, vy = ((v.yb - .2) * T - cam.y) * SCALE, vw = v.tw * T * SCALE;
   // Los postres van adentro del vidrio, en dos repisas
   const vim = IMG[v.img], vh = vim && vim.width ? vw * vim.height / vim.width : vw * .7, vtop = ((v.yb + 1) * T - cam.y) * SCALE - vh;
-  cx.save(); cx.beginPath(); cx.rect(vx + vw * .08, vtop + vh * .1, vw * .84, vh * .55); cx.clip();
-  S.show.slice(0, 8).forEach((r, i) => { const s = vw * .19, col = i % 4, row = i / 4 | 0; drawSprite('des-' + r, vx + vw * .1 + col * vw * .205, vtop + vh * (row ? .4 : .14), s, s); });
+  cx.save(); cx.beginPath(); cx.rect(vx + vw * .09, vtop + vh * .07, vw * .82, vh * .63); cx.clip();   // el vidrio de la vitrina
+  S.show.slice(0, 8).forEach((r, i) => { const s = vw * .17, col = i % 4, row = i / 4 | 0; drawSprite('des-' + r, vx + vw * .11 + col * vw * .2, vtop + vh * (row ? .68 : .41) - s, s, s); });   // dos repisas, postres a escala
   cx.restore();
   if (S.show.length > 8) { cx.font = `${Math.round(T * SCALE * .45)}px Lilita One`; cx.lineWidth = 4; cx.strokeStyle = '#4a2a4a'; cx.fillStyle = '#fff'; cx.strokeText('+' + (S.show.length - 8), vx + vw * .78, vtop + vh * .2); cx.fillText('+' + (S.show.length - 8), vx + vw * .78, vtop + vh * .2); }
 }
@@ -1237,16 +1239,16 @@ function custTalk(c, txt, arrive) {
 }
 function drawSay(c, r) {
   if (!c.say || game.t - c.say.t > 2.8) return;
-  const age = game.t - c.say.t, a = Math.min(1, age * 6, (2.8 - age) * 3), fs = Math.round(Math.max(13, T * SCALE * .38));
+  const age = game.t - c.say.t, a = Math.min(1, age * 6, (2.8 - age) * 3), fs = Math.round(Math.max(12, T * SCALE * .3));
   cx.save(); cx.globalAlpha = a; cx.font = `${fs}px Lilita One, sans-serif`;
-  const w = cx.measureText(c.say.txt).width + fs * 1.2, h = fs * 1.7, x = clamp(r.sx + r.w / 2 - w / 2, 6, VW - w - 6), y = r.sy - h - T * SCALE * (c.want && c.state !== 'leave' ? 1.15 : .2) - (1 - Math.min(1, age * 5)) * 8;
+  const w = cx.measureText(c.say.txt).width + fs * 1.2, h = fs * 1.7, x = clamp(r.sx + r.w / 2 - w / 2, 6, VW - w - 6), y = r.sy - h - T * SCALE * (c.want && c.state !== 'leave' ? .85 : .15) - (1 - Math.min(1, age * 5)) * 8;
   cx.fillStyle = '#fff'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 3; cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, w, h, h / 2) : cx.rect(x, y, w, h); cx.fill(); cx.stroke();
   const tx = clamp(r.sx + r.w / 2, x + 12, x + w - 12); cx.beginPath(); cx.moveTo(tx - 7, y + h - 1); cx.lineTo(tx, y + h + 9); cx.lineTo(tx + 7, y + h - 1); cx.fill(); cx.stroke(); cx.fillRect(tx - 6, y + h - 3, 12, 4);
   cx.fillStyle = '#4a2a4a'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(c.say.txt, x + w / 2, y + h / 2 + 1); cx.restore();
 }
 function drawBubble(c, r) {
   drawSay(c, r);
-  if (!c.want || c.state === 'leave') return; const s = T * SCALE * .9, x = r.sx + r.w / 2, y = r.sy - s * .5;
+  if (!c.want || c.state === 'leave') return; const s = T * SCALE * .6, x = r.sx + r.w / 2, y = r.sy - s * .45;   // globito chico: cabe uno por cliente sin encimarse
   bubble(x, y, s, 'des-' + c.want, false);
   // Paciencia: corazón que se va vaciando
   const p = clamp(1 - (game.t - c.since) / c.patience, 0, 1); cx.fillStyle = p > .35 ? '#ff8fc4' : '#ff4d6d'; cx.fillRect(x - s * .55, y + s * .72, s * 1.1 * p, 5);
