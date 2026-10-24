@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261023183728';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261023183922';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -1717,6 +1717,9 @@ function useFurn(f, it) {
   if (f.play === 'bath') { for (let i = 0; i < 5; i++) beep(rand(600, 1200), .06, 'sine', .04, 500, i * .1); floatText(lucy.px + .5, lucy.py - 1, '¡Burbujas!', null, '#bfe6ff'); return; }
   if (f.play === 'bird') { [0, 1, 2].forEach(i => { beep(1400 + i * 150, .07, 'sine', .05, 300, i * .12); }); floatText(lucy.px + .5, lucy.py - 1, '¡Pío pío!', null, '#bfe6ff'); return; }
   if (f.play === 'swing') { sfx.happy(); floatText(lucy.px + .5, lucy.py - 1, '¡Wiii!', null); return; }
+  // Cocina de la casa: el refri regala un ingrediente al día; en la estufa Lucy prepara chocolate caliente y los gatitos se acercan
+  if (f.id === 'kfridge' || f.id === 'fridge') { const day = Math.floor(Date.now() / 864e5); if (S.fridgeDay === day) { toast('Ya sacaste algo del refri hoy. ¡Mañana hay más!', f.img); return; } S.fridgeDay = day; const k = pick(['egg', 'egg', 'cream', 'strawberry', 'choco', 'sugar', 'flour']), n = k === 'egg' ? 2 : 1; addInv(k, n); sfx.pick(); floatText(lucy.px + .5, lucy.py - 1, `+${n}`, 'ing-' + k); toast(`Encontraste ${n} ${ING[k].n.toLowerCase()} en el refri`, 'ing-' + k); persist(); return; }
+  if (f.id === 'kstove' || f.id === 'stove') { [0, 4, 7].forEach((n, i) => beep(440 * Math.pow(2, n / 12), .12, 'sine', .05, 0, i * .12)); floatText(lucy.px + .5, lucy.py - 1, '¡Chocolate calientito!', null, '#ffe0b0'); const m = maps.home; for (const k of cats) { const p = findPath(m, k.x, k.y, lucy.x, lucy.y, true); if (p && p.length < 16) { k.path = p; k.state = 'walk'; k.then = () => { k.state = 'sit'; k.timer = rand(3, 5); sfx.meow(); }; } } return; }
   if (f.id === 'wardrobe') { openBoutique(true); return; }
   if (f.id === 'catbowl') { fillBowl(); return; }
   if (f.id === 'catbed') { openCatDress(); return; }
@@ -2049,6 +2052,7 @@ paintMute();
     S.home.lvl = 3; homeLook(); S.home.kit = 0; S.home.kits = {}; S.home.items = S.home.items.filter(i => !['flowerbed', 'berrypot', 'towels', 'bathmat'].includes(i.id) && !(FURNI[i.id] && FURNI[i.id].img.startsWith('h-k-'))); maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
     let offFloor = 0; for (let i = 0; i < 400; i++) { update(1 / 10); for (const k of cats) if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; } render();
     post('lucy-house', { townImg: maps.town.homeObj.img, size: maps.home.w + 'x' + maps.home.h, kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
+    { S.fridgeDay = 0; const tot = () => Object.values(S.inv).reduce((a, b) => a + b, 0), i0 = tot(); useFurn(FURNI.kfridge); const i1 = tot(); useFurn(FURNI.kfridge); const i2 = tot(); useFurn(FURNI.kstove); const walking = cats.filter(k => k.path.length).length; post('lucy-kitchenuse', { fridgeGave: i1 - i0, secondTime: i2 - i1, catsComing: walking }); }
     // Ampliar desde la mueblería: la casa crece y la del pueblo cambia de dibujo
     S.home.lvl = 0; maps.home = buildHome(); homeLook(); S.coins += 2000; openFurnShop(); winEl.querySelector('.tab[data-t=casa]').click(); winEl.querySelector('[data-grow]').click(); const g1 = { lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w }; winEl.querySelector('[data-grow]').click(); closeWin();
     post('lucy-grow', { lucyOk: game.map !== 'home' || !!maps.home.floorT[lucy.x + lucy.y * maps.home.w] || !!maps.home.doors[lucy.x + lucy.y * maps.home.w], g1, lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w, doors: maps.home.doorT.reduce((a, b) => a + b, 0) });
