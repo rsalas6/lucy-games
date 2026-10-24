@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261024060855';window.LEON_WAIT=true;</script>
+<script>window.LEON_VERSION='20261024061402';window.LEON_WAIT=true;</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -603,7 +603,10 @@ const bakeMul = () => S.ups.fastoven ? .5 : 1;
 
 /* ---------- Imágenes ---------- */
 const IMG = {};
-const CHARS = ['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pintora', 'lucy2-gatita', 'lucy2-princesa', 'leon', 'minisius', 'npc-a', 'npc-b', 'npc-c', 'npc-d', 'baker', 'cashier', 'helper'];
+const CHARS = ['lucy2', 'lucy2-pijama', 'lucy2-sirena', 'lucy2-fresa', 'lucy2-pintora', 'lucy2-gatita', 'lucy2-princesa', 'leon', 'minisius', 'cit1', 'cit2', 'cit3', 'cit4', 'cit5', 'cit6', 'baker2', 'cashier2', 'helper2'];
+// Ciudadanos y empleados con dibujo nuevo (estilo Pokémon, más coloridos): los nombres viejos apuntan a los nuevos
+const SHEET_ALIAS = { 'npc-a': 'cit1', 'npc-b': 'cit2', 'npc-c': 'cit3', 'npc-d': 'cit4', baker: 'baker2', cashier: 'cashier2', helper: 'helper2' };
+const sheetImg = sh => IMG['ch-' + (SHEET_ALIAS[sh] || sh)];
 const NEED = [
   ...CHARS.map(c => 'ch-' + c), 'b-bakery', 'b-barn', 'b-mill', 'b-fruit', 'b-choco', 'b-grocery', 'house-1', 'house-2', 'house-3', 'house-4',
   'p-tree', 'p-pine', 'p-berry', 'p-appletree', 'p-flowers', 'p-fountain', 'p-bench', 'p-lamp', 'p-fence', 'p-mailbox', 'p-hen', 'p-cow',
@@ -1035,7 +1038,7 @@ function drawSparkle(wx, wy) { const sx = (wx - cam.x) * SCALE, sy = (wy - cam.y
 // Altura de cada personaje en cuadros (chiquitos como en Pokémon; los hermanitos más bajitos)
 const CH_SIZE = { leon: .72, minisius: .56 };
 function drawChar(c, scale = 1) {
-  const im = IMG['ch-' + c.sheet]; if (!im || !im.width) return;
+  const im = sheetImg(c.sheet); if (!im || !im.width) return;
   const cw = im.width / 3, ch = im.height / 4, fr = c.moving || c.walking ? [0, 1, 2, 1][(c.anim * 2 | 0) % 4] : 1;
   const h = T * SCALE * 1.4 * scale * (CH_SIZE[c.sheet] || 1), w = h * cw / ch, sx = ((c.px + .5) * T - cam.x) * SCALE - w / 2, sy = ((c.py + 1) * T - cam.y) * SCALE - h + T * SCALE * .1;
   cx.fillStyle = 'rgba(40,20,40,.18)'; cx.beginPath(); cx.ellipse(sx + w / 2, sy + h - T * SCALE * .12, w * .3, T * SCALE * .14, 0, 0, 7); cx.fill();
@@ -1226,7 +1229,7 @@ function bubble(x, y, s, img, ready) {
 function custTalk(c, txt, arrive) {
   c.say = { txt, t: game.t };
   if (game.map !== 'bakery') return;
-  const n = Math.min(6, 2 + (txt.length / 6 | 0)), base = { 'npc-a': 520, 'npc-b': 300, 'npc-c': 420, 'npc-d': 360 }[c.sheet] || 440;
+  const n = Math.min(6, 2 + (txt.length / 6 | 0)), base = { 'npc-a': 560, 'npc-b': 470, 'npc-c': 620, 'npc-d': 300, cit5: 520, cit6: 340 }[c.sheet] || 440;
   for (let i = 0; i < n; i++) beep(base * (1 + Math.random() * .35), .05, 'square', .03, 0, i * .07);
   if (arrive) { const sx = ((c.px + .5) * T - cam.x) * SCALE, sy = ((c.py + .5) * T - cam.y) * SCALE; if (sx < 0 || sx > VW || sy < 0 || sy > VH - 60) toast('Una clienta en el mostrador: ' + txt.replace(/^[^A-Za-zÁÉÍÓÚ¿¡]*/, ''), 'des-' + c.want); }
 }
@@ -1351,7 +1354,7 @@ modal.addEventListener('pointerdown', e => { if (e.target === modal) closeWin();
 const head = (img, title, sub) => `<header><img alt="" src="${src(img)}"><div style="flex:1"><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div><button class="close" aria-label="Cerrar">✕</button></header>`;
 const priceTag = n => `<span class="price"><img alt="" src="${src('coin')}">${n}</span>`;
 // Retrato: primer cuadro (de frente) de la hoja del personaje
-function portrait(sheet) { const im = IMG['ch-' + sheet]; if (!im || !im.width) return src('heart'); const c = document.createElement('canvas'), w = im.width / 3, h = im.height / 4; c.width = w; c.height = h; c.getContext('2d').drawImage(im, w, 0, w, h, 0, 0, w, h); return c.toDataURL(); }
+function portrait(sheet) { const im = sheetImg(sheet); if (!im || !im.width) return src('heart'); const c = document.createElement('canvas'), w = im.width / 3, h = im.height / 4; c.width = w; c.height = h; c.getContext('2d').drawImage(im, w, 0, w, h, 0, 0, w, h); return c.toDataURL(); }
 function openShop(id) {
   const sh = SHOPS[id]; sfx.door();
   const draw = () => {
@@ -1574,7 +1577,7 @@ function takeOut(k) {
   unloadOvens();
 }
 /* ---------- Clientes ---------- */
-const CUST_SHEETS = ['npc-a', 'npc-b', 'npc-c', 'npc-d'];
+const CUST_SHEETS = ['npc-a', 'npc-b', 'npc-c', 'npc-d', 'cit5', 'cit6'];
 // Cuántos clientes pueden esperar a la vez: crece con lo que compras para el local
 const custCap = () => Math.min(4, 1 + (S.ups.table1 ? 1 : 0) + (S.ups.table2 ? 1 : 0) + (S.ups.bigbakery ? 1 : 0));
 function custInterval() { const st = starsOf(S.fame); return Math.max(5, 22 - st * 2.5 - (S.ups.table1 ? 3 : 0) - (S.ups.table2 ? 3 : 0) - (S.ups.bigbakery ? 4 : 0)); }
@@ -1990,7 +1993,7 @@ function openContest() {
 /* ---------- Vecinos del pueblo que pasean ---------- */
 function spawnTownNpcs() {
   const m = maps.town; npcs = [];
-  [['npc-a', 26, 19], ['npc-b', 10, 19], ['npc-c', 33, 21], ['npc-d', 22, 27], ['npc-c', 48, 19], ['npc-a', 55, 28], ['npc-d', 28, 43], ['npc-b', 40, 44], ['npc-a', 9, 44], ['npc-d', 51, 33]].forEach(([s, x, y]) => { const n = mkChar(s, x, y); n.speed = 2.2; n.wait = rand(1, 4); npcs.push(n); });
+  [['npc-a', 26, 19], ['npc-b', 10, 19], ['npc-c', 33, 21], ['npc-d', 22, 27], ['cit5', 48, 19], ['cit6', 55, 28], ['npc-d', 28, 43], ['cit5', 40, 44], ['cit6', 9, 44], ['npc-b', 51, 33]].forEach(([s, x, y]) => { const n = mkChar(s, x, y); n.speed = 2.2; n.wait = rand(1, 4); npcs.push(n); });
   // El jurado del concurso de pasteles se queda detrás de su mesa
   const j = mkChar('baker', 28, 20); j.judge = 1; j.dir = 0; j.wait = 1e9; npcs.push(j);
   for (const a of m.animals) { a.px = a.x; a.py = a.y; a.wait = rand(1, 3); a.face = 1; }
