@@ -1059,6 +1059,18 @@ function render() {
   if (game.edit) drawEditOverlay(m);
   drawGuide();
   drawFloaters();
+  drawRoomSign(m);
+}
+// Al cambiar de cuarto en la casa aparece un letrerito con su nombre (como al entrar a otra zona en Pokémon)
+function drawRoomSign(m) {
+  if (!m.plan || game.edit) { drawRoomSign.k = null; return; }
+  const c = m.cell(lucy.x, lucy.y);
+  if (ROOM_N[c] && c !== drawRoomSign.k) { if (drawRoomSign.k !== undefined && drawRoomSign.k !== null) drawRoomSign.t = performance.now(); drawRoomSign.k = c; }
+  const age = (performance.now() - (drawRoomSign.t || -1e9)) / 1000; if (age > 1.8 || !drawRoomSign.k) return;
+  const a = age < .25 ? age / .25 : age > 1.4 ? (1.8 - age) / .4 : 1, txt = ROOM_N[drawRoomSign.k], fs = Math.round(Math.min(30, VW * .055));
+  cx.save(); cx.globalAlpha = a; cx.font = `${fs}px Lilita One`; const w = cx.measureText(txt).width + fs * 1.6, x = (VW - w) / 2, y = Math.min(110, VH * .14) - (1 - a) * 12;
+  cx.fillStyle = '#fff8f0'; cx.strokeStyle = '#4a2a4a'; cx.lineWidth = 4; cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, w, fs * 1.6, fs * .8) : cx.rect(x, y, w, fs * 1.6); cx.fill(); cx.stroke();
+  cx.fillStyle = '#d0508a'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(txt, VW / 2, y + fs * .82); cx.restore();
 }
 // Luz del día según la hora real: atardecer naranja, noche azul con los faroles encendidos
 function daylight() { const d = new Date(), h = (window.__hour != null ? window.__hour : d.getHours() + d.getMinutes() / 60); if (h >= 7 && h < 17.5) return 0; if (h >= 17.5 && h < 19.5) return (h - 17.5) / 2 * .55; if (h >= 19.5 || h < 5.5) return .55; return .55 - (h - 5.5) / 1.5 * .55; }
@@ -1980,7 +1992,7 @@ paintMute();
     S.home.lvl = 3; homeLook(); S.home.kit = 0; S.home.kits = {}; S.home.items = S.home.items.filter(i => !['flowerbed', 'berrypot', 'towels', 'bathmat'].includes(i.id) && !(FURNI[i.id] && FURNI[i.id].img.startsWith('h-k-'))); maps.home = buildHome(); spawnCats(); game.map = 'home'; resize(); lucy.x = lucy.px = maps.home.spawn.x; lucy.y = lucy.py = maps.home.spawn.y; render.snap = true; step(5);
     let offFloor = 0; for (let i = 0; i < 400; i++) { update(1 / 10); for (const k of cats) if (!maps.home.floorT[Math.round(k.px) + Math.round(k.py) * maps.home.w]) offFloor++; } render();
     post('lucy-house', { townImg: maps.town.homeObj.img, size: maps.home.w + 'x' + maps.home.h, kit: S.home.items.filter(i => ['k', 'g', 'b'].includes(maps.home.cell(i.x, i.y))).map(i => maps.home.cell(i.x, i.y) + ':' + i.id).join(','), rooms: maps.home.rooms.map(r => r.n).join(','), offFloor });
-    { S.fridgeDay = 0; const tot = () => Object.values(S.inv).reduce((a, b) => a + b, 0), i0 = tot(); useFurn(FURNI.kfridge); const i1 = tot(); useFurn(FURNI.kfridge); const i2 = tot(); useFurn(FURNI.kstove); const walking = cats.filter(k => k.path.length).length; post('lucy-kitchenuse', { fridgeGave: i1 - i0, secondTime: i2 - i1, catsComing: walking }); }
+    { S.fridgeDay = 0; const tot = () => Object.values(S.inv).reduce((a, b) => a + b, 0), i0 = tot(); useFurn(FURNI.kfridge); const i1 = tot(); useFurn(FURNI.kfridge); const i2 = tot(); useFurn(FURNI.kstove); const walking = cats.filter(k => k.path.length).length; lucy.x = 3; lucy.y = 5; render(); lucy.x = 10; lucy.y = 10; render(); const signK = drawRoomSign.k, signOn = !!drawRoomSign.t; post('lucy-kitchenuse', { signK, signOn, fridgeGave: i1 - i0, secondTime: i2 - i1, catsComing: walking }); }
     // Ampliar desde la mueblería: la casa crece y la del pueblo cambia de dibujo
     S.home.lvl = 0; maps.home = buildHome(); homeLook(); S.coins += 2000; openFurnShop(); winEl.querySelector('.tab[data-t=casa]').click(); winEl.querySelector('[data-grow]').click(); const g1 = { lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w }; winEl.querySelector('[data-grow]').click(); closeWin();
     post('lucy-grow', { lucyOk: game.map !== 'home' || !!maps.home.floorT[lucy.x + lucy.y * maps.home.w] || !!maps.home.doors[lucy.x + lucy.y * maps.home.w], g1, lvl: S.home.lvl, img: maps.town.homeObj.img, w: maps.home.w, doors: maps.home.doorT.reduce((a, b) => a + b, 0) });
@@ -2002,6 +2014,6 @@ paintMute();
   window.LEON_READY = true;
 })();
 const toScreenXY = (x, y) => ({ x: ((x + .5) * T - cam.x) * SCALE, y: ((y + .5) * T - cam.y) * SCALE });
-window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, mixTick: (n, dt = 1 / 30) => { for (let i = 0; i < n && mix.__st; i++) mix.__st.tick(dt); }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
+window.__bake = { get S() { return S; }, get game() { return game; }, get lucy() { return lucy; }, maps, enter, openRecipes, openShop, openUpgrades, startMix, takeOut, serve, spawnCustomer, get customers() { return customers; }, findPath, arrive, tapAt, render, furnish: () => { furnishBakery(); spawnStaff(); }, get cats() { return cats; }, sign: () => [drawRoomSign.k, drawRoomSign.t, performance.now()], mixTick: (n, dt = 1 / 30) => { for (let i = 0; i < n && mix.__st; i++) mix.__st.tick(dt); }, toScreen: (x, y) => ({ clientX: ((x + .5) * T - cam.x) * SCALE, clientY: ((y + .5) * T - cam.y) * SCALE }), step: (n, dt = 1 / 30) => { for (let i = 0; i < n; i++) update(dt); render(); } };
 })();
 </script>
