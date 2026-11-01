@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261101073448';</script>
+<script>window.LEON_VERSION='20261101152909';</script>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="../icons/icon-192.png">
@@ -95,9 +95,24 @@ button{font-family:var(--font);color:var(--ink);cursor:pointer;touch-action:mani
 #keys button{height:var(--kb);font-size:calc(var(--kb) * .45)}
 #keys .ok{background:var(--mint);color:#fff;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill}
 #keys .del{background:var(--pink2)}
-#helpBtn,#nextBtn{height:58px;font-size:20px;display:flex;align-items:center;justify-content:center;gap:8px}
-#helpBtn{background:var(--lila2)}
-#nextBtn{background:var(--gold)}
+/* Ayuda: foquito flotante en la esquina del cuaderno (no quita espacio); brinca cuando conviene usarlo */
+.hint{position:absolute;right:12px;top:12px;z-index:3;width:60px;height:60px;border-radius:50%;padding:0;font-size:30px;background:var(--gold);display:grid;place-items:center}
+.hint.call{animation:wig .9s ease-in-out infinite}
+@keyframes wig{0%,100%{transform:rotate(0) scale(1)}25%{transform:rotate(-14deg) scale(1.12)}75%{transform:rotate(14deg) scale(1.12)}}
+#coachImg{cursor:pointer;transition:transform .15s}
+#coachImg:active{transform:scale(.9)}
+#coachImg.call{animation:wig 1s ease-in-out infinite}
+.nextBig{padding:12px 30px;font-size:clamp(22px,3.4vw,30px);background:var(--gold)}
+/* Práctica libre */
+.free{max-width:980px;margin:6px auto 0;background:#fff;border-radius:24px;padding:14px 16px 16px;box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.15)}
+.free h2{margin:0 0 10px;font-weight:400;font-size:clamp(20px,3vw,28px);text-align:center}
+.topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}
+.topic{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px 12px;font-size:clamp(17px,2.4vw,22px)}
+.topic span{font-size:clamp(34px,5vw,46px);line-height:1}
+.lvls{display:flex;flex-direction:column;gap:10px;width:min(80vw,420px)}
+.lvl{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;font-size:clamp(17px,2.4vw,21px);text-align:left}
+.lvl b{font-weight:400;color:var(--pink);white-space:nowrap}
+.pchip{background:#fff;border-radius:99px;padding:3px 12px;box-shadow:0 0 0 3px var(--ink);font-size:18px;color:var(--mint);-webkit-text-stroke:.04em var(--ink)}
 #bottom{grid-column:1;grid-row:3;display:flex;flex-direction:column;gap:8px}
 #vis{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;max-height:40vh;overflow:hidden}
 /* Vertical: el teclado abajo */
@@ -231,20 +246,18 @@ button{font-family:var(--font);color:var(--ink);cursor:pointer;touch-action:mani
 
 <main id="home">
   <div class="hero"><img alt="" src="../img/bakery/cat-coco-icon.webp"><div class="say" id="homeSay"></div></div>
+  <section class="free"><h2>¿Qué quieres practicar hoy?</h2><div class="topics" id="topics"></div></section>
+  <div class="unit" style="margin-top:22px">Mi camino de lecciones</div>
   <div id="units"></div>
   <button class="px" id="tableBtn"><span style="font-size:26px">🟩</span> Mi tabla de multiplicar</button>
 </main>
 
 <section id="play" hidden>
   <div id="coach"><img alt="" id="coachImg" src="../img/bakery/cat-coco-icon.webp"><div id="say"></div></div>
-  <div id="boardWrap"><div id="board"></div></div>
+  <div id="boardWrap"><div id="board"></div><button class="px hint" id="hintBtn" aria-label="Ayuda con dibujos" hidden>💡</button></div>
   <div id="bottom"><div id="quest"></div><div id="vis"></div></div>
   <div id="side">
     <div id="keys"></div>
-    <div class="col">
-      <button class="px" id="helpBtn">💡 Ayuda</button>
-      <button class="px" id="nextBtn" hidden>¡Siguiente! ➜</button>
-    </div>
   </div>
 </section>
 
@@ -307,6 +320,9 @@ const LESSONS = [
   { unit: 'Sumas', id: 'add2', nm: 'Sumas de 2 cifras', ex: '47 + 38', need: 4, kind: 'add', gen: () => [digits(2), digits(2)] },
   { unit: 'Sumas', id: 'add3', nm: 'Sumas de 3 cifras', ex: '386 + 457', need: 4, kind: 'add', gen: () => [digits(3), digits(3)] },
   { unit: 'Sumas', id: 'add4', nm: 'Sumas de 3 números', ex: '245 + 318 + 97', need: 3, kind: 'add', gen: () => [digits(3), digits(3), digits(2)] },
+  { unit: 'Restas', id: 'sub2', nm: 'Restas de 2 cifras', ex: '52 − 27', need: 4, kind: 'sub', gen: () => { const a = ri(30, 99); return [a, ri(11, a - 5)]; } },
+  { unit: 'Restas', id: 'sub3', nm: 'Restas de 3 cifras', ex: '645 − 278', need: 4, kind: 'sub', gen: () => { const a = ri(300, 999); return [a, ri(101, a - 20)]; } },
+  { unit: 'Restas', id: 'sub0', nm: 'Restas con ceros', ex: '503 − 178', need: 3, kind: 'sub', gen: () => { const a = ri(2, 9) * 100 + (Math.random() < .5 ? 0 : ri(1, 9) * 10) + ri(0, 3); return [a, ri(101, a - 20)]; } },
   { unit: 'La tabla', id: 'tA', nm: 'Tablas del 2, 5 y 10', ex: '5 × 7', need: 12, kind: 'fact', set: [2, 5, 10] },
   { unit: 'La tabla', id: 'tB', nm: 'Tablas del 3, 4 y 6', ex: '6 × 4', need: 12, kind: 'fact', set: [3, 4, 6] },
   { unit: 'La tabla', id: 'tC', nm: 'Tablas del 7, 8 y 9', ex: '7 × 8', need: 14, kind: 'fact', set: [7, 8, 9] },
@@ -344,6 +360,17 @@ function showHome() {
   $('#units').querySelectorAll('.ls').forEach(b => b.addEventListener('click', () => { const i = LESSONS.findIndex(l => l.id === b.dataset.l); if (!unlocked(i)) { sfx.no(); return; } sfx.pop(); startLesson(LESSONS[i]); }));
 }
 $('#tableBtn').addEventListener('click', () => { sfx.pop(); showTable(); });
+// Práctica libre: elige el tema y el nivel; problemas sin fin, sin terminar lección
+const TOPICS = [['Sumas', '➕', 'Sumas'], ['Restas', '➖', 'Restas'], ['Tablas', '✖️', 'La tabla'], ['Multiplicar', '🧮', 'Multiplicaciones'], ['Dividir', '➗', 'Divisiones']];
+const LEVEL_NM = ['Fácil', 'Medio', 'Difícil', 'Reto', 'Súper reto'];
+$('#topics').innerHTML = TOPICS.map(([n, ic, u]) => `<button class="px topic" data-u="${u}"><span>${ic}</span>${n}</button>`).join('');
+$('#topics').querySelectorAll('.topic').forEach(b => b.addEventListener('click', () => {
+  sfx.pop(); const ls = LESSONS.filter(l => l.unit === b.dataset.u), card = $('#helpCard');
+  card.innerHTML = `<h3>¿Qué tan difícil?</h3><div class="lvls">${ls.map((l, i) => `<button class="px lvl" data-l="${l.id}"><span>${LEVEL_NM[i] || ''} · ${l.nm}</span><b>${l.ex}</b></button>`).join('')}</div><button class="px close" id="hclose">Cancelar</button>`;
+  $('#help').hidden = false;
+  card.querySelectorAll('.lvl').forEach(x => x.addEventListener('click', () => { $('#help').hidden = true; sfx.pop(); startLesson(LES[x.dataset.l], true); }));
+  card.querySelector('#hclose').addEventListener('click', () => { $('#help').hidden = true; });
+}));
 $('#tableClose').addEventListener('click', () => { $('#mytable').hidden = true; });
 $('#backBtn').addEventListener('click', () => { sfx.pop(); showHome(); });
 
@@ -400,6 +427,35 @@ function stepsAdd(nums) {
     carry = last ? 0 : Math.floor(s / 10);
   }
   return { steps, check: () => sum, resRow: RES, title: nums.join(' + ') };
+}
+// Resta en columnas: si arriba hay menos, se le pide prestado al vecino (los ceros se vuelven 9)
+function stepsSub(a, b) {
+  const as = String(a), W = as.length, diff = a - b;
+  newBoard(W, [{ t: 'carry' }, {}, { sign: '−' }, { t: 'line' }, {}]);
+  putNum(1, a); putNum(2, b);
+  const top = as.split('').reverse().map(Number), bd = i => i < String(b).length ? Math.floor(b / 10 ** i) % 10 : null, steps = [];
+  const shown = i => top[i];
+  for (let i = 0; i < W; i++) {
+    const bi = bd(i);
+    if (bi !== null && top[i] < bi) {
+      let k = i + 1; while (top[k] === 0) k++;
+      const old = top[i], nb = top[k];
+      const put0 = [[0, k, nb - 1, 'carry']], gone = [[1, k]];
+      for (let m = k - 1; m > i; m--) { put0.push([0, m, 9, 'carry']); gone.push([1, m]); top[m] = 9; }
+      top[k] = nb - 1; top[i] = old + 10; put0.push([0, i, top[i], 'carry']); gone.push([1, i]);
+      steps.push({ auto: true, say: `Arriba hay <b>${old}</b> y abajo <b>${bi}</b>: ¡no alcanza! Le pedimos <b>1</b> prestado al vecino: el ${nb} se vuelve <b>${nb - 1}</b>${k - i > 1 ? ', los ceros se vuelven 9' : ''} y el ${old} se vuelve <b>${old + 10}</b>.`, put: put0, gone, hl: [[1, i], [1, k]] });
+    }
+    const last = i === W - 1;
+    if (bi === null) {
+      if (last && top[i] === 0) break;   // no se escribe un cero a la izquierda
+      steps.push({ auto: true, say: `En las ${PLACE[i]} abajo no hay nada: bajamos el <b>${top[i]}</b>.`, put: [[4, i, top[i]]], hl: [[1, i]] });
+      continue;
+    }
+    const d = top[i] - bi;
+    if (last && d === 0 && i > 0) break;
+    steps.push({ say: `Resta la columna de las <b>${PLACE[i]}</b>`, q: `${top[i]} − ${bi}`, ans: d, hl: [[top[i] !== +as[W - 1 - i] ? 0 : 1, i], [2, i]], target: [[4, i]], help: { t: 'sub', a: top[i], b: bi }, put: [[4, i, d]], after: `¡Eso! Escribe ${d}` });
+  }
+  return { steps, check: () => diff, resRow: 4, title: `${a} − ${b}` };
 }
 function stepsMul(a, b) {
   const as = String(a), bs = String(b), n = bs.length, prod = a * b, W = String(prod).length + (n > 1 ? 0 : 0);
@@ -539,20 +595,21 @@ sizeKeys();
 
 /* ---------- Jugar una lección ---------- */
 let L = null, P = null, si = 0, tries = 0, usedHelp = false, lesson = null;
-function startLesson(l) {
-  lesson = { l, n: 0, errors: 0, lastFact: '' };
+function startLesson(l, practice) {
+  lesson = { l, n: 0, errors: 0, lastFact: '', practice: !!practice };
   $('#home').hidden = true; $('#play').hidden = false; $('#backBtn').hidden = false; $('#prog').hidden = false; $('#win').hidden = true;
-  $('#title').textContent = l.nm.toUpperCase();
+  $('#title').textContent = (practice ? 'PRÁCTICA: ' : '') + l.nm.toUpperCase();
+  if (practice) coach(`¡Vamos a practicar <b>${l.nm.toLowerCase()}</b>! Haz las que quieras y sal cuando gustes.`);
   nextProblem();
 }
-function paintProg() { $('#prog').innerHTML = Array.from({ length: lesson.l.need }, (_, i) => `<i class="${i < lesson.n ? 'on' : ''}"></i>`).join(''); }
+function paintProg() { if (lesson.practice) { $('#prog').innerHTML = `<span class="pchip">✓ ${lesson.n}</span>`; return; } $('#prog').innerHTML = Array.from({ length: lesson.l.need }, (_, i) => `<i class="${i < lesson.n ? 'on' : ''}"></i>`).join(''); }
 function coach(html, cat) { $('#say').innerHTML = `<span>${html}</span>`; if (cat) $('#coachImg').src = UP + cat + '-icon.webp'; }
 function nextProblem() {
-  paintProg(); $('#nextBtn').hidden = true; $('#vis').innerHTML = '';
+  paintProg(); $('#vis').innerHTML = '';
   const l = lesson.l;
   if (l.kind === 'fact' || l.kind === 'dfact') return factProblem();
   const v = l.gen();
-  P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]);
+  P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'sub' ? stepsSub(v[0], v[1]) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]);
   si = 0; $('#boardWrap').hidden = false; runStep();
 }
 function redraw() { const s = P && P.steps[si]; renderBoard(s ? s.hl || [] : [], s ? s.target || [] : []); }
@@ -564,18 +621,21 @@ function runStep() {
   if (s.clearCarry != null) B.rows[s.clearCarry].cells.forEach(c => { c.v = ''; c.k = ''; });
   if (s.auto) {
     coach(s.say); $('#quest').innerHTML = `<button class="px pbtn" id="goOn">¡Va! ➜</button>`; onEnter = null;
-    renderBoard(s.hl || [], []); $('#helpBtn').hidden = true;
-    const go = () => { applyPut(s.put); sfx.write(); si++; runStep(); };
+    renderBoard(s.hl || [], []); hint(false);
+    const go = () => { (s.gone || []).forEach(([r, i]) => { cellAt(r, i).k = 'gone'; }); applyPut(s.put); sfx.write(); si++; runStep(); };
     $('#goOn').addEventListener('click', go); onEnter = () => go();
     return;
   }
-  $('#helpBtn').hidden = !s.help;
+  hint(!!s.help);
   coach(s.say);
   $('#quest').innerHTML = `<span class="q">${s.q} =</span><span id="ans">?</span>`;
   renderBoard(s.hl || [], s.target || []);
   onEnter = v => answer(v);
 }
-$('#helpBtn').addEventListener('click', () => { const s = P && P.steps[si]; if (lesson && (lesson.l.kind === 'fact' || lesson.l.kind === 'dfact')) { usedHelp = true; showHelp(lesson.fact.help, tries >= 2); return; } if (s && s.help) { usedHelp = true; showHelp(s.help, tries >= 2); } });
+function hint(on, call) { $('#hintBtn').hidden = !on; $('#hintBtn').classList.toggle('call', !!call); $('#coachImg').classList.toggle('call', !!call); }
+function openHint() { sfx.pop(); hint(!$('#hintBtn').hidden, false); const s = P && P.steps[si]; if (lesson && (lesson.l.kind === 'fact' || lesson.l.kind === 'dfact')) { usedHelp = true; showHelp(lesson.fact.help, tries >= 2); return; } if (s && s.help) { usedHelp = true; showHelp(s.help, tries >= 2); } }
+$('#hintBtn').addEventListener('click', openHint);
+$('#coachImg').addEventListener('click', () => { if (!$('#hintBtn').hidden) openHint(); else { sfx.pop(); coach(pick(['¡Miau! Tú puedes 💪', 'Vas muy bien 😺', '¡Prrr! Sigue así'])); } });
 function answer(v) {
   const s = P.steps[si];
   if (v === s.ans) {
@@ -589,7 +649,7 @@ function answer(v) {
   } else {
     sfx.no(); tries++; lesson.errors++; const a = $('#ans'); a.classList.remove('bad'); void a.offsetWidth; a.classList.add('bad'); typed = ''; a.textContent = '?';
     // Al equivocarse no hay castigo: aparece el dibujo para que vea por qué
-    if (tries === 1) coach(`Casi… ¡inténtalo otra vez! Si quieres, toca <b>💡 Ayuda</b> para verlo con dibujos.`);
+    if (tries === 1) { coach(`Casi… ¡inténtalo otra vez! Si quieres, toca el <b>💡</b> (o a mí) y te lo enseño con dibujos.`); hint(!!s.help, true); }
     else if (s.help) { coach(`Mira el dibujo 👀`); showHelp(s.help, tries >= 2); }
     else coach(`La respuesta es <b>${s.ans}</b>. Escríbela tú.`);
   }
@@ -598,16 +658,16 @@ function problemDone() {
   lesson.n++; onEnter = null; sfx.done(); burst(40);
   // Hasta que aprenda: si en esta se equivocó mucho, toca una más parecida para practicar
   const errs = lesson.errors - (lesson.errAtStart || 0); lesson.errAtStart = lesson.errors;
-  if (errs >= 3 && (lesson.extra || 0) < 3) { lesson.extra = (lesson.extra || 0) + 1; lesson.l = Object.assign({}, lesson.l, { need: lesson.l.need + 1 }); setTimeout(() => coach('Hagamos <b>otra parecida</b> para que te salga sin ayuda. ¡Tú puedes! 💪'), 2200); }
+  if (!lesson.practice && errs >= 3 && (lesson.extra || 0) < 3) { lesson.extra = (lesson.extra || 0) + 1; lesson.l = Object.assign({}, lesson.l, { need: lesson.l.need + 1 }); setTimeout(() => coach('Hagamos <b>otra parecida</b> para que te salga sin ayuda. ¡Tú puedes! 💪'), 2200); }
   paintProg();
   const right = P.check();
   coach(`🎉 ¡Muy bien! <b>${P.title} = ${right}${P.div && P.rem ? ' y sobran ' + P.rem : ''}</b>`, pick(['cat-coco', 'cat-aceituna']));
-  $('#quest').innerHTML = ''; $('#helpBtn').hidden = true;
+  $('#quest').innerHTML = ''; hint(false);
   giveCoins(5);
-  if (lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1300);
-  $('#nextBtn').hidden = false;
+  if (!lesson.practice && lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1300);
+  $('#quest').innerHTML = '<button class="px nextBig" id="nextBtn">¡Siguiente! ➜</button>';
+  $('#nextBtn').addEventListener('click', () => { sfx.pop(); nextProblem(); }); onEnter = () => nextProblem();
 }
-$('#nextBtn').addEventListener('click', () => { sfx.pop(); nextProblem(); });
 
 /* ---------- Tablas: la multiplicación se ve como charola de cupcakes ---------- */
 function factProblem() {
@@ -636,7 +696,7 @@ function factProblem() {
     const c = $('#cnt2'); if (c) c.addEventListener('click', () => countRows($('#board'), a, b));
     $('#quest').innerHTML = `<span class="q">${a} × ${b} =</span><span id="ans">?</span>`;
   }
-  $('#helpBtn').hidden = false;
+  hint(true);
   onEnter = v => factAnswer(v);
 }
 function factAnswer(v) {
@@ -650,12 +710,12 @@ function factAnswer(v) {
     const clean = !tries && !usedHelp;
     if (clean) { lesson.n++; paintProg(); burst(12); } else (lesson.again = lesson.again || []).push([a, b]);
     coach(`✔ ¡Sí! <b>${div ? `${a * b} ÷ ${b} = ${a}` : `${a} × ${b} = ${a * b}`}</b>${div ? ` porque ${b} × ${a} = ${a * b}` : ''}${clean ? '' : '. Esta te la vuelvo a preguntar al ratito para que se te quede 😉'}`);
-    if (lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1100);
+    if (!lesson.practice && lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1100);
     setTimeout(factProblem, 1100);
   } else {
     sfx.no(); tries++; lesson.errors++; save.facts[k] = Math.max(0, (save.facts[k] || 0) - 1); persist();
     const an = $('#ans'); an.classList.remove('bad'); void an.offsetWidth; an.classList.add('bad'); typed = ''; an.textContent = '?';
-    if (tries === 1) coach('Casi… ¡otra vez! Toca <b>💡 Ayuda</b> para verlo con dibujos.');
+    if (tries === 1) { coach('Casi… ¡otra vez! Toca el <b>💡</b> (o a mí) para verlo con dibujos.'); hint(true, true); }
     else { showHelp(lesson.fact.help, true); coach('Mira el dibujo y escríbela 👀'); }
   }
 }
@@ -707,10 +767,11 @@ if (location.hash === '#diag') (async () => {
   // 1) Verifica que el método da el resultado correcto en muchas operaciones al azar
   const resultOf = () => { const row = B.rows[P.resRow]; return +row.cells.map(c => c.v).join('').replace(/\D/g, ''); };
   const solveAll = () => { for (const s of P.steps) { if (s.clearCarry != null) B.rows[s.clearCarry].cells.forEach(c => { c.v = ''; c.k = ''; }); applyPut(s.put); } };
+  window.__mate.stepsSub = stepsSub;
   const bad = []; let n = 0;
   for (const l of LESSONS.filter(l => l.gen)) for (let k = 0; k < 150; k++) {
-    let v = l.gen(); P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]); solveAll(); n++;
-    const want = l.kind === 'add' ? v.reduce((x, y) => x + y, 0) : l.kind === 'mul' ? v[0] * v[1] : Math.floor(v[0] / v[1]);
+    let v = l.gen(); P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'sub' ? stepsSub(v[0], v[1]) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]); solveAll(); n++;
+    const want = l.kind === 'add' ? v.reduce((x, y) => x + y, 0) : l.kind === 'sub' ? v[0] - v[1] : l.kind === 'mul' ? v[0] * v[1] : Math.floor(v[0] / v[1]);
     if (resultOf() !== want || P.steps.some(s => !s.auto && (s.ans == null || isNaN(s.ans)))) bad.push(l.id + ':' + v.join(',') + '→' + resultOf());
   }
   await post('mate-check', { n, bad: bad.slice(0, 10), nBad: bad.length });
