@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
+<meta name="theme-color" content="#ff8fc4">
+<script>window.LEON_VERSION='20261101072935';</script>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<title>Mate con Lucy</title>
+<style>
+/* Layout: cuaderno de cuadrícula. Arriba: casita, monedas, sonido. Inicio: camino de lecciones (sumas → tablas → multiplicaciones de varias cifras → divisiones) y "Mi tabla".
+   Lección: la operación escrita en el cuaderno como en la escuela, Coco explica cada paso, la pregunta chiquita del paso y un teclado grande. */
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:block;src:url(../vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYEF8RXi4EwQ.woff2) format('woff2')}
+:root{
+  --ink:#4a2a4a; --pink:#ff6fae; --pink2:#ffd6ea; --lila:#b48cff; --lila2:#efe6ff; --mint:#5fd0a8; --mint2:#d8f7ec; --gold:#ffc83a; --sky:#6ec6ff;
+  --paper:#fffdf7; --grid:#d9e6f5; --font:'Lilita One','Arial Rounded MT Bold',sans-serif; color-scheme:light;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;color:var(--ink);font-family:var(--font);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior:none;
+  background:var(--paper) repeating-linear-gradient(0deg,transparent 0 31px,var(--grid) 31px 32px),var(--paper) repeating-linear-gradient(90deg,transparent 0 31px,var(--grid) 31px 32px);background-blend-mode:multiply}
+body::before{content:'';position:fixed;inset:0 auto 0 0;width:max(14px,env(safe-area-inset-left,0px));background:linear-gradient(90deg,#ffb3d1,#ffd6ea);opacity:.6;pointer-events:none}
+button{font-family:var(--font);color:var(--ink);cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;border:0}
+.px{border-radius:18px;background:#fff;box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.25)}
+.px:active{transform:translateY(3px);box-shadow:0 0 0 3px var(--ink),0 3px 0 3px rgba(74,42,74,.25)}
+.ibtn{flex:none;width:50px;height:50px;padding:0;display:grid;place-items:center}
+.chip{flex:none}
+@media (max-width:520px){.ibtn{width:42px;height:42px}#title{font-size:17px}#prog i{width:10px;height:10px}}
+.ibtn svg{width:24px;height:24px}
+.bar{position:fixed;left:0;right:0;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 10px) max(14px,env(safe-area-inset-right,0px)) 0 max(22px,env(safe-area-inset-left,0px))}
+.bar .sp{flex:1}
+.chip{display:flex;align-items:center;gap:6px;background:#fff;border-radius:99px;padding:3px 14px 3px 5px;font-size:clamp(17px,2.4vw,22px);box-shadow:0 0 0 3px var(--ink)}
+.chip img{width:30px;height:30px;object-fit:contain}
+#title{font-size:clamp(20px,3.4vw,30px);color:#fff;-webkit-text-stroke:.09em var(--ink);paint-order:stroke fill;text-shadow:0 3px 0 var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Inicio: camino de lecciones ---------- */
+#home{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 76px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(24px,env(safe-area-inset-left,0px))}
+.hero{display:flex;align-items:center;gap:14px;max-width:980px;margin:0 auto 14px}
+.hero img{width:clamp(64px,10vw,96px);height:auto;filter:drop-shadow(0 4px 0 rgba(74,42,74,.2))}
+.hero .say{flex:1;background:#fff;border-radius:20px;padding:12px 16px;font-size:clamp(16px,2.3vw,21px);line-height:1.25;box-shadow:0 0 0 3px var(--ink),0 5px 0 3px rgba(74,42,74,.15);position:relative}
+.hero .say::before{content:'';position:absolute;left:-12px;top:50%;margin-top:-9px;border:9px solid transparent;border-right:12px solid var(--ink)}
+.unit{max-width:980px;margin:18px auto 8px;display:flex;align-items:center;gap:10px;font-size:clamp(18px,2.6vw,24px)}
+.unit i{font-style:normal;background:var(--ink);color:#fff;border-radius:99px;padding:2px 12px;font-size:.8em}
+.lessons{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:14px}
+.ls{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 14px 12px;text-align:left;min-height:116px}
+.ls .ex{font-size:clamp(22px,3vw,28px);letter-spacing:.02em;color:var(--pink)}
+.ls .nm{font-size:clamp(16px,2.1vw,19px);line-height:1.15}
+.ls .st{position:absolute;right:10px;top:8px;font-size:18px;color:var(--gold);-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill;letter-spacing:-2px}
+.ls.lock{opacity:.5;filter:grayscale(.7)}
+.ls.lock .ex::after{content:' 🔒';font-size:.7em}
+.ls.next{background:#fff6c8;animation:glow 1.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.25),0 0 0 9px rgba(255,200,58,.5)}}
+.ls.done{background:var(--mint2)}
+#tableBtn{display:flex;align-items:center;gap:10px;margin:18px auto 0;padding:12px 22px;font-size:clamp(17px,2.4vw,22px);background:var(--lila2)}
+
+/* ---------- Lección ---------- */
+#play{position:fixed;inset:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 70px) max(14px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(22px,env(safe-area-inset-left,0px))}
+#coach{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:64px}
+#coach img{width:clamp(48px,7vw,70px);height:auto}
+#say{flex:1;background:#fff;border-radius:18px;padding:9px 14px;font-size:clamp(16px,2.3vw,22px);line-height:1.25;box-shadow:0 0 0 3px var(--ink);position:relative;min-height:46px;display:flex;align-items:center}
+#say b{color:var(--pink);font-weight:400}
+#prog{display:flex;gap:4px;align-items:center}
+#prog i{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--ink)}
+#prog i.on{background:var(--mint)}
+#boardWrap{position:relative;min-height:0;display:grid;place-items:center;background:rgba(255,255,255,.75);border-radius:22px;box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.15);overflow:hidden}
+#board{display:grid;align-items:center;justify-items:center;font-size:var(--fs);line-height:1}
+.cell{width:var(--cs);height:var(--cs);display:grid;place-items:center;position:relative;border-radius:10px;transition:background .2s}
+.cell.fixed{color:var(--ink)}
+.cell.mine{color:var(--pink);animation:drop .35s cubic-bezier(.3,1.6,.5,1)}
+.cell.ghost{color:#b9a8c9}
+.cell.hl{background:rgba(255,214,58,.55);box-shadow:inset 0 0 0 3px rgba(255,170,0,.7)}
+.cell.target{background:rgba(255,111,174,.18);box-shadow:inset 0 0 0 3px var(--pink);animation:pulse 1s ease-in-out infinite}
+.cell.gone{color:#c9b8d8;text-decoration:line-through}
+@keyframes pulse{50%{background:rgba(255,111,174,.32)}}
+@keyframes drop{from{transform:translateY(-30px) scale(1.4);opacity:0}}
+.crow .cell{height:calc(var(--cs) * .55);font-size:.5em;color:#e2405f}
+.crow .cell.hl{background:rgba(255,214,58,.7)}
+.sign{width:var(--cs);height:var(--cs);display:grid;place-items:center;color:var(--lila)}
+.line{grid-column:1/-1;height:5px;width:100%;background:var(--ink);border-radius:3px;margin:2px 0}
+.roof{border-top:5px solid var(--ink);border-radius:0}
+.wall{border-left:5px solid var(--ink)}
+#quest{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-size:clamp(28px,5vw,46px);min-height:64px}
+#quest .q{background:#fff;border-radius:18px;padding:4px 16px;box-shadow:0 0 0 3px var(--ink)}
+#ans{min-width:2.4em;text-align:center;background:var(--pink2);border-radius:16px;padding:4px 14px;box-shadow:0 0 0 3px var(--pink);color:var(--pink)}
+#ans.bad{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+#side{grid-row:2/4;grid-column:2;display:flex;flex-direction:column;gap:10px;align-items:stretch;justify-content:flex-end}
+#keys{display:grid;grid-template-columns:repeat(3,var(--kb));gap:10px}
+#keys button{height:var(--kb);font-size:calc(var(--kb) * .45)}
+#keys .ok{background:var(--mint);color:#fff;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill}
+#keys .del{background:var(--pink2)}
+#helpBtn,#nextBtn{height:58px;font-size:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+#helpBtn{background:var(--lila2)}
+#nextBtn{background:var(--gold)}
+#bottom{grid-column:1;grid-row:3;display:flex;flex-direction:column;gap:8px}
+#vis{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;max-height:40vh;overflow:hidden}
+/* Vertical: el teclado abajo */
+@media (orientation:portrait){
+  #play{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto}
+  #side{grid-row:4;grid-column:1;flex-direction:row;align-items:flex-end;justify-content:center}
+  #side .col{display:flex;flex-direction:column;gap:10px;flex:1;max-width:180px}
+  #bottom{grid-row:3}
+}
+
+/* ---------- Ayuda visual ---------- */
+#help{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(74,42,74,.35)}
+#helpCard{background:#fff;border-radius:26px;box-shadow:0 0 0 4px var(--ink),0 10px 0 4px rgba(74,42,74,.25);padding:18px 20px 16px;max-width:min(94vw,860px);max-height:88vh;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:12px;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+#helpCard h3{margin:0;font-weight:400;font-size:clamp(22px,3.6vw,34px);text-align:center}
+#helpCard h3 b{color:var(--pink);font-weight:400}
+#helpCard p{margin:0;font-size:clamp(16px,2.3vw,21px);text-align:center;line-height:1.3}
+.tray{display:grid;gap:4px;padding:10px;background:#f4d9b8;border-radius:16px;box-shadow:inset 0 0 0 4px #c98a5e}
+.tray img{width:var(--ts);height:var(--ts);object-fit:contain}
+.tray img.b{filter:hue-rotate(160deg) saturate(1.3)}
+.trayrow{display:contents}
+.rowsum{font-size:calc(var(--ts) * .55);color:var(--pink);display:flex;align-items:center;padding-left:6px;opacity:0;transition:opacity .25s}
+.rowsum.on{opacity:1}
+.tf{display:grid;grid-template-columns:repeat(10,var(--ts));gap:4px}
+.tf i{width:var(--ts);height:var(--ts);border-radius:50%;box-shadow:inset 0 0 0 2px rgba(74,42,74,.25)}
+.tf i.a{background:var(--pink)} .tf i.b{background:var(--sky)} .tf i.c{background:var(--gold)}
+.mults{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:clamp(18px,2.6vw,24px)}
+.mults span{background:var(--lila2);border-radius:12px;padding:4px 10px}
+.mults span.yes{background:var(--mint);color:#fff;-webkit-text-stroke:.05em var(--ink);paint-order:stroke fill}
+.mults span.no{background:#ffd0d0;text-decoration:line-through}
+.boxes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.box{min-width:calc(var(--ts) * 3.4);min-height:calc(var(--ts) * 2.2);background:#fff1f7;border-radius:14px;box-shadow:inset 0 0 0 3px var(--pink);display:flex;flex-wrap:wrap;align-content:flex-start;gap:2px;padding:6px;position:relative}
+.box img{width:calc(var(--ts) * .8);height:calc(var(--ts) * .8)}
+.box b{position:absolute;right:-10px;top:-12px;font-weight:400;color:#fff;background:var(--pink);border-radius:99px;min-width:30px;height:30px;display:grid;place-items:center;font-size:20px;box-shadow:0 0 0 3px var(--ink)}
+.pile{display:flex;flex-wrap:wrap;gap:2px;max-width:min(80vw,620px);justify-content:center}
+.pile img{width:calc(var(--ts) * .8);height:calc(var(--ts) * .8);transition:opacity .2s}
+.pbtn{padding:10px 22px;font-size:20px;background:var(--gold)}
+.close{padding:10px 26px;font-size:20px;background:var(--mint);color:#fff;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill}
+
+/* ---------- Mi tabla ---------- */
+#mytable{position:fixed;inset:0;z-index:45;display:flex;flex-direction:column;align-items:center;gap:12px;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 76px) 16px 24px;background:rgba(255,253,247,.96)}
+#grid{display:grid;grid-template-columns:repeat(11,var(--gc));gap:4px}
+#grid div{width:var(--gc);height:var(--gc);display:grid;place-items:center;border-radius:10px;font-size:calc(var(--gc) * .4);background:#eee;color:#9a8aa8}
+#grid .h{background:var(--ink);color:#fff}
+#grid .l1{background:#fff2b0;color:var(--ink)} #grid .l2{background:#c8f0d8;color:var(--ink)} #grid .l3{background:var(--mint);color:#fff;-webkit-text-stroke:.05em var(--ink);paint-order:stroke fill}
+.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:16px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:20px;height:20px;border-radius:6px;display:inline-block}
+
+/* ---------- Final ---------- */
+#win{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:rgba(74,42,74,.4);text-align:center}
+#win h2{margin:0;font-weight:400;font-size:clamp(40px,8vw,80px);color:var(--gold);-webkit-text-stroke:.07em var(--ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--ink);animation:pop .6s cubic-bezier(.3,1.6,.5,1)}
+#win .stars{font-size:clamp(46px,9vw,84px);color:var(--gold);-webkit-text-stroke:.05em var(--ink);paint-order:stroke fill;letter-spacing:6px}
+#win .stars s{text-decoration:none;color:#e8dcef}
+#win p{margin:0;font-size:clamp(18px,3vw,26px);color:#fff;-webkit-text-stroke:.07em var(--ink);paint-order:stroke fill}
+#win .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+#win button{padding:14px 26px;font-size:clamp(18px,2.6vw,24px)}
+#win .go{background:var(--mint);color:#fff;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill}
+#confetti{position:fixed;inset:0;z-index:61;pointer-events:none}
+@keyframes pop{from{transform:scale(.3)}70%{transform:scale(1.08)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
+</style>
+<style>@media (display-mode: standalone), (display-mode: fullscreen){html,body{height:var(--fullh,100%)!important}#app,.bg,.world,#menu,#play,#win,#confetti,#leonIntro{bottom:auto!important;height:var(--fullh,100%)!important}}</style>
+<script>(()=>{const fit=()=>{if(!(navigator.standalone===true||matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches))return;const land=innerWidth>innerHeight,h=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height),gap=h-innerHeight;document.documentElement.style.setProperty('--fullh',(gap>0&&gap<=90?h:innerHeight)+'px')};fit();addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,300))})()</script>
+</head>
+<body>
+<div id="leonIntro" aria-hidden="true">
+  <div class="li-scene"></div>
+  <div class="li-top">
+    <div class="li-title"><span>L</span><span>U</span><span>C</span><span>Y</span></div>
+    <div class="li-sub">GAMES</div>
+  </div>
+  <div class="li-load">
+    <div class="li-bar"><i></i></div>
+  </div>
+</div>
+<style>
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:block;src:url(../vendor/fonts/i7dPIFZ9Zz-WBtRtedDbYEF8RXi4EwQ.woff2) format('woff2')}
+#leonIntro{--li-ink:#2a1f3d;--li-sun:#ff8fc4;position:fixed;inset:0;z-index:9999;overflow:hidden;background:#ffd6ea;font-family:'Lilita One','Arial Rounded MT Bold',sans-serif;color:#fff;transition:opacity .5s;-webkit-user-select:none;user-select:none;touch-action:none}
+#leonIntro.out{opacity:0}
+.li-scene{position:absolute;inset:-2%;background:url(../img/splash2-wide.webp) 50% 70%/cover no-repeat;animation:li-zoom 4s ease-out both}
+@media (orientation:portrait){.li-scene{background-image:url(../img/splash2-tall.webp)}}
+.li-scene::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(42,31,61,.35),rgba(42,31,61,0) 40%,rgba(42,31,61,0) 75%,rgba(42,31,61,.35))}
+.li-top{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + max(4vh,16px));display:flex;flex-direction:column;align-items:center}
+.li-title{display:flex;gap:.02em;font-size:min(22vw,17vh,150px);line-height:.95;color:var(--li-sun);-webkit-text-stroke:.05em var(--li-ink);paint-order:stroke fill;text-shadow:0 .08em 0 var(--li-ink),0 .16em .1em rgba(0,0,0,.25)}
+.li-title span{display:inline-block;opacity:0;transform:translateY(-120%) scale(.6);animation:li-drop .6s cubic-bezier(.3,1.6,.5,1) forwards}
+.li-title span:nth-child(1){animation-delay:.2s}
+.li-title span:nth-child(2){animation-delay:.33s}
+.li-title span:nth-child(3){animation-delay:.46s}
+.li-title span:nth-child(4){animation-delay:.59s}
+.li-sub{margin-top:-.1em;font-size:min(9vw,7vh,62px);letter-spacing:.3em;padding-left:.3em;-webkit-text-stroke:.07em var(--li-ink);paint-order:stroke fill;text-shadow:0 .1em 0 var(--li-ink);opacity:0;transform:scale(.4);animation:li-pop .5s cubic-bezier(.3,1.8,.5,1) .9s forwards}
+.li-load{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + max(4vh,16px));transform:translateX(-50%);width:min(62vw,420px)}
+.li-bar{height:min(5vw,26px);box-sizing:border-box;padding:4px;border-radius:99px;background:rgba(42,31,61,.75);box-shadow:0 0 0 4px #fff,0 6px 0 4px rgba(42,31,61,.3)}
+.li-bar i{display:block;height:100%;width:6%;border-radius:99px;background:linear-gradient(#ffc4e0,#ff7ab8);box-shadow:inset 0 -3px 0 rgba(0,0,0,.15);transition:width .25s}
+@keyframes li-zoom{from{transform:scale(1.08)}to{transform:none}}
+@keyframes li-drop{to{opacity:1;transform:none}}
+@keyframes li-pop{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#leonIntro *{animation-duration:.01s!important;animation-delay:0s!important}}
+</style>
+<script>
+// Pantalla de carga de LUCY GAMES: dura al menos ~2.6 s; en los juegos 3D espera a que terminen de cargar los modelos
+// (la barra muestra el avance real). Tocar la pantalla la salta solo cuando ya no hay nada cargando.
+(() => {
+  const el = document.getElementById('leonIntro'), bar = el.querySelector('.li-bar i'), t0 = performance.now();
+  const MIN = matchMedia('(prefers-reduced-motion: reduce)').matches ? 800 : 2600;
+  let gone = false;
+  const ready = () => !window.LEON_WAIT || window.LEON_READY;
+  const done = () => { if (gone) return; gone = true; bar.style.width = '100%'; setTimeout(() => el.classList.add('out'), 150); setTimeout(() => el.remove(), 700); };
+  (function tick() {
+    if (gone) return;
+    const t = performance.now() - t0, timeP = Math.min(1, t / MIN);
+    const p = window.LEON_WAIT ? Math.min(timeP, .1 + .9 * (window.LEON_READY ? 1 : (window.LEON_PROGRESS || 0) * .95)) : timeP;
+    bar.style.width = Math.max(6, p * 100) + '%';
+    if ((t >= MIN && ready()) || t > 25000) done(); else setTimeout(tick, 100);
+  })();
+  // El toque que salta la intro no debe llegar a los botones de atrás
+  el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (ready()) done(); });
+  ['click', 'pointerup', 'touchend'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+})();
+</script>
+<script>window.LEON_HUB='../';</script>
+
+<div class="bar">
+  <button class="px ibtn" id="homeBtn" aria-label="Volver a los juegos" hidden><svg viewBox="0 0 16 16"><path fill="#4a2a4a" d="M8 1l7 6v1h-2v7H9v-4H7v4H3V8H1V7z"/><path fill="#ff6fae" d="M4 8h8v6h-2v-4H6v4H4z"/></svg></button>
+  <button class="px ibtn" id="backBtn" aria-label="Volver a las lecciones" hidden><svg viewBox="0 0 16 16" fill="#4a2a4a"><path d="M9 2L3 8l6 6V10h5V6H9z"/></svg></button>
+  <div id="title">MATE CON LUCY</div>
+  <div class="sp"></div>
+  <div id="prog" hidden></div>
+  <div class="chip"><img alt="" src="../img/bakery/coin.webp"><span id="coins">0</span></div>
+  <button class="px ibtn" id="muteBtn" aria-label="Sonido"></button>
+</div>
+
+<main id="home">
+  <div class="hero"><img alt="" src="../img/bakery/cat-coco-icon.webp"><div class="say" id="homeSay"></div></div>
+  <div id="units"></div>
+  <button class="px" id="tableBtn"><span style="font-size:26px">🟩</span> Mi tabla de multiplicar</button>
+</main>
+
+<section id="play" hidden>
+  <div id="coach"><img alt="" id="coachImg" src="../img/bakery/cat-coco-icon.webp"><div id="say"></div></div>
+  <div id="boardWrap"><div id="board"></div></div>
+  <div id="bottom"><div id="quest"></div><div id="vis"></div></div>
+  <div id="side">
+    <div id="keys"></div>
+    <div class="col">
+      <button class="px" id="helpBtn">💡 Ayuda</button>
+      <button class="px" id="nextBtn" hidden>¡Siguiente! ➜</button>
+    </div>
+  </div>
+</section>
+
+<div id="help" hidden><div id="helpCard"></div></div>
+<div id="mytable" hidden><div class="hero" style="max-width:640px"><img alt="" src="../img/bakery/cat-aceituna-icon.webp"><div class="say">Cada vez que contestas bien una multiplicación, su cuadrito se pinta. ¡Llénala toda!</div></div><div id="grid"></div>
+  <div class="legend"><span><i style="background:#eee"></i>Nueva</span><span><i style="background:#fff2b0"></i>Practicando</span><span><i style="background:#c8f0d8"></i>Casi</span><span><i style="background:#5fd0a8"></i>¡Ya me la sé!</span></div>
+  <button class="px close" id="tableClose">Cerrar</button></div>
+<div id="win" hidden><h2 id="winT">¡LO LOGRASTE!</h2><div class="stars" id="winStars"></div><p id="winP"></p><div class="row"><button class="px" id="winHome">Lecciones</button><button class="px" id="winAgain">Otra vez</button><button class="px go" id="winNext">Siguiente ➜</button></div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const rand = (a, b) => a + Math.random() * (b - a);
+const ri = (a, b) => Math.floor(rand(a, b + 1));
+const pick = a => a[Math.random() * a.length | 0];
+const UP = '../img/bakery/';
+
+/* ---------- Guardado ---------- */
+let save = { done: {}, facts: {}, coins: 0, muted: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem('lucyMate')) || {}); } catch (e) {}
+const persist = () => { try { localStorage.setItem('lucyMate', JSON.stringify(save)); } catch (e) {} };
+// Las monedas que gana aquí también llegan a su Pastelería de Lucy
+function giveCoins(n) {
+  save.coins += n; persist(); $('#coins').textContent = save.coins;
+  try { const k = 'lucyBakery', S = JSON.parse(localStorage.getItem(k)); if (S && S.v === 1) { S.coins = (S.coins || 0) + n; localStorage.setItem(k, JSON.stringify(S)); } } catch (e) {}
+}
+
+/* ---------- Sonido (sintetizado) ---------- */
+let actx = null;
+function unlockAudio() { try { if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); const b = actx.createBufferSource(); b.buffer = actx.createBuffer(1, 1, 22050); b.connect(actx.destination); b.start(0); } if (actx.state !== 'running') actx.resume(); } catch (e) {} }
+['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, unlockAudio, { passive: true }));
+function beep(f, dur = .1, type = 'square', vol = .05, slide = 0, delay = 0) {
+  if (save.muted || !actx) return;
+  try { const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + delay; o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur + .02); } catch (e) {}
+}
+const sfx = {
+  key: () => beep(700, .04, 'triangle', .05),
+  ok: () => { beep(784, .08, 'triangle', .06); beep(1175, .12, 'triangle', .06, 0, .07); },
+  no: () => beep(220, .18, 'triangle', .07, -60),
+  write: () => beep(1047, .06, 'sine', .05, 200),
+  carry: () => { beep(660, .05, 'sine', .05, 300); beep(990, .07, 'sine', .04, 0, .05); },
+  step: () => beep(523, .05, 'sine', .04),
+  done: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => beep(f, .14, 'square', .05, 0, i * .1)),
+  pop: () => beep(880, .05, 'triangle', .05, 200),
+};
+const ICON_ON = '<svg viewBox="0 0 16 16" fill="#4a2a4a"><path d="M1 6h3l4-4h1v12H8l-4-4H1z"/><path d="M11 5h1v1h1v4h-1v1h-1zM13 3h1v1h1v8h-1v1h-1v-2h1V5h-1z"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 16 16" fill="#4a2a4a"><path d="M1 6h3l4-4h1v12H8l-4-4H1z"/><path fill="#ff6fae" d="M10 5h2v1h1V5h2v2h-1v1h1v2h-2v-1h-1v1h-2V8h1V7h-1z"/></svg>';
+function paintMute() { $('#muteBtn').innerHTML = save.muted ? ICON_OFF : ICON_ON; }
+$('#muteBtn').addEventListener('click', () => { save.muted = !save.muted; persist(); paintMute(); });
+paintMute();
+if (window.LEON_HUB) { const b = $('#homeBtn'); b.hidden = false; b.addEventListener('click', () => { location.href = window.LEON_HUB; }); }
+['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+
+/* ---------- Lecciones: de lo más fácil a lo más difícil ---------- */
+const PLACE = ['unidades', 'decenas', 'centenas', 'millares', 'decenas de millar', 'centenas de millar'];
+const noZero = n => { let s = ''; for (let i = 0; i < n; i++) s += ri(1, 9); return +s; };
+const digits = n => ri(10 ** (n - 1), 10 ** n - 1);
+const LESSONS = [
+  { unit: 'Sumas', id: 'add2', nm: 'Sumas de 2 cifras', ex: '47 + 38', need: 4, kind: 'add', gen: () => [digits(2), digits(2)] },
+  { unit: 'Sumas', id: 'add3', nm: 'Sumas de 3 cifras', ex: '386 + 457', need: 4, kind: 'add', gen: () => [digits(3), digits(3)] },
+  { unit: 'Sumas', id: 'add4', nm: 'Sumas de 3 números', ex: '245 + 318 + 97', need: 3, kind: 'add', gen: () => [digits(3), digits(3), digits(2)] },
+  { unit: 'La tabla', id: 'tA', nm: 'Tablas del 2, 5 y 10', ex: '5 × 7', need: 12, kind: 'fact', set: [2, 5, 10] },
+  { unit: 'La tabla', id: 'tB', nm: 'Tablas del 3, 4 y 6', ex: '6 × 4', need: 12, kind: 'fact', set: [3, 4, 6] },
+  { unit: 'La tabla', id: 'tC', nm: 'Tablas del 7, 8 y 9', ex: '7 × 8', need: 14, kind: 'fact', set: [7, 8, 9] },
+  { unit: 'La tabla', id: 'tD', nm: 'Repaso: toda la tabla', ex: '? × ?', need: 15, kind: 'fact', set: [2, 3, 4, 5, 6, 7, 8, 9] },
+  { unit: 'Multiplicaciones', id: 'm21', nm: '2 cifras × 1 cifra', ex: '47 × 6', need: 4, kind: 'mul', gen: () => [digits(2), ri(2, 9)] },
+  { unit: 'Multiplicaciones', id: 'm31', nm: '3 cifras × 1 cifra', ex: '205 × 4', need: 4, kind: 'mul', gen: () => [digits(3), ri(2, 9)] },
+  { unit: 'Multiplicaciones', id: 'm22', nm: '2 cifras × 2 cifras', ex: '36 × 24', need: 3, kind: 'mul', gen: () => [digits(2), noZero(2)] },
+  { unit: 'Multiplicaciones', id: 'm32', nm: '3 cifras × 2 cifras', ex: '804 × 37', need: 3, kind: 'mul', gen: () => [digits(3), noZero(2)] },
+  { unit: 'Multiplicaciones', id: 'm33', nm: '3 cifras × 3 cifras', ex: '412 × 235', need: 2, kind: 'mul', gen: () => [digits(3), noZero(3)] },
+  { unit: 'Divisiones', id: 'dF', nm: 'Repartir (división de la tabla)', ex: '24 ÷ 4', need: 12, kind: 'dfact', set: [2, 3, 4, 5, 6, 7, 8, 9] },
+  { unit: 'Divisiones', id: 'd21', nm: 'Casita: 2 cifras ÷ 1 cifra', ex: '84 ÷ 4', need: 4, kind: 'div', gen: () => { const d = ri(2, 9); return [d * ri(11, Math.floor(99 / d)) + (Math.random() < .4 ? ri(1, d - 1) : 0), d].map((v, i) => i ? v : Math.min(99, v)); } },
+  { unit: 'Divisiones', id: 'd31', nm: 'Casita: 3 cifras ÷ 1 cifra', ex: '756 ÷ 6', need: 4, kind: 'div', gen: () => [digits(3), ri(2, 9)] },
+  { unit: 'Divisiones', id: 'd41', nm: 'Casita: 4 cifras ÷ 1 cifra', ex: '2 568 ÷ 7', need: 3, kind: 'div', gen: () => [digits(4), ri(2, 9)] },
+];
+const LES = Object.fromEntries(LESSONS.map(l => [l.id, l]));
+// La primera de cada tema siempre está abierta; las demás se abren al terminar la anterior
+const unlocked = i => i === 0 || LESSONS[i - 1].unit !== LESSONS[i].unit || !!save.done[LESSONS[i - 1].id] || !!save.done[LESSONS[i].id];
+
+/* ---------- Pantalla de inicio ---------- */
+function showHome() {
+  $('#home').hidden = false; $('#play').hidden = true; $('#win').hidden = true; $('#backBtn').hidden = true; $('#prog').hidden = true; $('#title').textContent = 'MATE CON LUCY';
+  $('#coins').textContent = save.coins;
+  const nextI = LESSONS.findIndex(l => !save.done[l.id]);
+  const nDone = LESSONS.filter(l => save.done[l.id]).length;
+  $('#homeSay').innerHTML = nDone === 0 ? '¡Hola, Lucy! Aquí las matemáticas se <b style="color:#ff6fae;font-weight:400">ven</b>. Vamos paso a paso y yo te ayudo en cada uno. ¡Empieza por la que brilla!'
+    : nextI < 0 ? '¡Terminaste TODO! Eres una genia. Puedes repetir cualquier lección para ganar más estrellas y monedas.'
+    : `¡Vas súper bien! Llevas ${nDone} de ${LESSONS.length} lecciones. La que brilla es la siguiente.`;
+  let html = '', unit = '';
+  LESSONS.forEach((l, i) => {
+    if (l.unit !== unit) { if (unit) html += '</div>'; unit = l.unit; const uDone = LESSONS.filter(x => x.unit === unit && save.done[x.id]).length, uTot = LESSONS.filter(x => x.unit === unit).length; html += `<div class="unit">${unit} <i>${uDone}/${uTot}</i></div><div class="lessons">`; }
+    const st = save.done[l.id] || 0, lock = !unlocked(i), cls = lock ? 'lock' : i === nextI ? 'next' : st ? 'done' : '';
+    html += `<button class="px ls ${cls}" data-l="${l.id}"><span class="st">${st ? '★'.repeat(st) : ''}</span><span class="ex">${l.ex}</span><span class="nm">${l.nm}</span></button>`;
+  });
+  $('#units').innerHTML = html + '</div>';
+  $('#units').querySelectorAll('.ls').forEach(b => b.addEventListener('click', () => { const i = LESSONS.findIndex(l => l.id === b.dataset.l); if (!unlocked(i)) { sfx.no(); return; } sfx.pop(); startLesson(LESSONS[i]); }));
+}
+$('#tableBtn').addEventListener('click', () => { sfx.pop(); showTable(); });
+$('#tableClose').addEventListener('click', () => { $('#mytable').hidden = true; });
+$('#backBtn').addEventListener('click', () => { sfx.pop(); showHome(); });
+
+/* ---------- Mi tabla (10 × 10) ---------- */
+const fkey = (a, b) => Math.min(a, b) + 'x' + Math.max(a, b);
+const flvl = (a, b) => (save.facts[fkey(a, b)] || 0);
+function showTable() {
+  const s = Math.min(54, Math.floor((Math.min(innerWidth - 40, innerHeight - 330)) / 11));
+  $('#grid').style.setProperty('--gc', s + 'px');
+  let h = '<div class="h">×</div>'; for (let b = 1; b <= 10; b++) h += `<div class="h">${b}</div>`;
+  for (let a = 1; a <= 10; a++) { h += `<div class="h">${a}</div>`; for (let b = 1; b <= 10; b++) { const l = a === 1 || b === 1 ? 3 : flvl(a, b); h += `<div class="l${l}">${a * b}</div>`; } }
+  $('#grid').innerHTML = h; $('#mytable').hidden = false;
+}
+
+/* ---------- Tablero (la operación escrita como en el cuaderno) ---------- */
+// Cada renglón tiene W columnas; i = posición desde la derecha (0 = unidades)
+let B = null;
+function newBoard(W, rows) { B = { W, rows: rows.map(r => ({ t: r.t || 'num', sign: r.sign || '', cells: Array.from({ length: W }, () => ({ v: '', k: '' })), cls: r.cls || '' })) }; }
+const cellAt = (r, i) => B.rows[r].cells[B.W - 1 - i];
+function put(r, i, v, k = 'fixed') { const c = cellAt(r, i); c.v = String(v); c.k = k; }
+function putNum(r, n, k = 'fixed', shift = 0) { String(n).split('').reverse().forEach((d, i) => put(r, i + shift, d, k)); }
+function renderBoard(hl = [], target = []) {
+  const el = $('#board'), wrap = $('#boardWrap').getBoundingClientRect(), nR = B.rows.reduce((a, r) => a + (r.t === 'line' ? .2 : r.t === 'carry' ? .6 : 1), 0);
+  const cs = Math.max(26, Math.min(76, (wrap.width - 20) / (B.W + 1.3), (wrap.height - 20) / nR));
+  el.style.setProperty('--cs', cs + 'px'); el.style.setProperty('--fs', cs * .78 + 'px');
+  el.style.gridTemplateColumns = `${cs}px repeat(${B.W}, ${cs}px)`;
+  const H = new Set(hl.map(([r, i]) => r + ',' + i)), Tg = new Set(target.map(([r, i]) => r + ',' + i));
+  let h = '';
+  B.rows.forEach((row, r) => {
+    if (row.t === 'line') { h += '<div class="line"></div>'; return; }
+    h += `<div class="sign ${row.t === 'carry' ? 'crow' : ''}" style="${row.t === 'carry' ? 'height:calc(var(--cs) * .55)' : ''}">${row.sign}</div>`;
+    row.cells.forEach((c, ci) => { const i = B.W - 1 - ci, wrapCls = row.t === 'carry' ? 'crow' : '';
+      const extra = (row.cls === 'roof' && c.k ? ' roof' : '') + (row.cls === 'roof' && ci === B.firstDiv ? ' wall' : '');
+      h += `<div class="${wrapCls}" style="display:contents"><div class="cell ${c.k}${H.has(r + ',' + i) ? ' hl' : ''}${Tg.has(r + ',' + i) ? ' target' : ''}${extra}">${c.v}</div></div>`; });
+  });
+  el.innerHTML = h;
+}
+
+/* ---------- Pasos de cada operación ---------- */
+// Un paso: pregunta chiquita (q / ans) y qué se escribe en el cuaderno cuando contesta bien; o un paso automático que solo explica.
+function stepsAdd(nums) {
+  const sum = nums.reduce((a, b) => a + b, 0), W = String(sum).length, k = nums.length;
+  newBoard(W, [{ t: 'carry' }, ...nums.map((n, j) => ({ sign: j === k - 1 ? '+' : '' })), { t: 'line' }, {}]);
+  nums.forEach((n, j) => putNum(1 + j, n));
+  const RES = k + 2, steps = []; let carry = 0;
+  const maxLen = Math.max(...nums.map(n => String(n).length));
+  for (let i = 0; i < maxLen; i++) {
+    const ds = nums.map(n => Math.floor(n / 10 ** i) % 10 * (String(n).length > i ? 1 : NaN)).filter(d => !isNaN(d));
+    const parts = carry ? [carry, ...ds] : ds, s = parts.reduce((a, b) => a + b, 0), last = i === maxLen - 1;
+    const hl = nums.map((n, j) => String(n).length > i ? [1 + j, i] : null).filter(Boolean); if (carry) hl.push([0, i]);
+    const after = last || s < 10 ? `¡Eso! Escribe ${s}` : `Escribe el <b>${s % 10}</b> y llevas <b>${Math.floor(s / 10)}</b> arriba`;
+    steps.push({ say: `Suma la columna de las <b>${PLACE[i]}</b>${carry ? ' (¡con lo que llevabas!)' : ''}`, q: parts.join(' + '), ans: s, hl, target: [[RES, i]], help: { t: 'add', parts },
+      put: last ? String(s).split('').reverse().map((d, j) => [RES, i + j, d]) : [[RES, i, s % 10]].concat(s >= 10 ? [[0, i + 1, Math.floor(s / 10), 'carry']] : []), after });
+    carry = last ? 0 : Math.floor(s / 10);
+  }
+  return { steps, check: () => sum, resRow: RES, title: nums.join(' + ') };
+}
+function stepsMul(a, b) {
+  const as = String(a), bs = String(b), n = bs.length, prod = a * b, W = String(prod).length + (n > 1 ? 0 : 0);
+  const partial = bs.split('').reverse().map((d, j) => a * +d * 10 ** j);
+  const rows = [{ t: 'carry' }, {}, { sign: '×' }, { t: 'line' }];
+  if (n > 1) { rows.push({ t: 'carry' }); bs.split('').forEach((_, j) => rows.push({ sign: j === n - 1 ? '+' : '' })); rows.push({ t: 'line' }); }
+  rows.push({});
+  newBoard(W, rows); putNum(1, a); putNum(2, b);
+  const P0 = n > 1 ? 5 : 4, RES = rows.length - 1, steps = [];
+  for (let j = 0; j < n; j++) {
+    const bj = +bs[n - 1 - j], R = n > 1 ? P0 + j : RES;
+    if (j > 0) {
+      steps.push({ auto: true, say: `Ahora multiplicamos por el <b>${bj}</b> (está en las ${PLACE[j]}). Borramos las llevadas y <b>recorremos ${j === 1 ? 'un lugar' : j + ' lugares'}</b>: ponemos ${j === 1 ? 'un 0' : j + ' ceros'} a la derecha.`,
+        clearCarry: 0, put: Array.from({ length: j }, (_, z) => [R, z, 0, 'ghost']), hl: [[2, j]] });
+    }
+    let carry = 0;
+    for (let i = 0; i < as.length; i++) {
+      const ai = +as[as.length - 1 - i], p = ai * bj, last = i === as.length - 1;
+      const hl = [[1, i], [2, j]];
+      if (carry) {
+        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, help: { t: 'mul', a: ai, b: bj }, after: `${ai} × ${bj} = ${p}. ¡Y no se te olvide lo que llevabas!` });
+        const v = p + carry;
+        steps.push({ say: `A <b>${p}</b> súmale lo que llevabas: <b>${carry}</b>`, q: `${p} + ${carry}`, ans: v, hl: [[0, i], [1, i]], target: [[R, i + j]], help: { t: 'add', parts: [p, carry] },
+          put: last ? String(v).split('').reverse().map((d, z) => [R, i + j + z, d]) : [[R, i + j, v % 10]].concat(v >= 10 ? [[0, i + 1, Math.floor(v / 10), 'carry']] : []),
+          after: last || v < 10 ? `Escribe ${v}` : `Escribe el <b>${v % 10}</b> y llevas <b>${Math.floor(v / 10)}</b>`, clearOne: [0, i] });
+        carry = last ? 0 : Math.floor(v / 10);
+      } else {
+        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, target: [[R, i + j]], help: { t: 'mul', a: ai, b: bj },
+          put: last ? String(p).split('').reverse().map((d, z) => [R, i + j + z, d]) : [[R, i + j, p % 10]].concat(p >= 10 ? [[0, i + 1, Math.floor(p / 10), 'carry']] : []),
+          after: last || p < 10 ? `Escribe ${p}` : `Escribe el <b>${p % 10}</b> y llevas <b>${Math.floor(p / 10)}</b>` });
+        carry = last ? 0 : Math.floor(p / 10);
+      }
+    }
+  }
+  if (n > 1) {
+    steps.push({ auto: true, say: '¡Ya casi! Ahora <b>sumamos</b> los renglones de abajo, columna por columna.', clearCarry: 0 });
+    let carry = 0;
+    const maxLen = String(prod).length;
+    for (let i = 0; i < maxLen; i++) {
+      const ds = partial.map((pn, j) => i >= j && String(pn).length > i ? Math.floor(pn / 10 ** i) % 10 : null).filter(d => d !== null);   // los ceros de relleno no se suman
+      const parts = carry ? [carry, ...ds] : ds, s = parts.reduce((x, y) => x + y, 0);
+      const lastCol = partial.every(pn => String(pn).length <= i + 1);
+      const hl = partial.map((pn, j) => i >= j && String(pn).length > i ? [P0 + j, i] : null).filter(Boolean); if (carry) hl.push([4, i]);
+      if (parts.length === 1 && !carry) { steps.push({ auto: true, say: `En las ${PLACE[i]} solo hay un <b>${ds[0]}</b>: lo bajamos.`, put: [[RES, i, ds[0]]], hl }); continue; }
+      steps.push({ say: `Suma la columna de las <b>${PLACE[i]}</b>`, q: parts.join(' + '), ans: s, hl, target: [[RES, i]], help: { t: 'add', parts },
+        put: lastCol ? String(s).split('').reverse().map((d, z) => [RES, i + z, d]) : [[RES, i, s % 10]].concat(s >= 10 ? [[4, i + 1, Math.floor(s / 10), 'carry']] : []),
+        after: lastCol || s < 10 ? `Escribe ${s}` : `Escribe el <b>${s % 10}</b> y llevas <b>${Math.floor(s / 10)}</b>` });
+      carry = lastCol ? 0 : Math.floor(s / 10);
+      if (lastCol) break;
+    }
+  }
+  return { steps, check: () => prod, resRow: RES, title: `${a} × ${b}` };
+}
+function stepsDiv(D, d) {
+  const Ds = String(D), W = Ds.length;
+  // Renglones: cociente, dividendo (dentro de la casita) y los residuos con la cifra que se baja
+  newBoard(W, [{}, { sign: d, cls: 'roof' }, ...Array.from({ length: W }, () => ({}))]);
+  B.firstDiv = 0; putNum(1, D);
+  const steps = [], at = k => W - 1 - k;   // k = posición desde la izquierda
+  let e = 0, cur = +Ds[0], row = 2;
+  while (cur < d && e < W - 1) { e++; cur = cur * 10 + +Ds[e]; }
+  if (e > 0) steps.push({ auto: true, say: `El <b>${d}</b> no cabe en ${Ds[0]}, así que tomamos <b>${cur}</b>.`, hl: Array.from({ length: e + 1 }, (_, k) => [1, at(k)]) });
+  let srcRow = 1;
+  for (;;) {
+    const q = Math.floor(cur / d), r = cur - q * d;
+    const curHl = String(cur).split('').map((_, z) => [srcRow, at(e - z)]);
+    steps.push({ say: `¿Cuántas veces cabe el <b>${d}</b> en <b>${cur}</b>?`, q: `${cur} ÷ ${d}`, ans: q, hl: curHl, target: [[0, at(e)]], help: { t: 'div', d, n: cur },
+      put: [[0, at(e), q]], after: `¡Sí! ${d} × ${q} = ${q * d}` });
+    steps.push({ say: `${d} × ${q} = <b>${q * d}</b>. ¿Cuánto <b>sobra</b>? Resta ${cur} − ${q * d}`, q: `${cur} − ${q * d}`, ans: r, hl: curHl, target: [[row, at(e)]], help: { t: 'sub', a: cur, b: q * d },
+      put: String(r).split('').reverse().map((dd, z) => [row, at(e) + z, dd]), after: r ? `Sobran ${r}` : 'No sobra nada' });
+    if (e >= W - 1) { steps.push({ auto: true, say: r ? `¡Listo! A cada uno le tocan <b>${Math.floor(D / d)}</b> y sobran <b>${r}</b> (el residuo).` : `¡Listo! A cada uno le tocan <b>${Math.floor(D / d)}</b> y no sobra nada.`, hl: [[row, at(e)]] }); break; }
+    e++;
+    steps.push({ auto: true, say: `<b>Bajamos</b> el ${Ds[e]} y queda <b>${r * 10 + +Ds[e]}</b>.`, put: [[row, at(e), Ds[e], 'mine']], hl: [[1, at(e)]] });
+    cur = r * 10 + +Ds[e]; srcRow = row; row++;
+  }
+  B.rows = B.rows.slice(0, row + 1);
+  return { steps, check: () => Math.floor(D / d), resRow: 0, title: `${D} ÷ ${d}`, div: true, rem: D % d };
+}
+
+/* ---------- Ayudas visuales ---------- */
+const cup = cls => `<img alt="" class="${cls || ''}" src="${UP}des-cupcake.webp">`, cookie = `<img alt="" src="${UP}des-cookie.webp">`;
+function trayHTML(a, b, ts, split) {
+  // a renglones de b cupcakes; en las difíciles se pintan de otro color los primeros 5 renglones (truco: 5 × b + lo demás)
+  let h = `<div class="tray" style="--ts:${ts}px;grid-template-columns:repeat(${b},${ts}px) auto">`;
+  for (let r = 0; r < a; r++) { for (let c = 0; c < b; c++) h += cup(split && r >= 5 ? 'b' : ''); h += `<div class="rowsum" data-r="${r}">${(r + 1) * b}</div>`; }
+  return h + '</div>';
+}
+function countRows(card, a, b) { const els = card.querySelectorAll('.rowsum'); els.forEach((e, r) => setTimeout(() => { e.classList.add('on'); beep(523 * Math.pow(2, Math.min(r, 12) / 12), .08, 'triangle', .05); }, r * 380)); }
+function showHelp(h, reveal) {
+  const card = $('#helpCard'); let html = '';
+  const fit = (cols, rows) => Math.max(16, Math.min(44, (Math.min(innerWidth * .86, 820) - 60) / (cols + 1.5), (innerHeight * .55) / rows));
+  if (h.t === 'mul') {
+    const { a, b } = h, split = a > 5 && b > 5, ts = fit(b, a);
+    html = `<h3><b>${a}</b> × <b>${b}</b> son <b>${a}</b> ${a === 1 ? 'renglón' : 'renglones'} de <b>${b}</b> cupcake${b === 1 ? '' : 's'}</h3>${trayHTML(a, b, ts, split)}
+      <p>${split ? `Truco: 5 renglones son <b>${5 * b}</b> (rosas) y ${a - 5} renglones más son <b>${(a - 5) * b}</b> (verdes). Juntos: ${5 * b} + ${(a - 5) * b}.` : `Cuenta de <b>${b}</b> en <b>${b}</b>, un renglón a la vez.`}</p>
+      ${reveal ? `<p>Es <b style="color:#ff6fae">${a * b}</b></p>` : ''}<div style="display:flex;gap:10px"><button class="px pbtn" id="cnt">Contar de ${b} en ${b}</button><button class="px close" id="hclose">¡Entendí!</button></div>`;
+  } else if (h.t === 'add') {
+    const tot = h.parts.reduce((x, y) => x + y, 0);
+    if (tot <= 40) {
+      const cls = ['a', 'b', 'c']; let dots = ''; h.parts.forEach((p, j) => { for (let z = 0; z < p; z++) dots += `<i class="${cls[j % 3]}"></i>`; });
+      const ts = fit(10, Math.ceil(tot / 10) + 1);
+      html = `<h3>${h.parts.map((p, j) => `<b style="color:${['#ff6fae', '#6ec6ff', '#e0a400'][j % 3]}">${p}</b>`).join(' + ')}</h3><div class="tf" style="--ts:${ts}px">${dots}</div>
+        <p>Cada renglón completo son <b>10</b>. ${tot >= 10 ? `Hay <b>${Math.floor(tot / 10)}</b> renglón${tot >= 20 ? 'es' : ''} de 10 y sobran <b>${tot % 10}</b>.` : ''}</p>${reveal ? `<p>Es <b style="color:#ff6fae">${tot}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
+    } else {
+      html = `<h3>${h.parts.join(' + ')}</h3><p>Primero suma las decenas y luego las unidades.<br>${h.parts.map(p => `${p} = ${Math.floor(p / 10) * 10} + ${p % 10}`).join('<br>')}</p>${reveal ? `<p>Es <b style="color:#ff6fae">${tot}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
+    }
+  } else if (h.t === 'div') {
+    const { d, n } = h; let m = '';
+    for (let k = 0; k <= 9; k++) { const v = d * k; if (k > 0 && d * (k - 1) > n) break; m += `<span class="${v <= n ? (d * (k + 1) > n ? 'yes' : '') : 'no'}">${d} × ${k} = ${v}</span>`; }
+    html = `<h3>¿Cuántas veces cabe el <b>${d}</b> en <b>${n}</b>?</h3><p>Busca en la tabla del ${d} el número más grande que <b>no se pase</b> de ${n}:</p><div class="mults">${m}</div>${reveal ? `<p>Cabe <b style="color:#ff6fae">${Math.floor(n / d)}</b> veces</p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
+  } else if (h.t === 'sub') {
+    const { a, b } = h;
+    if (a <= 40) { let dots = ''; for (let z = 0; z < a; z++) dots += `<i class="${z < b ? 'c' : 'a'}" style="${z < b ? 'opacity:.35' : ''}"></i>`; const ts = fit(10, Math.ceil(a / 10) + 1);
+      html = `<h3><b>${a}</b> − <b>${b}</b></h3><div class="tf" style="--ts:${ts}px">${dots}</div><p>Tachamos ${b} y contamos los que quedan.</p>${reveal ? `<p>Quedan <b style="color:#ff6fae">${a - b}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`; }
+    else html = `<h3><b>${a}</b> − <b>${b}</b></h3><p>Cuenta hacia arriba desde ${b} hasta llegar a ${a}.</p>${reveal ? `<p>Es <b style="color:#ff6fae">${a - b}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
+  }
+  card.innerHTML = html; $('#help').hidden = false;
+  const c = card.querySelector('#cnt'); if (c) c.addEventListener('click', () => countRows(card, h.a, h.b));
+  card.querySelector('#hclose').addEventListener('click', () => { $('#help').hidden = true; sfx.pop(); });
+}
+
+/* ---------- Teclado ---------- */
+let typed = '', onEnter = null;
+$('#keys').innerHTML = [7, 8, 9, 4, 5, 6, 1, 2, 3].map(n => `<button class="px" data-k="${n}">${n}</button>`).join('') + '<button class="px del" data-k="del">⌫</button><button class="px" data-k="0">0</button><button class="px ok" data-k="ok">✓</button>';
+$('#keys').querySelectorAll('button').forEach(b => b.addEventListener('click', () => press(b.dataset.k)));
+addEventListener('keydown', e => { if ($('#play').hidden) return; if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('del'); else if (e.key === 'Enter') press('ok'); });
+function press(k) {
+  if (!onEnter) return;
+  if (k === 'del') { typed = typed.slice(0, -1); sfx.key(); }
+  else if (k === 'ok') { if (typed !== '') onEnter(+typed); return; }
+  else if (typed.length < 6) { typed += k; sfx.key(); }
+  $('#ans').textContent = typed || '?';
+}
+function sizeKeys() { const port = innerHeight > innerWidth; const kb = port ? Math.min(78, (innerWidth - 220) / 3.4, innerHeight * .085) : Math.min(84, (innerHeight - 300) / 4.3, innerWidth * .085); document.documentElement.style.setProperty('--kb', Math.max(48, kb) + 'px'); }
+addEventListener('resize', () => { sizeKeys(); if (B && !$('#play').hidden) redraw(); });
+sizeKeys();
+
+/* ---------- Jugar una lección ---------- */
+let L = null, P = null, si = 0, tries = 0, usedHelp = false, lesson = null;
+function startLesson(l) {
+  lesson = { l, n: 0, errors: 0, lastFact: '' };
+  $('#home').hidden = true; $('#play').hidden = false; $('#backBtn').hidden = false; $('#prog').hidden = false; $('#win').hidden = true;
+  $('#title').textContent = l.nm.toUpperCase();
+  nextProblem();
+}
+function paintProg() { $('#prog').innerHTML = Array.from({ length: lesson.l.need }, (_, i) => `<i class="${i < lesson.n ? 'on' : ''}"></i>`).join(''); }
+function coach(html, cat) { $('#say').innerHTML = `<span>${html}</span>`; if (cat) $('#coachImg').src = UP + cat + '-icon.webp'; }
+function nextProblem() {
+  paintProg(); $('#nextBtn').hidden = true; $('#vis').innerHTML = '';
+  const l = lesson.l;
+  if (l.kind === 'fact' || l.kind === 'dfact') return factProblem();
+  const v = l.gen();
+  P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]);
+  si = 0; $('#boardWrap').hidden = false; runStep();
+}
+function redraw() { const s = P && P.steps[si]; renderBoard(s ? s.hl || [] : [], s ? s.target || [] : []); }
+function applyPut(list) { (list || []).forEach(([r, i, v, k]) => put(r, i, v, k || 'mine')); }
+function runStep() {
+  const s = P.steps[si];
+  if (!s) return problemDone();
+  tries = 0; usedHelp = false; typed = '';
+  if (s.clearCarry != null) B.rows[s.clearCarry].cells.forEach(c => { c.v = ''; c.k = ''; });
+  if (s.auto) {
+    coach(s.say); $('#quest').innerHTML = `<button class="px pbtn" id="goOn">¡Va! ➜</button>`; onEnter = null;
+    renderBoard(s.hl || [], []); $('#helpBtn').hidden = true;
+    const go = () => { applyPut(s.put); sfx.write(); si++; runStep(); };
+    $('#goOn').addEventListener('click', go); onEnter = () => go();
+    return;
+  }
+  $('#helpBtn').hidden = !s.help;
+  coach(s.say);
+  $('#quest').innerHTML = `<span class="q">${s.q} =</span><span id="ans">?</span>`;
+  renderBoard(s.hl || [], s.target || []);
+  onEnter = v => answer(v);
+}
+$('#helpBtn').addEventListener('click', () => { const s = P && P.steps[si]; if (lesson && (lesson.l.kind === 'fact' || lesson.l.kind === 'dfact')) { usedHelp = true; showHelp(lesson.fact.help, tries >= 2); return; } if (s && s.help) { usedHelp = true; showHelp(s.help, tries >= 2); } });
+function answer(v) {
+  const s = P.steps[si];
+  if (v === s.ans) {
+    sfx.ok(); onEnter = null;
+    if (s.clearOne) { const c = cellAt(...s.clearOne); c.k = 'gone'; }
+    applyPut(s.put); renderBoard([], []);
+    if ((s.put || []).some(p => p[3] === 'carry')) setTimeout(sfx.carry, 180);
+    coach('✔ ' + (s.after || '¡Muy bien!'));
+    if (!tries) giveCoins(1);
+    setTimeout(() => { si++; runStep(); }, s.after && s.after.includes('llevas') ? 1500 : 1000);
+  } else {
+    sfx.no(); tries++; lesson.errors++; const a = $('#ans'); a.classList.remove('bad'); void a.offsetWidth; a.classList.add('bad'); typed = ''; a.textContent = '?';
+    // Al equivocarse no hay castigo: aparece el dibujo para que vea por qué
+    if (tries === 1) coach(`Casi… ¡inténtalo otra vez! Si quieres, toca <b>💡 Ayuda</b> para verlo con dibujos.`);
+    else if (s.help) { coach(`Mira el dibujo 👀`); showHelp(s.help, tries >= 2); }
+    else coach(`La respuesta es <b>${s.ans}</b>. Escríbela tú.`);
+  }
+}
+function problemDone() {
+  lesson.n++; paintProg(); onEnter = null; sfx.done(); burst(40);
+  const right = P.check();
+  coach(`🎉 ¡Muy bien! <b>${P.title} = ${right}${P.div && P.rem ? ' y sobran ' + P.rem : ''}</b>`, pick(['cat-coco', 'cat-aceituna']));
+  $('#quest').innerHTML = ''; $('#helpBtn').hidden = true;
+  giveCoins(5);
+  if (lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1300);
+  $('#nextBtn').hidden = false;
+}
+$('#nextBtn').addEventListener('click', () => { sfx.pop(); nextProblem(); });
+
+/* ---------- Tablas: la multiplicación se ve como charola de cupcakes ---------- */
+function factProblem() {
+  const l = lesson.l; $('#boardWrap').hidden = false;
+  // Elige primero las que todavía no se sabe (las que falla regresan más seguido)
+  const pool = []; for (const a of l.set) for (let b = 2; b <= 10; b++) pool.push([a, b]);
+  let f; for (let k = 0; k < 20; k++) { const w = pool.map(([a, b]) => (4 - flvl(a, b)) ** 2); let t = Math.random() * w.reduce((x, y) => x + y, 0); f = pool[pool.length - 1]; for (let z = 0; z < pool.length; z++) { t -= w[z]; if (t <= 0) { f = pool[z]; break; } } if (fkey(...f) !== lesson.lastFact) break; }
+  let [a, b] = Math.random() < .5 ? f : [f[1], f[0]];
+  lesson.lastFact = fkey(a, b); tries = 0; usedHelp = false; typed = '';
+  const lvl = flvl(a, b), div = l.kind === 'dfact';
+  lesson.fact = { a, b, div, help: div ? { t: 'div', d: b, n: a * b } : { t: 'mul', a, b } };
+  B = null; const bw = $('#boardWrap').getBoundingClientRect(), ts = Math.max(18, Math.min(46, (bw.width - 60) / (b + 2), (bw.height - 70) / (a + .5)));
+  if (div) {
+    // Repartir: las galletas se reparten una por una en las cajitas
+    coach(lvl >= 2 ? `¿Cuánto es <b>${a * b} ÷ ${b}</b>?` : `Hay <b>${a * b}</b> galletas para <b>${b}</b> amigas. Toca <b>Repartir</b> y cuenta cuántas le tocan a cada una.`);
+    $('#board').style.gridTemplateColumns = ''; $('#board').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;--ts:${Math.max(16, Math.min(34, ts * .8))}px"><div class="pile" id="pile">${cookie.repeat(a * b)}</div><div class="boxes">${Array.from({ length: b }, (_, i) => `<div class="box" id="bx${i}"><b>0</b></div>`).join('')}</div><button class="px pbtn" id="deal">Repartir 🍪</button></div>`;
+    $('#deal').addEventListener('click', () => { $('#deal').disabled = true; const pile = [...$('#pile').children]; pile.forEach((im, z) => setTimeout(() => { im.style.opacity = 0; const bx = $('#bx' + (z % b)); bx.insertAdjacentHTML('beforeend', cookie); bx.querySelector('b').textContent = Math.floor(z / b) + 1; beep(600 + (z % b) * 60, .04, 'triangle', .04); if (z === pile.length - 1) setTimeout(() => { $('#pile').style.display = 'none'; coach(`A cada amiga le tocaron <b>${a}</b> galletas. Escribe cuánto es ${a * b} ÷ ${b}.`); }, 300); }, z * Math.max(40, 900 / pile.length * 2))); });
+    if (lvl >= 2) $('#board').innerHTML = `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a * b} ÷ ${b}</div>`;
+    $('#quest').innerHTML = `<span class="q">${a * b} ÷ ${b} =</span><span id="ans">?</span>`;
+  } else {
+    coach(lvl >= 2 ? `¿Cuánto es <b>${a} × ${b}</b>? ¡Tú puedes!` : `<b>${a} × ${b}</b>: son <b>${a}</b> renglones de <b>${b}</b>. Toca <b>Contar</b> si quieres.`);
+    $('#board').style.gridTemplateColumns = '';
+    $('#board').innerHTML = lvl >= 2 ? `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a} × ${b}</div>` : `<div style="display:flex;flex-direction:column;align-items:center;gap:8px">${trayHTML(a, b, ts, a > 5 && b > 5)}<button class="px pbtn" id="cnt2">Contar de ${b} en ${b}</button></div>`;
+    const c = $('#cnt2'); if (c) c.addEventListener('click', () => countRows($('#board'), a, b));
+    $('#quest').innerHTML = `<span class="q">${a} × ${b} =</span><span id="ans">?</span>`;
+  }
+  $('#helpBtn').hidden = false;
+  onEnter = v => factAnswer(v);
+}
+function factAnswer(v) {
+  const { a, b, div } = lesson.fact, right = div ? a : a * b, k = fkey(a, b);
+  if (v === right) {
+    sfx.ok(); onEnter = null;
+    // Solo sube de nivel si la contestó al primer intento y sin ayuda
+    if (!tries && !usedHelp) save.facts[k] = Math.min(3, (save.facts[k] || 0) + 1); persist();
+    if (!tries) giveCoins(1);
+    lesson.n++; paintProg(); burst(12);
+    coach(`✔ ¡Sí! <b>${div ? `${a * b} ÷ ${b} = ${a}` : `${a} × ${b} = ${a * b}`}</b>${div ? ` porque ${b} × ${a} = ${a * b}` : ''}`);
+    if (lesson.n >= lesson.l.need) return setTimeout(lessonDone, 1100);
+    setTimeout(factProblem, 1100);
+  } else {
+    sfx.no(); tries++; lesson.errors++; save.facts[k] = Math.max(0, (save.facts[k] || 0) - 1); persist();
+    const an = $('#ans'); an.classList.remove('bad'); void an.offsetWidth; an.classList.add('bad'); typed = ''; an.textContent = '?';
+    if (tries === 1) coach('Casi… ¡otra vez! Toca <b>💡 Ayuda</b> para verlo con dibujos.');
+    else { showHelp(lesson.fact.help, true); coach('Mira el dibujo y escríbela 👀'); }
+  }
+}
+
+/* ---------- Fin de la lección ---------- */
+function lessonDone() {
+  const l = lesson.l, e = lesson.errors, steps = l.need, st = e <= Math.ceil(steps * .15) ? 3 : e <= steps ? 2 : 1;
+  const first = !save.done[l.id]; save.done[l.id] = Math.max(save.done[l.id] || 0, st); persist();
+  const bonus = 20 + st * 10 + (first ? 30 : 0); giveCoins(bonus);
+  $('#winStars').innerHTML = '★'.repeat(st) + '<s>★</s>'.repeat(3 - st);
+  $('#winT').textContent = st === 3 ? '¡PERFECTO!' : '¡LO LOGRASTE!';
+  $('#winP').innerHTML = `Ganaste ${bonus} monedas para tu pastelería` + (first ? '<br>¡Desbloqueaste la siguiente lección!' : '');
+  const i = LESSONS.indexOf(l); $('#winNext').hidden = i >= LESSONS.length - 1;
+  $('#win').hidden = false; sfx.done(); burst(120);
+}
+$('#winHome').addEventListener('click', () => { sfx.pop(); showHome(); });
+$('#winAgain').addEventListener('click', () => { sfx.pop(); startLesson(lesson.l); });
+$('#winNext').addEventListener('click', () => { sfx.pop(); startLesson(LESSONS[LESSONS.indexOf(lesson.l) + 1]); });
+
+/* ---------- Confeti ---------- */
+const cf = $('#confetti'), cfx = cf.getContext('2d'); let bits = [];
+function burst(n) { const W = innerWidth; for (let i = 0; i < n; i++) bits.push({ x: W / 2 + rand(-W * .3, W * .3), y: innerHeight * .35, vx: rand(-260, 260), vy: rand(-620, -200), r: rand(0, 6), c: pick(['#ff6fae', '#ffc83a', '#5fd0a8', '#6ec6ff', '#b48cff']), t: 0 }); }
+let lt = performance.now();
+(function loop(t) {
+  const dt = Math.min(.05, (t - lt) / 1000); lt = t;
+  if (bits.length) {
+    const d = Math.min(2, devicePixelRatio || 1); if (cf.width !== innerWidth * d) { cf.width = innerWidth * d; cf.height = innerHeight * d; } cfx.setTransform(d, 0, 0, d, 0, 0); cfx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const b of bits) { b.t += dt; b.vy += 900 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.r += dt * 8; cfx.save(); cfx.translate(b.x, b.y); cfx.rotate(b.r); cfx.fillStyle = b.c; cfx.fillRect(-6, -3, 12, 6); cfx.restore(); }
+    bits = bits.filter(b => b.y < innerHeight + 30 && b.t < 4); if (!bits.length) cfx.clearRect(0, 0, innerWidth, innerHeight);
+  }
+  requestAnimationFrame(loop);
+})(lt);
+
+showHome();
+window.LEON_READY = true;
+
+/* ---------- Pruebas: #diag resuelve cada tipo de operación y manda fotos ---------- */
+window.__mate = { LESSONS, stepsAdd, stepsMul, stepsDiv, startLesson, get P() { return P; }, get si() { return si; }, answer, press, showHelp, get board() { return B; } };
+if (location.hash === '#diag') (async () => {
+  const errs = []; addEventListener('error', e => errs.push(e.message));
+  const post = (tag, info) => fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag, img: null, info: Object.assign({ ua: navigator.userAgent, errs }, info) }) });
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  // 1) Verifica que el método da el resultado correcto en muchas operaciones al azar
+  const resultOf = () => { const row = B.rows[P.resRow]; return +row.cells.map(c => c.v).join('').replace(/\D/g, ''); };
+  const solveAll = () => { for (const s of P.steps) { if (s.clearCarry != null) B.rows[s.clearCarry].cells.forEach(c => { c.v = ''; c.k = ''; }); applyPut(s.put); } };
+  const bad = []; let n = 0;
+  for (const l of LESSONS.filter(l => l.gen)) for (let k = 0; k < 150; k++) {
+    let v = l.gen(); P = l.kind === 'add' ? stepsAdd(v) : l.kind === 'mul' ? stepsMul(v[0], v[1]) : stepsDiv(v[0], v[1]); solveAll(); n++;
+    const want = l.kind === 'add' ? v.reduce((x, y) => x + y, 0) : l.kind === 'mul' ? v[0] * v[1] : Math.floor(v[0] / v[1]);
+    if (resultOf() !== want || P.steps.some(s => !s.auto && (s.ans == null || isNaN(s.ans)))) bad.push(l.id + ':' + v.join(',') + '→' + resultOf());
+  }
+  await post('mate-check', { n, bad: bad.slice(0, 10), nBad: bad.length });
+})();
+})();
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('../sw.js',{scope:'../'});</script>
+</body>
+</html>

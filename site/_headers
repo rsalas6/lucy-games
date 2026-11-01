@@ -8,3 +8,5 @@
   Cache-Control: no-cache
 /pasteleria/
   Cache-Control: no-cache
+/mate/
+  Cache-Control: no-cache

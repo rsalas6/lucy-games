@@ -13,6 +13,7 @@ INTRO = open(os.path.join(ROOT, 'shared/intro.html'), encoding='utf-8').read()  
 PAGES = [
     ('hub.html', 'index.html', ''),
     ('games/pasteleria.html', 'pasteleria/index.html', '../'),
+    ('games/mate.html', 'mate/index.html', '../'),
 ]
 APP_NAME = 'Juegos de Lucy'
 # iOS home-screen apps (black-translucent status bar) report a viewport shorter than the screen by the status bar height,

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Juegos de Lucy">
 <meta name="theme-color" content="#ff8fc4">
-<script>window.LEON_VERSION='20261024064647';</script>
+<script>window.LEON_VERSION='20261101072935';</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -42,7 +42,7 @@ h1{margin:0;font-weight:400;display:flex;flex-direction:column;align-items:cente
 .t2{font-size:clamp(52px,min(12vw,13vh),130px);color:var(--sun);letter-spacing:.02em;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill;text-shadow:0 .07em 0 var(--ink),0 .14em .1em rgba(0,0,0,.25);animation:wob 3s ease-in-out infinite}
 @keyframes wob{50%{transform:rotate(-2deg) scale(1.03)}}
 
-.apps{display:grid;grid-template-columns:repeat(auto-fit,auto);justify-content:center;column-gap:clamp(22px,5vw,60px);row-gap:clamp(14px,3vh,32px)}
+.apps{display:grid;grid-template-columns:repeat(2,auto);justify-content:center;column-gap:clamp(22px,5vw,60px);row-gap:clamp(14px,3vh,32px)}
 .app{display:flex;flex-direction:column;align-items:center;gap:12px;text-decoration:none;color:#fff}
 .icon{width:clamp(84px,min(17vw,21vh),190px);aspect-ratio:1;max-width:100%;border-radius:24%;overflow:hidden;background:#fff;box-shadow:0 0 0 6px #fff,0 0 0 10px var(--ink),0 14px 0 6px rgba(42,31,61,.35),0 24px 30px rgba(0,0,0,.2);animation:float 3s ease-in-out infinite;transition:transform .12s}
 .app:nth-child(2) .icon{animation-delay:-1s}
@@ -141,6 +141,7 @@ h1{margin:0;font-weight:400;display:flex;flex-direction:column;align-items:cente
   <h1 aria-label="Juegos de Lucy"><span class="t1">JUEGOS DE</span><span class="t2">LUCY</span></h1>
   <nav class="apps">
     <a class="app" href="pasteleria/" data-keys="lucyBakery" aria-label="Pastelería de Lucy"><span class="icon"><img src="icons/pasteleria.webp" alt=""></span><span class="name">Pastelería</span></a>
+    <a class="app" href="mate/" data-keys="lucyMate" aria-label="Mate con Lucy"><span class="icon"><img src="icons/mate.webp" alt=""></span><span class="name">Mate</span></a>
   </nav>
   <button class="parent" id="helpBtn">Instalar en el iPad</button>
   <button class="parent upd" id="updBtn">Actualizar</button>
