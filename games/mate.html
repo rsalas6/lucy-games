@@ -614,6 +614,12 @@ window.LEON_READY = true;
 
 /* ---------- Pruebas: #diag resuelve cada tipo de operación y manda fotos ---------- */
 window.__mate = { LESSONS, stepsAdd, stepsMul, stepsDiv, startLesson, get P() { return P; }, get si() { return si; }, answer, press, showHelp, get board() { return B; } };
+// Pruebas: #demo-<lección>-<pasos> abre una lección y contesta solo unos pasos (para tomar fotos en el simulador)
+{ const m = /^#demo-(\w+)-(\d+)(-x)?$/.exec(location.hash); if (m) setTimeout(async () => {
+  document.querySelectorAll('#leonIntro').forEach(e => e.remove()); startLesson(LES[m[1]]);
+  for (let k = 0; k < +m[2]; k++) { const s = P && P.steps[si]; if (lesson.l.kind === 'fact' || lesson.l.kind === 'dfact' || !s) break; if (s.auto) $('#goOn').click(); else { String(s.ans).split('').forEach(press); press('ok'); await new Promise(r => setTimeout(r, 1700)); } }
+  if (m[3]) { const s = P && P.steps[si]; if (s && s.help) showHelp(s.help, false); else if (lesson.fact) showHelp(lesson.fact.help, false); }
+}, 300); }
 if (location.hash === '#diag') (async () => {
   const errs = []; addEventListener('error', e => errs.push(e.message));
   const post = (tag, info) => fetch('http://127.0.0.1:8799/', { method: 'POST', body: JSON.stringify({ tag, img: null, info: Object.assign({ ua: navigator.userAgent, errs }, info) }) });
