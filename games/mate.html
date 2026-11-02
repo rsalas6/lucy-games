@@ -55,8 +55,8 @@ button{font-family:var(--font);color:var(--ink);cursor:pointer;touch-action:mani
 #prog{display:flex;gap:4px;align-items:center}
 #prog i{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--ink)}
 #prog i.on{background:var(--mint)}
-#boardWrap{position:relative;min-height:0;display:grid;place-items:center;background:rgba(255,255,255,.75);border-radius:22px;box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.15);overflow:hidden}
-#board{display:grid;align-items:center;justify-items:center;font-size:var(--fs);line-height:1}
+#boardWrap{position:relative;min-height:0;display:flex;overflow:auto;-webkit-overflow-scrolling:touch;background:rgba(255,255,255,.75);border-radius:22px;box-shadow:0 0 0 3px var(--ink),0 6px 0 3px rgba(74,42,74,.15);overflow:hidden}
+#board{margin:auto;padding:10px 0;display:grid;align-items:center;justify-items:center;font-size:var(--fs);line-height:1}
 .cell{width:var(--cs);height:var(--cs);display:grid;place-items:center;position:relative;border-radius:10px;transition:background .2s}
 .cell.fixed{color:var(--ink)}
 .cell.mine{color:var(--pink);animation:drop .35s cubic-bezier(.3,1.6,.5,1)}
@@ -159,6 +159,57 @@ button{font-family:var(--font);color:var(--ink);cursor:pointer;touch-action:mani
 #win .go{background:var(--mint);color:#fff;-webkit-text-stroke:.06em var(--ink);paint-order:stroke fill}
 #confetti{position:fixed;inset:0;z-index:61;pointer-events:none}
 @keyframes pop{from{transform:scale(.3)}70%{transform:scale(1.08)}to{transform:none}}
+
+/* ---------- Técnicas interactivas ---------- */
+.strat{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.stabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.stabs button{padding:9px 18px;font-size:clamp(16px,2.3vw,21px);border-radius:99px}
+.stabs button.on{background:var(--ink);color:#fff}
+.sbody{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.stip{font-size:clamp(17px,2.6vw,26px);text-align:center;line-height:1.3;margin:0}
+.stip b{color:var(--pink);font-weight:400}
+.dots{display:flex;flex-direction:column;gap:var(--dg);padding:10px;background:#fff;border-radius:14px;box-shadow:inset 0 0 0 3px #eadcf5}
+.drow{display:flex;align-items:center;gap:var(--dg);cursor:pointer;border-radius:8px}
+.drow i{width:var(--ds);height:var(--ds);border-radius:50%;background:var(--pink);box-shadow:inset 0 -2px 0 rgba(0,0,0,.15)}
+.drow.b i{background:var(--sky)}
+.drow i.g5{margin-right:calc(var(--ds) * .45)}
+.drow.g5{margin-bottom:calc(var(--ds) * .45)}
+.drow.cut{border-bottom:4px dashed var(--ink);padding-bottom:4px}
+.drow em{font-style:normal;font-size:calc(var(--ds) * .75);color:#9a8aa8;margin-left:6px;min-width:2em}
+.parts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:clamp(22px,3.4vw,34px)}
+.pt{padding:6px 12px;border-radius:14px;cursor:pointer}
+.pt.a{background:#ffe0ee;box-shadow:0 0 0 3px var(--pink)} .pt.b{background:#dff2ff;box-shadow:0 0 0 3px var(--sky)}
+.pt.tot{background:#fff6c8;box-shadow:0 0 0 3px var(--gold)}
+.pt .q{color:#c9b8d8}
+.arrows{display:flex;gap:10px}
+.arrows button{padding:10px 20px;font-size:22px}
+.nline{position:relative;width:min(100%,760px);height:120px;margin:4px 0}
+.nline .bar{position:absolute;left:0;right:0;top:78px;height:5px;background:var(--ink);border-radius:3px}
+.nline .tk{position:absolute;top:70px;width:3px;height:20px;background:var(--ink);transform:translateX(-50%)}
+.nline .tl{position:absolute;top:94px;transform:translateX(-50%);font-size:clamp(14px,2.2vw,22px)}
+.nline .tl.on{color:var(--pink);font-size:clamp(17px,2.8vw,28px)}
+.nline .arc{position:absolute;top:30px;height:48px;border:4px solid var(--pink);border-bottom:0;border-radius:50% 50% 0 0/100% 100% 0 0;animation:arcIn .35s ease-out}
+.nline .arc span{position:absolute;left:50%;top:-26px;transform:translateX(-50%);font-size:clamp(14px,2vw,20px);color:var(--pink);white-space:nowrap}
+.nline .hop{position:absolute;top:44px;width:30px;height:30px;transform:translateX(-50%);transition:left .35s;font-size:26px;line-height:30px;text-align:center}
+@keyframes arcIn{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.tsteps{display:flex;flex-direction:column;gap:10px;align-items:center;font-size:clamp(22px,3.6vw,40px)}
+.tsteps div{background:var(--lila2);border-radius:16px;padding:8px 20px;animation:pop .3s}
+.tsteps div:first-child{background:#fff6c8}
+.area{display:grid;gap:4px}
+.area div{display:grid;place-items:center;border-radius:10px;padding:8px 10px;font-size:clamp(16px,2.3vw,22px);min-width:64px;min-height:48px}
+.area .h{background:var(--ink);color:#fff}
+.area .c{background:#fff;box-shadow:inset 0 0 0 3px var(--lila);cursor:pointer;color:#c9b8d8}
+.area .c.on{background:var(--mint2);color:var(--ink)}
+.ladder{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:min(100%,760px)}
+.ladder span{background:var(--lila2);border-radius:14px;padding:8px 16px;font-size:clamp(22px,3.4vw,36px);animation:pop .25s}
+.ladder span.last{background:var(--mint);color:#fff;-webkit-text-stroke:.05em var(--ink);paint-order:stroke fill}
+.ladder span.over{background:#ffd0d0;text-decoration:line-through}
+.groups{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.grp{min-width:70px;min-height:56px;border-radius:14px;box-shadow:inset 0 0 0 3px var(--pink);background:#fff1f7;display:flex;flex-wrap:wrap;gap:3px;padding:6px;align-content:flex-start;position:relative}
+.grp i{width:14px;height:14px;border-radius:50%;background:var(--pink)}
+.grp b{position:absolute;right:-10px;top:-12px;font-weight:400;color:#fff;background:var(--pink);border-radius:99px;min-width:28px;height:28px;display:grid;place-items:center;font-size:18px;box-shadow:0 0 0 3px var(--ink)}
+.pool{display:flex;flex-wrap:wrap;gap:3px;max-width:min(80vw,560px);justify-content:center}
+.pool i{width:14px;height:14px;border-radius:50%;background:var(--gold)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
 </style>
 
@@ -260,7 +311,7 @@ const LESSONS = [
   { unit: 'Multiplicaciones', id: 'm22', nm: '2 cifras × 2 cifras', ex: '36 × 24', need: 3, kind: 'mul', gen: () => [digits(2), noZero(2)] },
   { unit: 'Multiplicaciones', id: 'm32', nm: '3 cifras × 2 cifras', ex: '804 × 37', need: 3, kind: 'mul', gen: () => [digits(3), noZero(2)] },
   { unit: 'Multiplicaciones', id: 'm33', nm: '3 cifras × 3 cifras', ex: '412 × 235', need: 2, kind: 'mul', gen: () => [digits(3), noZero(3)] },
-  { unit: 'Divisiones', id: 'dF', nm: 'Repartir (división de la tabla)', ex: '24 ÷ 4', need: 12, kind: 'dfact', set: [2, 3, 4, 5, 6, 7, 8, 9] },
+  { unit: 'Divisiones', id: 'dF', nm: 'División de la tabla', ex: '24 ÷ 4', need: 12, kind: 'dfact', set: [2, 3, 4, 5, 6, 7, 8, 9] },
   { unit: 'Divisiones', id: 'd21', nm: 'Casita: 2 cifras ÷ 1 cifra', ex: '84 ÷ 4', need: 4, kind: 'div', gen: () => { const d = ri(2, 9); return [d * ri(11, Math.floor(99 / d)) + (Math.random() < .4 ? ri(1, d - 1) : 0), d].map((v, i) => i ? v : Math.min(99, v)); } },
   { unit: 'Divisiones', id: 'd31', nm: 'Casita: 3 cifras ÷ 1 cifra', ex: '756 ÷ 6', need: 4, kind: 'div', gen: () => [digits(3), ri(2, 9)] },
   { unit: 'Divisiones', id: 'd41', nm: 'Casita: 4 cifras ÷ 1 cifra', ex: '2 568 ÷ 7', need: 3, kind: 'div', gen: () => [digits(4), ri(2, 9)] },
@@ -404,14 +455,14 @@ function stepsMul(a, b) {
       const ai = +as[as.length - 1 - i], p = ai * bj, last = i === as.length - 1;
       const hl = [[1, i], [2, j]];
       if (carry) {
-        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, help: { t: 'mul', a: ai, b: bj }, after: `${ai} × ${bj} = ${p}. ¡Y no se te olvide lo que llevabas!` });
+        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, help: { t: 'mul', a: ai, b: bj, whole: [a, b] }, after: `${ai} × ${bj} = ${p}. ¡Y no se te olvide lo que llevabas!` });
         const v = p + carry;
         steps.push({ say: `A <b>${p}</b> súmale lo que llevabas: <b>${carry}</b>`, q: `${p} + ${carry}`, ans: v, hl: [[0, i], [1, i]], target: [[R, i + j]], help: { t: 'add', parts: [p, carry] },
           put: last ? String(v).split('').reverse().map((d, z) => [R, i + j + z, d]) : [[R, i + j, v % 10]].concat(v >= 10 ? [[0, i + 1, Math.floor(v / 10), 'carry']] : []),
           after: last || v < 10 ? `Escribe ${v}` : `Escribe el <b>${v % 10}</b> y llevas <b>${Math.floor(v / 10)}</b>`, clearOne: [0, i] });
         carry = last ? 0 : Math.floor(v / 10);
       } else {
-        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, target: [[R, i + j]], help: { t: 'mul', a: ai, b: bj },
+        steps.push({ say: `Multiplica <b>${ai} × ${bj}</b>`, q: `${ai} × ${bj}`, ans: p, hl, target: [[R, i + j]], help: { t: 'mul', a: ai, b: bj, whole: [a, b] },
           put: last ? String(p).split('').reverse().map((d, z) => [R, i + j + z, d]) : [[R, i + j, p % 10]].concat(p >= 10 ? [[0, i + 1, Math.floor(p / 10), 'carry']] : []),
           after: last || p < 10 ? `Escribe ${p}` : `Escribe el <b>${p % 10}</b> y llevas <b>${Math.floor(p / 10)}</b>` });
         carry = last ? 0 : Math.floor(p / 10);
@@ -472,14 +523,110 @@ function trayHTML(a, b, ts, split) {
   return h + '</div>';
 }
 function countRows(card, a, b) { const els = card.querySelectorAll('.rowsum'); els.forEach((e, r) => setTimeout(() => { e.classList.add('on'); beep(523 * Math.pow(2, Math.min(r, 12) / 12), .08, 'triangle', .05); }, r * 380)); }
+
+/* ---------- Técnicas interactivas (en vez de contar uno por uno) ---------- */
+// Para cada multiplicación se elige la tabla con el truco más fácil
+const TRICK_ORDER = [10, 2, 5, 9, 4, 8, 3, 6, 7, 1];
+function trick(a, b) {
+  const [n, t] = TRICK_ORDER.indexOf(a) < TRICK_ORDER.indexOf(b) ? [b, a] : [a, b];
+  const S = {
+    1: [`× 1 se queda igual`, `${n} × 1 = <b>${n}</b>`],
+    2: [`× 2 es el <b>doble</b>`, `${n} + ${n} = <b>${n * 2}</b>`],
+    3: [`× 3 es el <b>doble y uno más</b>`, `Doble de ${n}: ${n * 2}`, `${n * 2} + ${n} = <b>${n * 3}</b>`],
+    4: [`× 4 es el <b>doble del doble</b>`, `Doble de ${n}: ${n * 2}`, `Doble de ${n * 2}: <b>${n * 4}</b>`],
+    5: [`× 5 es la <b>mitad de × 10</b>`, `${n} × 10 = ${n * 10}`, `La mitad de ${n * 10} es <b>${n * 5}</b>`],
+    6: [`× 6 es <b>× 5 y uno más</b>`, `${n} × 5 = ${n * 5}`, `${n * 5} + ${n} = <b>${n * 6}</b>`],
+    7: [`× 7 es <b>× 5 más × 2</b>`, `${n} × 5 = ${n * 5}`, `${n} × 2 = ${n * 2}`, `${n * 5} + ${n * 2} = <b>${n * 7}</b>`],
+    8: [`× 8 es <b>doble, doble, doble</b>`, `Doble de ${n}: ${n * 2}`, `Doble de ${n * 2}: ${n * 4}`, `Doble de ${n * 4}: <b>${n * 8}</b>`],
+    9: [`× 9 es <b>× 10 menos uno</b>`, `${n} × 10 = ${n * 10}`, `${n * 10} − ${n} = <b>${n * 9}</b>`],
+    10: [`× 10: le pones un <b>0</b> al final`, `${n} → <b>${n}0</b>`],
+  };
+  return S[t] || [`${n} × ${t}`];
+}
+function dotsHTML(a, b, cut, ds) {
+  let h = `<div class="dots" style="--ds:${ds}px;--dg:${Math.max(3, ds * .22)}px">`;
+  for (let r = 0; r < a; r++) {
+    h += `<div class="drow${r >= cut ? ' b' : ''}${r === cut - 1 ? ' cut' : ''}${r % 5 === 4 && r < a - 1 ? ' g5' : ''}" data-r="${r + 1}">`;
+    for (let c = 0; c < b; c++) h += `<i class="${c % 5 === 4 && c < b - 1 ? 'g5' : ''}"></i>`;
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+// Monta las técnicas en un contenedor: pestañas Partir / Saltos / Truco / Cajitas (multiplicar) o Escalera / Repartir (dividir)
+function mountStrat(el, o) {
+  const st = { tab: null, cut: 0, jumps: 0, ti: 1, seen: {}, cells: {}, lad: 0, dealt: false };
+  const W = () => Math.max(220, Math.min(el.getBoundingClientRect().width || innerWidth * .8, 820));
+  let tabs;
+  if (o.div) tabs = [['lad', '🪜 Escalera']].concat(o.n <= 40 ? [['rep', '🫳 Repartir']] : []);
+  else { const { a, b } = o; tabs = (a > 1 ? [['cut', '✂️ Partir']] : []).concat([['jmp', '🦘 Saltos'], ['trk', '✨ Truco']], o.whole && String(o.whole[0]).length + String(o.whole[1]).length > 2 ? [['area', '🔲 Cajitas']] : []); st.cut = a > 5 ? 5 : Math.max(1, Math.floor(a / 2)); }
+  st.tab = o.start && tabs.some(t => t[0] === o.start) ? o.start : tabs[0][0];
+  const draw = () => {
+    let h = `<div class="strat"><div class="stabs">${tabs.map(([k, n]) => `<button class="px${k === st.tab ? ' on' : ''}" data-t="${k}">${n}</button>`).join('')}</div><div class="sbody">`;
+    if (o.div) {
+      const { d, n } = o;
+      if (st.tab === 'lad') {
+        // Escalera: sube de d en d hasta llegar (o casi) al número
+        const q = Math.floor(n / d); let chips = '<span>0</span>';
+        for (let k = 1; k <= st.lad; k++) chips += `<span class="${k * d > n ? 'over' : k === st.lad && (k * d === n || (k + 1) * d > n) ? 'last' : ''}">${k * d}</span>`;
+        const done = st.lad > q || (st.lad === q && q * d === n) || (st.lad === q && (q + 1) * d > n && st.lad > 0 && st.stop);
+        h += `<p class="stip">Sube la escalera del <b>${d}</b> hasta llegar a <b>${n}</b>. Cuenta cuántos escalones subiste.</p><div class="ladder">${chips}</div>`;
+        if (st.lad > q) h += `<p class="stip">¡Uy, ${st.lad * d} se pasa de ${n}! Entonces cabe <b>${q}</b> veces${n - q * d ? ` y sobran <b>${n - q * d}</b>` : ''}.</p>`;
+        else if (st.lad === q && q * d === n) h += `<p class="stip">¡Llegaste exacto! Subiste <b>${q}</b> escalones: ${n} ÷ ${d} = <b>${q}</b></p>`;
+        else h += `<div class="arrows"><button class="px pbtn" id="up">+ ${d} ⬆️</button></div><p class="stip">Escalones: <b>${st.lad}</b></p>`;
+        void done;
+      } else {
+        // Repartir: puntitos uno a uno en los grupos
+        h += `<p class="stip">Reparte <b>${n}</b> en <b>${d}</b> grupos iguales.</p><div class="pool" id="pool">${'<i></i>'.repeat(st.dealt ? n % d : n)}</div><div class="groups">${Array.from({ length: d }, (_, i) => `<div class="grp" id="g${i}">${st.dealt ? '<i></i>'.repeat(Math.floor(n / d)) + `<b>${Math.floor(n / d)}</b>` : '<b>0</b>'}</div>`).join('')}</div>${st.dealt ? `<p class="stip">A cada grupo le tocan <b>${Math.floor(n / d)}</b>${n % d ? ` y sobran <b>${n % d}</b>` : ''}.</p>` : '<button class="px pbtn" id="deal">Repartir</button>'}`;
+      }
+    } else {
+      const { a, b } = o, ds = Math.max(10, Math.min(40, (W() - 120) / (b * 1.25 + 2), (o.h || 300) / (a * 1.35 + .6)));
+      if (st.tab === 'cut') {
+        const c = st.cut, A = c * b, Bv = (a - c) * b, both = st.seen.a && st.seen.b;
+        h += `<p class="stip">Parte en <b>dos multiplicaciones fáciles</b>. Toca un renglón para cortar ahí (cortar en <b>5</b> casi siempre es fácil).</p>${dotsHTML(a, b, c, ds)}
+          <div class="parts"><span class="pt a" data-p="a">${c} × ${b} = ${st.seen.a ? `<b>${A}</b>` : '<span class="q">?</span>'}</span>+<span class="pt b" data-p="b">${a - c} × ${b} = ${st.seen.b ? `<b>${Bv}</b>` : '<span class="q">?</span>'}</span>${o.reveal ? `= <span class="pt tot">${A + Bv}</span>` : ''}</div>${both && !o.reveal ? `<p class="stip">Ahora suma <b>${A} + ${Bv}</b> y escribe el resultado ✍️</p>` : ''}
+          <div class="arrows"><button class="px" id="cl">▲</button><button class="px" id="cr">▼</button></div>${both ? '' : '<p class="stip">Toca cada cuadrito para ver cuánto da.</p>'}`;
+      } else if (st.tab === 'jmp') {
+        // Saltos en la recta numérica: de b en b
+        const tot = a * b, at = st.jumps * b;
+        let marks = ''; for (let k = 0; k <= a; k++) { const x = k / a * 100; marks += `<div class="tk" style="left:${x}%"></div><div class="tl${k <= st.jumps && k ? ' on' : ''}" style="left:${x}%">${k <= st.jumps || o.reveal ? k * b : (a <= 10 ? '' : '')}</div>`; }
+        let arcs = ''; for (let k = 0; k < st.jumps; k++) arcs += `<div class="arc" style="left:${k / a * 100}%;width:${100 / a}%"><span>+${b}</span></div>`;
+        h += `<p class="stip">Salta de <b>${b}</b> en <b>${b}</b>. ¡Cuenta los saltos!</p><div class="nline"><div class="bar"></div>${marks}${arcs}<div class="hop" style="left:${st.jumps / a * 100}%">🐱</div></div>
+          ${st.jumps < a ? `<div class="arrows"><button class="px pbtn" id="hop">Saltar +${b}</button></div><p class="stip">Saltos: <b>${st.jumps}</b> · vas en <b>${at}</b></p>` : `<p class="stip">¡<b>${a}</b> saltos de <b>${b}</b> llegan a <b>${tot}</b>!</p>`}`;
+      } else if (st.tab === 'trk') {
+        const steps = trick(a, b), shown = steps.slice(0, st.ti);
+        h += `<div class="tsteps">${shown.map(x => `<div>${x}</div>`).join('')}</div>${st.ti < steps.length ? '<button class="px pbtn" id="nx">Siguiente paso ➜</button>' : '<p class="stip">¡Así de fácil! 😎</p>'}`;
+      } else {
+        // Cajitas (modelo de área): cada cajita es una multiplicación fácil; juntas dan toda la operación
+        const [A, Bn] = o.whole, pa = String(A).split('').map((d, i, arr) => +d * 10 ** (arr.length - 1 - i)).filter(Boolean), pb = String(Bn).split('').map((d, i, arr) => +d * 10 ** (arr.length - 1 - i)).filter(Boolean);
+        let g = `<div class="area" style="grid-template-columns:auto repeat(${pa.length},auto)"><div class="h">×</div>${pa.map(x => `<div class="h">${x}</div>`).join('')}`, all = true, sum = 0;
+        pb.forEach((y, j) => { g += `<div class="h">${y}</div>`; pa.forEach((x, i) => { const on = st.cells[i + ',' + j]; if (!on) all = false; sum += x * y; g += `<div class="c${on ? ' on' : ''}" data-c="${i},${j}">${on ? x * y : '?'}</div>`; }); });
+        h += `<p class="stip"><b>${A} × ${Bn}</b> partido en cajitas: cada una es fácil. ¡Tócalas!</p>${g}</div>${all ? `<p class="stip">Todas juntas: <b>${sum}</b> = ${A} × ${Bn} 🎉</p>` : ''}`;
+      }
+    }
+    el.innerHTML = h + '</div></div>';
+    el.querySelectorAll('.stabs button').forEach(bt => bt.addEventListener('click', () => { st.tab = bt.dataset.t; sfx.pop(); draw(); }));
+    const on = (id, f) => { const x = el.querySelector('#' + id); if (x) x.addEventListener('click', f); };
+    on('cl', () => { if (st.cut > 1) { st.cut--; st.seen = {}; beep(500, .05, 'triangle', .05); draw(); } });
+    on('cr', () => { if (st.cut < o.a - 1) { st.cut++; st.seen = {}; beep(600, .05, 'triangle', .05); draw(); } });
+    el.querySelectorAll('.drow').forEach(r => r.addEventListener('click', () => { const v = +r.dataset.r; if (v >= 1 && v < o.a) { st.cut = v; st.seen = {}; beep(550, .05, 'triangle', .05); draw(); } }));
+    el.querySelectorAll('.pt[data-p]').forEach(x => x.addEventListener('click', () => { st.seen[x.dataset.p] = 1; sfx.ok(); draw(); }));
+    on('hop', () => { st.jumps++; beep(440 * Math.pow(2, Math.min(st.jumps, 12) / 12), .09, 'triangle', .06, 200); draw(); });
+    on('nx', () => { st.ti++; sfx.pop(); draw(); });
+    el.querySelectorAll('.area .c').forEach(x => x.addEventListener('click', () => { st.cells[x.dataset.c] = 1; sfx.ok(); draw(); }));
+    on('up', () => { st.lad++; beep(440 * Math.pow(2, Math.min(st.lad, 12) / 12), .08, 'triangle', .06, 120); draw(); });
+    on('deal', () => {
+      const pool = [...el.querySelectorAll('#pool i')], n = o.n, d = o.d, per = Math.floor(n / d), give = per * d;
+      el.querySelector('#deal').disabled = true;
+      pool.slice(0, give).forEach((p, z) => setTimeout(() => { p.style.visibility = 'hidden'; const g = el.querySelector('#g' + (z % d)); g.insertAdjacentHTML('afterbegin', '<i></i>'); g.querySelector('b').textContent = Math.floor(z / d) + 1; beep(600 + (z % d) * 50, .04, 'triangle', .04); if (z === give - 1) setTimeout(() => { st.dealt = true; draw(); }, 350); }, z * Math.max(35, 1400 / give)));
+    });
+  };
+  draw();
+}
 function showHelp(h, reveal) {
   const card = $('#helpCard'); let html = '';
   const fit = (cols, rows) => Math.max(16, Math.min(44, (Math.min(innerWidth * .86, 820) - 60) / (cols + 1.5), (innerHeight * .55) / rows));
   if (h.t === 'mul') {
-    const { a, b } = h, split = a > 5 && b > 5, ts = fit(b, a);
-    html = `<h3><b>${a}</b> × <b>${b}</b> son <b>${a}</b> ${a === 1 ? 'renglón' : 'renglones'} de <b>${b}</b> cupcake${b === 1 ? '' : 's'}</h3>${trayHTML(a, b, ts, split)}
-      <p>${split ? `Truco: 5 renglones son <b>${5 * b}</b> (rosas) y ${a - 5} renglones más son <b>${(a - 5) * b}</b> (verdes). Juntos: ${5 * b} + ${(a - 5) * b}.` : `Cuenta de <b>${b}</b> en <b>${b}</b>, un renglón a la vez.`}</p>
-      ${reveal ? `<p>Es <b style="color:#ff6fae">${a * b}</b></p>` : ''}<div style="display:flex;gap:10px"><button class="px pbtn" id="cnt">Contar de ${b} en ${b}</button><button class="px close" id="hclose">¡Entendí!</button></div>`;
+    html = `<h3><b>${h.a}</b> × <b>${h.b}</b></h3><div id="stratBox" style="width:100%"></div>${reveal ? `<p>Es <b style="color:#ff6fae">${h.a * h.b}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
   } else if (h.t === 'add') {
     const tot = h.parts.reduce((x, y) => x + y, 0);
     if (tot <= 40) {
@@ -491,9 +638,7 @@ function showHelp(h, reveal) {
       html = `<h3>${h.parts.join(' + ')}</h3><p>Primero suma las decenas y luego las unidades.<br>${h.parts.map(p => `${p} = ${Math.floor(p / 10) * 10} + ${p % 10}`).join('<br>')}</p>${reveal ? `<p>Es <b style="color:#ff6fae">${tot}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
     }
   } else if (h.t === 'div') {
-    const { d, n } = h; let m = '';
-    for (let k = 0; k <= 9; k++) { const v = d * k; if (k > 0 && d * (k - 1) > n) break; m += `<span class="${v <= n ? (d * (k + 1) > n ? 'yes' : '') : 'no'}">${d} × ${k} = ${v}</span>`; }
-    html = `<h3>¿Cuántas veces cabe el <b>${d}</b> en <b>${n}</b>?</h3><p>Busca en la tabla del ${d} el número más grande que <b>no se pase</b> de ${n}:</p><div class="mults">${m}</div>${reveal ? `<p>Cabe <b style="color:#ff6fae">${Math.floor(n / d)}</b> veces</p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
+    html = `<h3>¿Cuántas veces cabe el <b>${h.d}</b> en <b>${h.n}</b>?</h3><div id="stratBox" style="width:100%"></div>${reveal ? `<p>Cabe <b style="color:#ff6fae">${Math.floor(h.n / h.d)}</b> veces</p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
   } else if (h.t === 'sub') {
     const { a, b } = h;
     if (a <= 40) { let dots = ''; for (let z = 0; z < a; z++) dots += `<i class="${z < b ? 'c' : 'a'}" style="${z < b ? 'opacity:.35' : ''}"></i>`; const ts = fit(10, Math.ceil(a / 10) + 1);
@@ -501,7 +646,7 @@ function showHelp(h, reveal) {
     else html = `<h3><b>${a}</b> − <b>${b}</b></h3><p>Cuenta hacia arriba desde ${b} hasta llegar a ${a}.</p>${reveal ? `<p>Es <b style="color:#ff6fae">${a - b}</b></p>` : ''}<button class="px close" id="hclose">¡Entendí!</button>`;
   }
   card.innerHTML = html; $('#help').hidden = false;
-  const c = card.querySelector('#cnt'); if (c) c.addEventListener('click', () => countRows(card, h.a, h.b));
+  const sb = card.querySelector('#stratBox'); if (sb) mountStrat(sb, h.t === 'div' ? { div: true, d: h.d, n: h.n } : { a: h.a, b: h.b, whole: h.whole, reveal, h: innerHeight * .42 });
   card.querySelector('#hclose').addEventListener('click', () => { $('#help').hidden = true; sfx.pop(); });
 }
 
@@ -597,7 +742,7 @@ function problemDone() {
   $('#nextBtn').addEventListener('click', () => { sfx.pop(); nextProblem(); }); onEnter = () => nextProblem();
 }
 
-/* ---------- Tablas: la multiplicación se ve como charola de cupcakes ---------- */
+/* ---------- Tablas: con técnicas interactivas (partir, saltos, trucos, escalera) ---------- */
 function factProblem() {
   const l = lesson.l; $('#boardWrap').hidden = false;
   // Elige primero las que todavía no se sabe (las que falla regresan más seguido)
@@ -610,18 +755,16 @@ function factProblem() {
   const lvl = flvl(a, b), div = l.kind === 'dfact';
   lesson.fact = { a, b, div, help: div ? { t: 'div', d: b, n: a * b } : { t: 'mul', a, b } };
   B = null; const bw = $('#boardWrap').getBoundingClientRect(), ts = Math.max(18, Math.min(46, (bw.width - 60) / (b + 2), (bw.height - 70) / (a + .5)));
+  $('#board').style.gridTemplateColumns = '';
   if (div) {
-    // Repartir: las galletas se reparten una por una en las cajitas
-    coach(lvl >= 2 ? `¿Cuánto es <b>${a * b} ÷ ${b}</b>?` : `Hay <b>${a * b}</b> galletas para <b>${b}</b> amigas. Toca <b>Repartir</b> y cuenta cuántas le tocan a cada una.`);
-    $('#board').style.gridTemplateColumns = ''; $('#board').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;--ts:${Math.max(16, Math.min(34, ts * .8))}px"><div class="pile" id="pile">${cookie.repeat(a * b)}</div><div class="boxes">${Array.from({ length: b }, (_, i) => `<div class="box" id="bx${i}"><b>0</b></div>`).join('')}</div><button class="px pbtn" id="deal">Repartir 🍪</button></div>`;
-    $('#deal').addEventListener('click', () => { $('#deal').disabled = true; const pile = [...$('#pile').children]; pile.forEach((im, z) => setTimeout(() => { im.style.opacity = 0; const bx = $('#bx' + (z % b)); bx.insertAdjacentHTML('beforeend', cookie); bx.querySelector('b').textContent = Math.floor(z / b) + 1; beep(600 + (z % b) * 60, .04, 'triangle', .04); if (z === pile.length - 1) setTimeout(() => { $('#pile').style.display = 'none'; coach(`A cada amiga le tocaron <b>${a}</b> galletas. Escribe cuánto es ${a * b} ÷ ${b}.`); }, 300); }, z * Math.max(40, 900 / pile.length * 2))); });
-    if (lvl >= 2) $('#board').innerHTML = `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a * b} ÷ ${b}</div>`;
+    coach(lvl >= 2 ? `¿Cuánto es <b>${a * b} ÷ ${b}</b>?` : `<b>${a * b} ÷ ${b}</b>: ¿cuántas veces cabe el ${b} en ${a * b}? Sube la escalera o reparte.`);
+    $('#board').innerHTML = lvl >= 2 ? `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a * b} ÷ ${b}</div>` : '<div id="factStrat" style="width:min(92vw,820px)"></div>';
+    if (lvl < 2) mountStrat($('#factStrat'), { div: true, d: b, n: a * b });
     $('#quest').innerHTML = `<span class="q">${a * b} ÷ ${b} =</span><span id="ans">?</span>`;
   } else {
-    coach(lvl >= 2 ? `¿Cuánto es <b>${a} × ${b}</b>? ¡Tú puedes!` : `<b>${a} × ${b}</b>: son <b>${a}</b> renglones de <b>${b}</b>. Toca <b>Contar</b> si quieres.`);
-    $('#board').style.gridTemplateColumns = '';
-    $('#board').innerHTML = lvl >= 2 ? `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a} × ${b}</div>` : `<div style="display:flex;flex-direction:column;align-items:center;gap:8px">${trayHTML(a, b, ts, a > 5 && b > 5)}<button class="px pbtn" id="cnt2">Contar de ${b} en ${b}</button></div>`;
-    const c = $('#cnt2'); if (c) c.addEventListener('click', () => countRows($('#board'), a, b));
+    coach(lvl >= 2 ? `¿Cuánto es <b>${a} × ${b}</b>? ¡Tú puedes!` : `<b>${a} × ${b}</b>: no hay que contar uno por uno. ¡Usa un truco! Parte, salta o mira el truco de la tabla.`);
+    $('#board').innerHTML = lvl >= 2 ? `<div style="font-size:clamp(60px,12vw,120px);color:#b48cff">${a} × ${b}</div>` : '<div id="factStrat" style="width:min(92vw,820px)"></div>';
+    if (lvl < 2) mountStrat($('#factStrat'), { a, b, start: a > 5 && b > 5 ? 'cut' : 'trk', h: Math.max(160, $('#boardWrap').getBoundingClientRect().height - 230) });
     $('#quest').innerHTML = `<span class="q">${a} × ${b} =</span><span id="ans">?</span>`;
   }
   hint(true);
